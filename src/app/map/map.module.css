@@ -236,3 +236,109 @@
   .mapLayout { grid-template-columns: 1fr; }
   .detailPanel { max-height: 300px; }
 }
+
+/* Timeline Simulation CSS Overlays */
+.timelineOverlay {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: 90%;
+  max-width: 480px;
+  background: rgba(10, 25, 47, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.85rem 1.25rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.timelineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timelineTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #00d4ff;
+  font-family: var(--font-outfit), sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.timelineControls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.playBtn {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.playBtn:hover {
+  background: rgba(0, 212, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.timelineSlider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+  cursor: pointer;
+}
+
+.timelineSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00d4ff;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+  border: 2px solid #ffffff;
+  transition: all 0.1s ease;
+}
+
+.timelineSlider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.timelineTicks {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.timelineTicks span {
+  font-size: 0.62rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.timelineTicks .activeTick {
+  color: #00d4ff;
+  font-weight: 700;
+}
+

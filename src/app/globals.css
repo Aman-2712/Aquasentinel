@@ -553,3 +553,62 @@ img {
 .leaflet-control-zoom a:hover {
   background: var(--clr-card-hover) !important;
 }
+
+/* Custom Tooltip Styles for FloodMap */
+.custom-zone-tooltip {
+  background: rgba(10, 25, 47, 0.8) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+  color: #fff !important;
+  font-family: var(--font-outfit), sans-serif !important;
+  font-size: 11px !important;
+  text-align: center !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
+}
+
+.custom-zone-tooltip::before {
+  display: none !important; /* Remove default triangle pointer */
+}
+
+.tooltip-high {
+  border-left: 3px solid #ff3b30 !important;
+}
+
+.tooltip-medium {
+  border-left: 3px solid #ff9500 !important;
+}
+
+.tooltip-low {
+  border-left: 3px solid #30d158 !important;
+}
+
+.zone-label-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.zone-label-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 11px;
+}
+
+.zone-label-icon {
+  font-size: 12px;
+}
+
+.zone-label-risk {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
+}
+

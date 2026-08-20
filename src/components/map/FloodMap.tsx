@@ -15,10 +15,22 @@ const RISK_COLORS = {
   low: { fill: '#30d158', stroke: '#00b894', opacity: 0.25 },
 };
 
+const RESOURCES = [
+  { type: 'sensor', name: 'IoT Drainage Sensor DS-02', coords: [17.705, 83.292] as [number, number], status: 'Active' },
+  { type: 'sensor', name: 'IoT Water Sensor WS-05', coords: [17.728, 83.325] as [number, number], status: 'Active' },
+  { type: 'sensor', name: 'IoT Stream Sensor SS-11', coords: [17.755, 83.250] as [number, number], status: 'Active' },
+  { type: 'shelter', name: 'Evacuation Shelter - Old Town School', coords: [17.695, 83.297] as [number, number], status: 'Open' },
+  { type: 'shelter', name: 'Gajuwaka Relief Camp', coords: [17.682, 83.211] as [number, number], status: 'Open' },
+  { type: 'shelter', name: 'Gopalapatnam Shelter Center', coords: [17.760, 83.253] as [number, number], status: 'Open' },
+  { type: 'rescue', name: 'Rescue Unit 01 (Boat Squad)', coords: [17.699, 83.288] as [number, number], status: 'Deployed' },
+  { type: 'rescue', name: 'Rescue Unit 03 (Emergency Ambulance)', coords: [17.732, 83.315] as [number, number], status: 'Deployed' },
+];
+
 export default function FloodMap({ zones, onSelect, selected }: Props) {
   const mapRef = useRef<ReturnType<typeof import('leaflet').map> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const polygonsRef = useRef<ReturnType<typeof import('leaflet').polygon>[]>([]);
+  const markersRef = useRef<ReturnType<typeof import('leaflet').marker>[]>([]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -55,6 +67,41 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
     polygonsRef.current.forEach(p => p.remove());
     polygonsRef.current = [];
 
+    // Clear old markers (pulse and resource markers)
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+
+    // Draw resources (sensors, shelters, rescues)
+    RESOURCES.forEach(res => {
+      let iconHtml = '';
+      if (res.type === 'sensor') {
+        iconHtml = `<div style="width:24px;height:24px;border-radius:50%;background:rgba(0,212,255,0.15);border:2.5px solid #00d4ff;display:flex;align-items:center;justify-content:center;color:#00d4ff;font-size:10px;box-shadow:0 0 10px rgba(0,212,255,0.5)">📡</div>`;
+      } else if (res.type === 'shelter') {
+        iconHtml = `<div style="width:24px;height:24px;border-radius:50%;background:rgba(48,209,88,0.15);border:2.5px solid #30d158;display:flex;align-items:center;justify-content:center;color:#30d158;font-size:10px;box-shadow:0 0 10px rgba(48,209,88,0.5)">🏠</div>`;
+      } else if (res.type === 'rescue') {
+        iconHtml = `<div style="width:24px;height:24px;border-radius:50%;background:rgba(255,149,0,0.15);border:2.5px solid #ff9500;display:flex;align-items:center;justify-content:center;color:#ff9500;font-size:10px;box-shadow:0 0 10px rgba(255,149,0,0.5)">🚒</div>`;
+      }
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: '',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      });
+
+      const m = L.marker(res.coords, { icon: customIcon })
+        .bindPopup(`
+          <div style="padding:6px;min-width:180px;background:rgba(10,25,47,0.9);color:#fff;border-radius:8px;">
+            <strong style="color:#00d4ff;font-size:12px;display:block;margin-bottom:4px">${res.name}</strong>
+            <span style="color:#6b8cae;font-size:10px;display:block;">Type: ${res.type.charAt(0).toUpperCase() + res.type.slice(1)}</span>
+            <span style="color:#30d158;font-weight:700;font-size:10px;display:block;margin-top:2px">Status: ${res.status}</span>
+          </div>
+        `)
+        .addTo(map);
+
+      markersRef.current.push(m);
+    });
+
     // Draw zones
     zones.forEach(zone => {
       const colors = RISK_COLORS[zone.risk];
@@ -68,7 +115,7 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
         dashArray: zone.risk === 'high' ? '0' : '4',
       });
 
-      // Popup
+      // Interactive Popup
       poly.bindPopup(`
         <div style="min-width:200px;padding:4px 0">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -95,6 +142,34 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
       poly.addTo(map);
       polygonsRef.current.push(poly);
 
+      // Map risk to mock percentage
+      let riskPct = 40;
+      if (zone.risk === 'high') {
+        riskPct = Math.min(99, Math.round(75 + (zone.waterDepth % 25)));
+      } else if (zone.risk === 'medium') {
+        riskPct = Math.round(50 + (zone.waterDepth % 15));
+      } else {
+        riskPct = Math.round(20 + (zone.waterDepth % 20));
+      }
+
+      // Permanent high-tech label
+      const alertIcon = zone.risk === 'high' ? '🚨' : zone.risk === 'medium' ? '⚠️' : '✅';
+      const tooltipContent = `
+        <div class="zone-label-content">
+          <div class="zone-label-title">
+            <span class="zone-label-icon">${alertIcon}</span>
+            <span>${zone.name}</span>
+          </div>
+          <div class="zone-label-risk">Risk: ${riskPct}%</div>
+        </div>
+      `;
+
+      poly.bindTooltip(tooltipContent, {
+        permanent: true,
+        direction: 'center',
+        className: `custom-zone-tooltip tooltip-${zone.risk}`,
+      });
+
       // Pulse marker for high risk
       if (zone.risk === 'high') {
         const pulseIcon = L.divIcon({
@@ -103,7 +178,8 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
           iconSize: [20, 20],
           iconAnchor: [10, 10],
         });
-        L.marker(zone.center, { icon: pulseIcon }).addTo(map);
+        const mPulse = L.marker(zone.center, { icon: pulseIcon }).addTo(map);
+        markersRef.current.push(mPulse);
       }
     });
 

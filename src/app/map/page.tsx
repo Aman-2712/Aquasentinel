@@ -1,11 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProtectedLayout from '@/components/layout/ProtectedLayout';
 import dynamic from 'next/dynamic';
 import styles from './map.module.css';
 import { useFloodData } from '@/context/FloodDataContext';
 import type { FloodZone } from '@/data/visakhapatnam_zones';
-import { AlertTriangle, Droplets, Users, Filter } from 'lucide-react';
+import { AlertTriangle, Droplets, Users, Filter, Play, Pause } from 'lucide-react';
 
 const FloodMap = dynamic(() => import('@/components/map/FloodMap'), { ssr: false, loading: () => (
   <div className={styles.mapLoading}>
@@ -18,8 +18,73 @@ type FilterType = 'all' | 'high' | 'medium' | 'low';
 
 export default function MapPage() {
   const { zones, isLoading } = useFloodData();
-  const [selected, setSelected] = useState<FloodZone | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
+  const [forecastTime, setForecastTime] = useState<number>(0);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setForecastTime(prev => {
+          if (prev >= 12) return 0;
+          return prev + 3;
+        });
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  const getForecastZones = (baseZones: FloodZone[], offset: number): FloodZone[] => {
+    return baseZones.map(zone => {
+      let depthFactor = 0;
+      let rainFactor = 0;
+      
+      if (offset === 3) {
+        depthFactor = 25;
+        rainFactor = 15;
+      } else if (offset === 6) {
+        depthFactor = 50;
+        rainFactor = 30;
+      } else if (offset === 9) {
+        depthFactor = -15;
+        rainFactor = -30;
+      } else if (offset === 12) {
+        depthFactor = -35;
+        rainFactor = -50;
+      }
+      
+      const newDepth = Math.max(0, zone.waterDepth + depthFactor);
+      const newRainfall = Math.max(0, zone.rainfall + rainFactor);
+      
+      let newRisk: 'high' | 'medium' | 'low' = 'low';
+      if (newDepth > 100) {
+        newRisk = 'high';
+      } else if (newDepth > 40) {
+        newRisk = 'medium';
+      } else {
+        newRisk = 'low';
+      }
+      
+      let newAction = zone.action;
+      if (newRisk === 'high') {
+        newAction = 'Critical level. Evacuate low-lying areas. Roads submerged.';
+      } else if (newRisk === 'medium') {
+        newAction = 'Moderate flooding. Avoid flooded streets and basements.';
+      } else {
+        newAction = 'Normal flow. Watch for drainage blockages.';
+      }
+      
+      return {
+        ...zone,
+        waterDepth: newDepth,
+        rainfall: newRainfall,
+        risk: newRisk,
+        action: newAction,
+      };
+    });
+  };
 
   if (isLoading) {
     return (
@@ -32,7 +97,9 @@ export default function MapPage() {
     );
   }
 
-  const filtered = filter === 'all' ? zones : zones.filter(z => z.risk === filter);
+  const forecastedZones = getForecastZones(zones, forecastTime);
+  const filtered = filter === 'all' ? forecastedZones : forecastedZones.filter(z => z.risk === filter);
+  const selected = selectedId ? forecastedZones.find(z => z.id === selectedId) || null : null;
 
   return (
     <ProtectedLayout>
@@ -64,8 +131,49 @@ export default function MapPage() {
 
           {/* Map + Sidebar */}
           <div className={styles.mapLayout}>
-            <div className={styles.mapContainer}>
-              <FloodMap zones={filtered} onSelect={setSelected} selected={selected} />
+            <div className={styles.mapContainer} style={{ position: 'relative' }}>
+              <FloodMap zones={filtered} onSelect={(zone) => setSelectedId(zone.id)} selected={selected} />
+              
+              {/* Timeline Forecast Overlay */}
+              <div className={styles.timelineOverlay}>
+                <div className={styles.timelineHeader}>
+                  <span className={styles.timelineTitle}>
+                    Time: {forecastTime === 0 ? 'Live Status' : `+${forecastTime} Hours Forecast`}
+                  </span>
+                </div>
+                
+                <div className={styles.timelineControls}>
+                  <button 
+                    className={styles.playBtn} 
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    title={isPlaying ? 'Pause Simulation' : 'Play Simulation'}
+                  >
+                    {isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
+                  </button>
+                  
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="12" 
+                      step="3" 
+                      value={forecastTime} 
+                      onChange={(e) => {
+                        setForecastTime(Number(e.target.value));
+                        setIsPlaying(false);
+                      }} 
+                      className={styles.timelineSlider}
+                    />
+                    <div className={styles.timelineTicks}>
+                      <span className={forecastTime === 0 ? styles.activeTick : ''}>Live</span>
+                      <span className={forecastTime === 3 ? styles.activeTick : ''}>+3h</span>
+                      <span className={forecastTime === 6 ? styles.activeTick : ''}>+6h</span>
+                      <span className={forecastTime === 9 ? styles.activeTick : ''}>+9h</span>
+                      <span className={forecastTime === 12 ? styles.activeTick : ''}>+12h</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Zone Detail Panel */}
@@ -130,8 +238,8 @@ export default function MapPage() {
               {/* Zone List */}
               <div className={styles.zoneListPanel}>
                 <h3 className={styles.zoneListTitle}>All Zones</h3>
-                {zones.map(zone => (
-                  <button key={zone.id} className={`${styles.zoneListItem} ${selected?.id === zone.id ? styles.zoneListItemActive : ''}`} onClick={() => setSelected(zone)}>
+                {forecastedZones.map(zone => (
+                  <button key={zone.id} className={`${styles.zoneListItem} ${selectedId === zone.id ? styles.zoneListItemActive : ''}`} onClick={() => setSelectedId(zone.id)}>
                     <div className={`risk-dot ${zone.risk === 'low' ? 'low' : zone.risk}`} />
                     <div style={{ flex: 1, textAlign: 'left' }}>
                       <span className={styles.zoneListName}>{zone.name}</span>
