@@ -554,61 +554,104 @@ img {
   background: var(--clr-card-hover) !important;
 }
 
-/* Custom Tooltip Styles for FloodMap */
-.custom-zone-tooltip {
-  background: rgba(10, 25, 47, 0.8) !important;
-  backdrop-filter: blur(8px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 8px !important;
-  padding: 6px 12px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-  color: #fff !important;
-  font-family: var(--font-outfit), sans-serif !important;
-  font-size: 11px !important;
-  text-align: center !important;
-  pointer-events: none !important;
-  white-space: nowrap !important;
+/* Custom Flood Zone Polygons styling */
+.flood-zone-poly {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  cursor: pointer;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.custom-zone-tooltip::before {
-  display: none !important; /* Remove default triangle pointer */
+/* Hover effects */
+.flood-zone-poly:hover {
+  fill-opacity: 0.65 !important;
+  stroke-width: 4.5px !important;
+  stroke-opacity: 1 !important;
 }
 
-.tooltip-high {
-  border-left: 3px solid #ff3b30 !important;
+.flood-zone-high:hover {
+  filter: drop-shadow(0 0 10px rgba(255, 59, 48, 0.95)) !important;
 }
 
-.tooltip-medium {
-  border-left: 3px solid #ff9500 !important;
+.flood-zone-medium:hover {
+  filter: drop-shadow(0 0 10px rgba(255, 149, 0, 0.95)) !important;
 }
 
-.tooltip-low {
-  border-left: 3px solid #30d158 !important;
+.flood-zone-low:hover {
+  filter: drop-shadow(0 0 10px rgba(48, 209, 88, 0.95)) !important;
 }
 
-.zone-label-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
+/* Base states & animations */
+.flood-zone-high {
+  animation: danger-pulse 2.2s infinite alternate ease-in-out;
+  filter: drop-shadow(0 0 4px rgba(255, 59, 48, 0.5));
 }
 
-.zone-label-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 700;
-  color: #ffffff;
-  font-size: 11px;
+.flood-zone-medium {
+  animation: warning-pulse 2.8s infinite alternate ease-in-out;
+  filter: drop-shadow(0 0 4px rgba(255, 149, 0, 0.4));
 }
 
-.zone-label-icon {
-  font-size: 12px;
+.flood-zone-low {
+  stroke-dasharray: 6, 8;
+  animation: low-march 35s linear infinite;
+  filter: drop-shadow(0 0 2px rgba(48, 209, 88, 0.3));
 }
 
-.zone-label-risk {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.75);
-  font-weight: 500;
+/* Selection states */
+.flood-zone-poly.is-selected {
+  stroke-width: 5px !important;
+  stroke-opacity: 1 !important;
+  fill-opacity: 0.75 !important;
+  animation: none !important;
 }
 
+.flood-zone-high.is-selected {
+  filter: drop-shadow(0 0 16px rgba(255, 59, 48, 1)) !important;
+}
+
+.flood-zone-medium.is-selected {
+  filter: drop-shadow(0 0 14px rgba(255, 149, 0, 1)) !important;
+}
+
+.flood-zone-low.is-selected {
+  filter: drop-shadow(0 0 12px rgba(48, 209, 88, 1)) !important;
+  stroke-dasharray: 6, 8;
+  animation: low-march 12s linear infinite !important;
+}
+
+/* Keyframes for glowing animations */
+@keyframes danger-pulse {
+  0% {
+    fill-opacity: 0.25;
+    stroke-opacity: 0.75;
+    filter: drop-shadow(0 0 2px rgba(255, 59, 48, 0.4));
+  }
+  100% {
+    fill-opacity: 0.48;
+    stroke-opacity: 1;
+    filter: drop-shadow(0 0 12px rgba(255, 59, 48, 0.9));
+  }
+}
+
+@keyframes warning-pulse {
+  0% {
+    fill-opacity: 0.22;
+    stroke-opacity: 0.7;
+    filter: drop-shadow(0 0 2px rgba(255, 149, 0, 0.3));
+  }
+  100% {
+    fill-opacity: 0.42;
+    stroke-opacity: 0.9;
+    filter: drop-shadow(0 0 10px rgba(255, 149, 0, 0.8));
+  }
+}
+
+@keyframes low-march {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -320;
+  }
+}
