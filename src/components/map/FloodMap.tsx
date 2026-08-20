@@ -102,6 +102,44 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
       markersRef.current.push(m);
     });
 
+    // 📡 LIVE LOCATION TRACKING VIA BROWSER GEOLOCATION
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const userLat = pos.coords.latitude;
+          const userLng = pos.coords.longitude;
+          const userCoords: [number, number] = [userLat, userLng];
+
+          const userIcon = L.divIcon({
+            html: `
+              <div style="position:relative;width:28px;height:28px;">
+                <div style="position:absolute;inset:0;border-radius:50%;background:rgba(0,212,255,0.3);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite;"></div>
+                <div style="position:relative;width:24px;height:24px;border-radius:50%;background:#00d4ff;border:3px solid #ffffff;box-shadow:0 0 15px #00d4ff;display:flex;align-items:center;justify-content:center;color:#000;font-weight:bold;font-size:10px;">📍</div>
+              </div>
+            `,
+            className: '',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+          });
+
+          const userMarker = L.marker(userCoords, { icon: userIcon })
+            .bindPopup(`
+              <div style="padding:8px;background:rgba(10,25,47,0.95);color:#fff;border-radius:8px;text-align:center">
+                <strong style="color:#00d4ff;font-size:13px;display:block">Your Live Location</strong>
+                <span style="font-size:10px;color:#6b8cae">Lat: ${userLat.toFixed(4)}, Lon: ${userLng.toFixed(4)}</span>
+              </div>
+            `)
+            .addTo(map);
+
+          markersRef.current.push(userMarker);
+        },
+        (err) => {
+          console.warn('Geolocation permission denied or unavailable:', err.message);
+        },
+        { enableHighAccuracy: true }
+      );
+    }
+
     // Draw zones
     zones.forEach(zone => {
       const colors = RISK_COLORS[zone.risk];
