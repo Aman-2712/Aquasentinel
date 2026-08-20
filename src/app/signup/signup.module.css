@@ -1,11 +1,12 @@
 @import '../login/auth.module.css';
 
-.roleSection { margin-bottom: 1rem; }
-.roleLabel { display: block; font-size: 0.82rem; font-weight: 600; color: var(--clr-text-muted); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.6rem; }
-.roleGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
-.roleCard { padding: 0.65rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: rgba(255,255,255,0.02); transition: all var(--transition-md); text-align: center; position: relative; cursor: pointer; }
-.roleCard:hover { border-color: var(--clr-border-strong); background: rgba(255,255,255,0.05); }
-.roleActive { border-color: var(--clr-primary); background: var(--clr-primary-dim); }
+.headerText { margin-bottom: 1.5rem; }
+.roleSection { margin-bottom: 1.5rem; }
+.roleLabel { display: block; font-size: 0.75rem; font-weight: 700; color: var(--clr-text-muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.6rem; }
+.roleGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+.roleCard { padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: rgba(255,255,255,0.03); transition: all var(--transition-md); text-align: center; position: relative; cursor: pointer; }
+.roleCard:hover { border-color: var(--clr-border-strong); background: rgba(255,255,255,0.07); }
+.roleActive { border-color: var(--clr-primary); background: var(--clr-primary-dim); box-shadow: var(--shadow-primary); }
 .roleCheck { position: absolute; top: 6px; right: 6px; color: var(--clr-primary); }
-.roleName { display: block; font-size: 0.8rem; font-weight: 700; color: var(--clr-text); margin-bottom: 0.2rem; }
-.roleDesc { display: block; font-size: 0.65rem; color: var(--clr-text-muted); line-height: 1.4; }
+.roleName { display: block; font-size: 0.82rem; font-weight: 700; color: var(--clr-text); margin-bottom: 0.2rem; }
+.roleDesc { display: block; font-size: 0.65rem; color: var(--clr-text-muted); line-height: 1.3; }
