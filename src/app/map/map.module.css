@@ -1,0 +1,238 @@
+.mapPage {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--navbar-height));
+  overflow: hidden;
+  padding: 1rem 1.5rem;
+  gap: 0.75rem;
+}
+
+.topBar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.filterBtn {
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--clr-border);
+  color: var(--clr-text-muted);
+  transition: all var(--transition-fast);
+}
+
+.filterBtn:hover { border-color: var(--clr-border-strong); color: var(--clr-text); }
+.filterActive_all { background: var(--clr-primary-dim); border-color: rgba(0,212,255,0.3); color: var(--clr-primary); }
+.filterActive_high { background: var(--clr-danger-dim); border-color: rgba(255,59,48,0.3); color: var(--clr-danger); }
+.filterActive_medium { background: var(--clr-warning-dim); border-color: rgba(255,149,0,0.3); color: var(--clr-warning); }
+.filterActive_low { background: var(--clr-safe-dim); border-color: rgba(48,209,88,0.3); color: var(--clr-safe); }
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--clr-text-muted);
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendSep {
+  height: 16px;
+  width: 1px;
+  background: var(--clr-border);
+}
+
+.legendTotal {
+  font-size: 0.75rem;
+  color: var(--clr-text-subtle);
+}
+
+.mapLayout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.mapContainer {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--clr-border);
+  height: 100%;
+}
+
+.mapLoading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--clr-card);
+  border-radius: var(--radius-lg);
+  color: var(--clr-text-muted);
+  gap: 0.75rem;
+}
+
+.mapLoadingIcon {
+  color: var(--clr-primary);
+  animation: float 2s ease-in-out infinite;
+}
+
+.detailPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+}
+
+.detail {
+  background: var(--grad-card);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.detailName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--clr-text);
+  margin-bottom: 2px;
+}
+
+.detailArea {
+  font-size: 0.75rem;
+  color: var(--clr-text-muted);
+}
+
+.detailStats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.detailStat {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: var(--radius-sm);
+}
+
+.detailStatVal {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--clr-text);
+}
+
+.detailStatLabel {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--clr-text-muted);
+}
+
+.detailAction {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.65rem;
+  background: rgba(255,59,48,0.06);
+  border: 1px solid rgba(255,59,48,0.2);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.75rem;
+}
+
+.detailActionIcon { flex-shrink: 0; }
+.detailActionText { font-size: 0.8rem; color: var(--clr-text-muted); line-height: 1.5; }
+
+.detailRoads { margin-bottom: 0.5rem; }
+.detailRoadsLabel { display: block; font-size: 0.68rem; font-weight: 600; color: var(--clr-text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.4rem; }
+.roadTag { display: inline-block; padding: 0.2rem 0.6rem; background: rgba(255,255,255,0.04); border: 1px solid var(--clr-border); border-radius: var(--radius-full); font-size: 0.72rem; color: var(--clr-text-muted); margin: 0 4px 4px 0; }
+
+.detailUpdated { font-size: 0.68rem; color: var(--clr-text-subtle); }
+
+.noSelection {
+  background: var(--grad-card);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--clr-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.zoneListPanel {
+  background: var(--grad-card);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem;
+}
+
+.zoneListTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--clr-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.6rem;
+}
+
+.zoneListItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-bottom: 2px;
+}
+
+.zoneListItem:hover { background: rgba(255,255,255,0.04); }
+.zoneListItemActive { background: var(--clr-primary-dim); border-color: rgba(0,212,255,0.2); }
+
+.zoneListName { display: block; font-size: 0.8rem; font-weight: 600; color: var(--clr-text); }
+.zoneListDepth { font-size: 0.68rem; color: var(--clr-text-muted); margin-left: 0.3rem; }
+
+@media (max-width: 1024px) {
+  .mapLayout { grid-template-columns: 1fr; }
+  .detailPanel { max-height: 300px; }
+}

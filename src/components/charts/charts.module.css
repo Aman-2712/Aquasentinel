@@ -1,0 +1,7 @@
+.chartsGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+.chartCard { padding: 1.25rem; }
+.chartCardFull { grid-column: 1 / -1; padding: 1.25rem; }
+.chartTitle { font-size: 0.9rem; font-weight: 700; color: var(--clr-text); margin-bottom: 1rem; }
+.chartWrap { height: 220px; }
+.chartWrapFull { height: 280px; }
+@media (max-width: 900px) { .chartsGrid { grid-template-columns: 1fr; } }

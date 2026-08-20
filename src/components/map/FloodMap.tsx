@@ -1,0 +1,119 @@
+'use client';
+import { useEffect, useRef } from 'react';
+import type { FloodZone } from '@/data/visakhapatnam_zones';
+import 'leaflet/dist/leaflet.css';
+
+interface Props {
+  zones: FloodZone[];
+  onSelect: (zone: FloodZone) => void;
+  selected: FloodZone | null;
+}
+
+const RISK_COLORS = {
+  high: { fill: '#ff3b30', stroke: '#ff6b35', opacity: 0.35 },
+  medium: { fill: '#ff9500', stroke: '#ffcc00', opacity: 0.30 },
+  low: { fill: '#30d158', stroke: '#00b894', opacity: 0.25 },
+};
+
+export default function FloodMap({ zones, onSelect, selected }: Props) {
+  const mapRef = useRef<ReturnType<typeof import('leaflet').map> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const polygonsRef = useRef<ReturnType<typeof import('leaflet').polygon>[]>([]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    // eslint-disable-next-line
+    const L = require('leaflet');
+
+    // Fix default marker icons
+    // eslint-disable-next-line
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    });
+
+    if (!mapRef.current) {
+      mapRef.current = L.map(containerRef.current, {
+        center: [17.7231, 83.3012],
+        zoom: 12,
+        zoomControl: true,
+      });
+
+      // Dark tile layer
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap contributors © CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      }).addTo(mapRef.current);
+    }
+
+    const map = mapRef.current;
+
+    // Clear old polygons
+    polygonsRef.current.forEach(p => p.remove());
+    polygonsRef.current = [];
+
+    // Draw zones
+    zones.forEach(zone => {
+      const colors = RISK_COLORS[zone.risk];
+      const isSelected = selected?.id === zone.id;
+
+      const poly = L.polygon(zone.coordinates, {
+        color: colors.stroke,
+        fillColor: colors.fill,
+        fillOpacity: isSelected ? 0.6 : colors.opacity,
+        weight: isSelected ? 3 : 2,
+        dashArray: zone.risk === 'high' ? '0' : '4',
+      });
+
+      // Popup
+      poly.bindPopup(`
+        <div style="min-width:200px;padding:4px 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong style="font-size:14px;color:#e8f4f8">${zone.name}</strong>
+            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:${zone.risk === 'high' ? 'rgba(255,59,48,0.2)' : zone.risk === 'medium' ? 'rgba(255,149,0,0.2)' : 'rgba(48,209,88,0.2)'};color:${zone.risk === 'high' ? '#ff3b30' : zone.risk === 'medium' ? '#ff9500' : '#30d158'};text-transform:uppercase">${zone.risk} risk</span>
+          </div>
+          <div style="font-size:12px;color:#6b8cae;margin-bottom:4px">📍 ${zone.area}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0">
+            <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:6px;text-align:center">
+              <div style="font-weight:700;color:#e8f4f8">${zone.waterDepth}cm</div>
+              <div style="font-size:10px;color:#6b8cae">Water Depth</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:6px;text-align:center">
+              <div style="font-weight:700;color:#e8f4f8">${zone.rainfall}mm/h</div>
+              <div style="font-size:10px;color:#6b8cae">Rainfall</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#6b8cae;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;margin-top:6px">${zone.action}</div>
+          <div style="font-size:10px;color:#3d5a7a;margin-top:4px">Updated ${zone.lastUpdated}</div>
+        </div>
+      `, { maxWidth: 280 });
+
+      poly.on('click', () => onSelect(zone));
+      poly.addTo(map);
+      polygonsRef.current.push(poly);
+
+      // Pulse marker for high risk
+      if (zone.risk === 'high') {
+        const pulseIcon = L.divIcon({
+          html: `<div style="width:20px;height:20px;border-radius:50%;background:rgba(255,59,48,0.8);border:2px solid #ff3b30;box-shadow:0 0 0 6px rgba(255,59,48,0.3);animation:pulse-danger 2s infinite"></div>`,
+          className: '',
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+        });
+        L.marker(zone.center, { icon: pulseIcon }).addTo(map);
+      }
+    });
+
+    // Fly to selected
+    if (selected && map) {
+      map.flyTo(selected.center, 14, { duration: 0.8 });
+    }
+
+    return () => {};
+  }, [zones, selected, onSelect]);
+
+  return <div ref={containerRef} style={{ width: '100%', height: '100%', borderRadius: '16px', overflow: 'hidden' }} />;
+}

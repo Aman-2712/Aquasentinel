@@ -1,0 +1,9 @@
+.forecastCard { text-align: center; padding: 1.25rem; }
+.forecastDay { display: block; font-size: 0.75rem; font-weight: 600; color: var(--clr-text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+.forecastRainVal { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: var(--clr-text); }
+.forecastRainVal span { font-size: 0.9rem; color: var(--clr-text-muted); margin-left: 2px; }
+.forecastTemp { display: block; font-size: 0.75rem; color: var(--clr-text-muted); margin-top: 0.35rem; }
+.insightIcon { margin-bottom: 0.75rem; }
+.insightTitle { font-size: 0.95rem; font-weight: 700; color: var(--clr-text); margin-bottom: 0.5rem; }
+.insightText { font-size: 0.82rem; color: var(--clr-text-muted); line-height: 1.6; }
+.insightText strong { color: var(--clr-text); }

@@ -1,0 +1,37 @@
+.summaryCard { display: flex; align-items: center; gap: 1rem; }
+.dangerSummary { border-color: rgba(255,59,48,0.25); }
+.warnSummary { border-color: rgba(255,149,0,0.25); }
+.safeSummary { border-color: rgba(48,209,88,0.25); }
+.summaryVal { display: block; font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 800; color: var(--clr-text); }
+.summaryLabel { display: block; font-size: 0.78rem; color: var(--clr-text-muted); }
+
+.filterBar { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; }
+.filterGroup { display: flex; align-items: center; gap: 0.35rem; }
+.filterBtn { padding: 0.3rem 0.75rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; background: rgba(255,255,255,0.04); border: 1px solid var(--clr-border); color: var(--clr-text-muted); transition: all var(--transition-fast); }
+.filterBtn:hover { color: var(--clr-text); border-color: var(--clr-border-strong); }
+.filterActive { background: var(--clr-primary-dim); border-color: rgba(0,212,255,0.3); color: var(--clr-primary); }
+
+.alertGrid { display: flex; flex-direction: column; gap: 0.75rem; }
+.alertCard { background: var(--grad-card); border: 1px solid var(--clr-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; border-left: 4px solid transparent; transition: all var(--transition-md); }
+.alertCard:hover { transform: translateX(3px); }
+.alert_high { border-left-color: var(--clr-danger); background: linear-gradient(145deg, rgba(255,59,48,0.05), rgba(7,18,40,0.98)); }
+.alert_medium { border-left-color: var(--clr-warning); background: linear-gradient(145deg, rgba(255,149,0,0.05), rgba(7,18,40,0.98)); }
+.alert_low { border-left-color: var(--clr-safe); background: linear-gradient(145deg, rgba(48,209,88,0.05), rgba(7,18,40,0.98)); }
+.alertInactive { opacity: 0.55; }
+
+.alertCardHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem; }
+.alertMeta { display: flex; align-items: flex-start; gap: 0.65rem; }
+.alertIconWrap { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.alertIcon_high { background: var(--clr-danger-dim); color: var(--clr-danger); }
+.alertIcon_medium { background: var(--clr-warning-dim); color: var(--clr-warning); }
+.alertIcon_low { background: var(--clr-safe-dim); color: var(--clr-safe); }
+.alertArea { display: block; font-size: 0.9rem; font-weight: 700; color: var(--clr-text); }
+.alertTags { display: flex; align-items: center; gap: 0.35rem; margin-top: 2px; }
+.liveBadge { display: inline-flex; align-items: center; gap: 3px; font-size: 0.6rem; font-weight: 700; color: var(--clr-danger); }
+.liveDot { width: 5px; height: 5px; border-radius: 50%; background: var(--clr-danger); animation: pulse-danger 2s infinite; }
+.alertRight { display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
+.alertTime { font-size: 0.72rem; color: var(--clr-text-muted); }
+.alertMessage { font-size: 0.85rem; color: var(--clr-text-muted); line-height: 1.6; margin-bottom: 0.75rem; }
+.alertActions { display: flex; gap: 0.5rem; }
+
+.empty { text-align: center; padding: 3rem; color: var(--clr-text-muted); font-size: 0.9rem; }
