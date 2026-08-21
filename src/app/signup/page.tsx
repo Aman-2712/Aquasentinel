@@ -25,6 +25,8 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [gLoading, setGLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +34,16 @@ function SignupForm() {
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     setLoading(true); setError('');
     try {
-      await signup(name, email, password, role);
-      router.push('/dashboard');
-    } catch { setError('Signup failed. Please try again.'); }
+      const res = await signup(name, email, password, role);
+      if (res?.confirmationRequired) {
+        setRegisteredEmail(email);
+        setSuccess(true);
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Signup failed. Please try again.');
+    }
     finally { setLoading(false); }
   };
 
@@ -42,10 +51,52 @@ function SignupForm() {
     setGLoading(true); setError('');
     try {
       await loginWithGoogle();
-      router.replace('/dashboard');
-    } catch { setError('Google sign-in failed.'); }
+      // Don't redirect — Google OAuth redirects the browser automatically
+    } catch (err: any) {
+      setError(err?.message || 'Google sign-in failed. Make sure Google provider is enabled in Supabase.');
+    }
     finally { setGLoading(false); }
   };
+
+  if (success) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.bgGlow1} /><div className={styles.bgGlow2} /><div className={styles.bgGrid} />
+        <div className={styles.card} style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+          <div className={styles.logo} style={{ justifyContent: 'center' }}>
+            <div className={styles.logoIcon}><Droplets size={24} /></div>
+            <span className={styles.logoText}>AquaSentinel</span>
+          </div>
+          <div style={{ margin: '2rem 0', display: 'flex', justifyContent: 'center' }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: 'rgba(48,209,88,0.1)',
+              border: '2px solid #30d158',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#30d158',
+              boxShadow: '0 0 15px rgba(48,209,88,0.3)',
+            }}>
+              <CheckCircle size={32} />
+            </div>
+          </div>
+          <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem' }}>Confirm Your Email</h2>
+          <p style={{ color: 'var(--clr-text-muted)', fontSize: '0.9rem', lineHeight: '1.5', marginBottom: '1.5rem' }}>
+            We&apos;ve sent a verification link to <strong style={{ color: '#00d4ff' }}>{registeredEmail}</strong>.<br />
+            Please click the link in your email to activate your account.
+          </p>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.5rem' }}>
+            <Link href="/login" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+              Proceed to Sign In
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

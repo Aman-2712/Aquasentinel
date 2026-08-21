@@ -16,7 +16,7 @@ interface AuthContextType {
   isSupabaseConfigured: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
-  signup: (name: string, email: string, password: string, role: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, role: string) => Promise<{ confirmationRequired: boolean }>;
   sendOTP: (identifier: string, type: 'email' | 'phone') => Promise<void>;
   verifyOTP: (otp: string, identifier: string, type: 'email' | 'phone') => Promise<void>;
   logout: () => Promise<void>;
@@ -113,7 +113,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
     });
     if (error) throw error;
   };
@@ -122,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isSupabaseConfigured) {
       await new Promise(r => setTimeout(r, 1200));
       saveMockUser({ id: 'mock-3', name, email, role: role as User['role'] });
-      return;
+      return { confirmationRequired: false };
     }
 
     const { data, error } = await supabase.auth.signUp({
@@ -133,14 +139,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
     if (error) throw error;
+
     if (data.user) {
-      setUser({
-        id: data.user.id,
-        name: data.user.user_metadata?.name || name,
-        email: data.user.email || email,
-        role: data.user.user_metadata?.role || (role as User['role']),
-      });
+      const confirmationRequired = !data.session;
+      if (!confirmationRequired) {
+        setUser({
+          id: data.user.id,
+          name: data.user.user_metadata?.name || name,
+          email: data.user.email || email,
+          role: data.user.user_metadata?.role || (role as User['role']),
+        });
+      }
+      return { confirmationRequired };
     }
+    return { confirmationRequired: false };
   };
 
   const sendOTP = async (identifier: string, type: 'email' | 'phone') => {
@@ -150,7 +162,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (type === 'email') {
-      const { error } = await supabase.auth.signInWithOtp({ email: identifier });
+      const { error } = await supabase.auth.signInWithOtp({
+        email: identifier,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
       if (error) throw error;
     } else {
       const { error } = await supabase.auth.signInWithOtp({ phone: identifier });

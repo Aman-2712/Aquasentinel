@@ -2,11 +2,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Eye, EyeOff, Droplets, Phone, ArrowRight, Loader } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Droplets, ArrowRight, Loader } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import styles from '@/app/login/auth.module.css';
 
-type Tab = 'email-pass' | 'email-otp' | 'phone-otp';
+type Tab = 'email-pass' | 'email-otp';
 
 export function LoginForm() {
   const { login, loginWithGoogle, sendOTP } = useAuth();
@@ -14,7 +14,6 @@ export function LoginForm() {
   const [tab, setTab] = useState<Tab>('email-pass');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -27,8 +26,8 @@ export function LoginForm() {
     try {
       await login(email, password);
       router.push('/dashboard');
-    } catch (err: any) { 
-      setError(err?.message || 'Invalid credentials. Try again.'); 
+    } catch (err: any) {
+      setError(err?.message || 'Invalid credentials. Try again.');
     }
     finally { setLoading(false); }
   };
@@ -37,8 +36,9 @@ export function LoginForm() {
     setGoogleLoading(true); setError('');
     try {
       await loginWithGoogle();
-      router.replace('/dashboard');
-    } catch { setError('Google sign-in failed.'); }
+    } catch (err: any) {
+      setError(err?.message || 'Google sign-in failed.');
+    }
     finally { setGoogleLoading(false); }
   };
 
@@ -48,19 +48,10 @@ export function LoginForm() {
     setLoading(true); setError('');
     try {
       await sendOTP(email, 'email');
-      router.push(`/otp-verify?email=${email}`);
-    } catch { setError('Failed to send OTP.'); }
-    finally { setLoading(false); }
-  };
-
-  const handlePhoneOTPSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phone || phone.length < 10) { setError('Enter a valid phone number'); return; }
-    setLoading(true); setError('');
-    try {
-      await sendOTP(phone, 'phone');
-      router.push(`/otp-verify?phone=${phone}`);
-    } catch { setError('Failed to send OTP.'); }
+      router.push(`/otp-verify?email=${encodeURIComponent(email)}`);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to send OTP. Try again.');
+    }
     finally { setLoading(false); }
   };
 
@@ -99,14 +90,19 @@ export function LoginForm() {
         <div className={styles.divider}><span>or sign in with</span></div>
 
         <div className={styles.tabs}>
-          <button type="button" className={`${styles.tab} ${tab === 'email-pass' ? styles.tabActive : ''}`} onClick={() => setTab('email-pass')}>
+          <button
+            type="button"
+            className={`${styles.tab} ${tab === 'email-pass' ? styles.tabActive : ''}`}
+            onClick={() => { setTab('email-pass'); setError(''); }}
+          >
             <Lock size={15} /> Password
           </button>
-          <button type="button" className={`${styles.tab} ${tab === 'email-otp' ? styles.tabActive : ''}`} onClick={() => setTab('email-otp')}>
-            <Mail size={15} /> Gmail OTP
-          </button>
-          <button type="button" className={`${styles.tab} ${tab === 'phone-otp' ? styles.tabActive : ''}`} onClick={() => setTab('phone-otp')}>
-            <Phone size={15} /> Phone OTP
+          <button
+            type="button"
+            className={`${styles.tab} ${tab === 'email-otp' ? styles.tabActive : ''}`}
+            onClick={() => { setTab('email-otp'); setError(''); }}
+          >
+            <Mail size={15} /> Email OTP
           </button>
         </div>
 
@@ -145,26 +141,19 @@ export function LoginForm() {
               <label className="form-label">Email Address</label>
               <div className="form-input-icon">
                 <Mail size={16} className="icon" />
-                <input className="form-input" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
+                <input
+                  className="form-input"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                />
               </div>
             </div>
-            <p className={styles.otpNote}>A 6-digit OTP will be sent to your Gmail address.</p>
-            <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading}>
-              {loading ? <Loader size={16} className={styles.spin} /> : <><span>Send OTP</span><ArrowRight size={16} /></>}
-            </button>
-          </form>
-        )}
-
-        {tab === 'phone-otp' && (
-          <form onSubmit={handlePhoneOTPSend} className={styles.form}>
-            <div className="form-group">
-              <label className="form-label">Phone Number</label>
-              <div className="form-input-icon">
-                <Phone size={16} className="icon" />
-                <input className="form-input" type="tel" placeholder="+91 98765 43210" value={phone} onChange={e => setPhone(e.target.value)} required />
-              </div>
-            </div>
-            <p className={styles.otpNote}>A 6-digit OTP will be sent to your phone number via SMS.</p>
+            <p className={styles.otpNote}>
+              A 6-digit OTP code will be sent to your email address.
+            </p>
             <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading}>
               {loading ? <Loader size={16} className={styles.spin} /> : <><span>Send OTP</span><ArrowRight size={16} /></>}
             </button>

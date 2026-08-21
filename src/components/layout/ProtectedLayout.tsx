@@ -16,7 +16,12 @@ export default function ProtectedLayout({ children }: Props) {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace('/login');
+      // If URL has OAuth hash tokens, don't redirect yet — Supabase is processing the session
+      const hash = window.location.hash;
+      const hasOAuthToken = hash.includes('access_token') || hash.includes('code=');
+      if (!hasOAuthToken) {
+        router.replace('/login');
+      }
     }
   }, [user, isLoading, router]);
 
