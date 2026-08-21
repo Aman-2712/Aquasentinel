@@ -63,6 +63,49 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
 
     const map = mapRef.current;
 
+    // Load leaflet.heat plugin dynamically
+    require('leaflet.heat');
+
+    // Generate smooth continuous weather radar heatmap points
+    const heatPoints: [number, number, number][] = [];
+    zones.forEach(zone => {
+      const [centerLat, centerLng] = zone.center;
+      const intensity = zone.risk === 'high' ? 1.0 : zone.risk === 'medium' ? 0.6 : 0.25;
+
+      // Add central high-intensity point
+      heatPoints.push([centerLat, centerLng, intensity]);
+
+      // Generate surrounding radar heat points to create smooth blended weather gradient
+      for (let i = 0; i < 25; i++) {
+        const offsetLat = (Math.random() - 0.5) * 0.025;
+        const offsetLng = (Math.random() - 0.5) * 0.025;
+        const subIntensity = intensity * (0.4 + Math.random() * 0.5);
+        heatPoints.push([centerLat + offsetLat, centerLng + offsetLng, subIntensity]);
+      }
+    });
+
+    // Remove previous heat layer if exists
+    if ((map as any)._heatLayer) {
+      map.removeLayer((map as any)._heatLayer);
+    }
+
+    // Add realistic weather station gradient heatmap layer (Red -> Orange -> Yellow -> Cyan)
+    const heatLayer = (L as any).heatLayer(heatPoints, {
+      radius: 40,
+      blur: 25,
+      maxZoom: 15,
+      max: 1.0,
+      gradient: {
+        0.2: '#00d4ff', // Safe cyan
+        0.4: '#ffe600', // Yellow watch
+        0.65: '#ff8800', // Orange elevated
+        0.85: '#ff2a00', // Red critical
+        1.0: '#990000'  // Dark red extreme
+      }
+    }).addTo(map);
+
+    (map as any)._heatLayer = heatLayer;
+
     // Clear old polygons
     polygonsRef.current.forEach(p => p.remove());
     polygonsRef.current = [];
@@ -146,11 +189,10 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
       const isSelected = selected?.id === zone.id;
 
       const poly = L.polygon(zone.coordinates, {
-        color: colors.stroke,
-        fillColor: colors.fill,
-        fillOpacity: isSelected ? 0.6 : colors.opacity,
-        weight: isSelected ? 3 : 2,
-        dashArray: zone.risk === 'high' ? '0' : '4',
+        color: 'transparent',
+        fillColor: 'transparent',
+        fillOpacity: 0,
+        weight: 0,
       });
 
       // Interactive Popup
