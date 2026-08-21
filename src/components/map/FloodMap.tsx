@@ -10,9 +10,9 @@ interface Props {
 }
 
 const RISK_COLORS = {
-  high: { fill: '#ff3b30', stroke: '#ff6b35', opacity: 0.35 },
-  medium: { fill: '#ff9500', stroke: '#ffcc00', opacity: 0.30 },
-  low: { fill: '#30d158', stroke: '#00b894', opacity: 0.25 },
+  high: { fill: '#ff2a00', stroke: '#ff5500', opacity: 0.65 },
+  medium: { fill: '#ff8800', stroke: '#ffaa00', opacity: 0.50 },
+  low: { fill: '#00e676', stroke: '#00b0ff', opacity: 0.20 },
 };
 
 const RESOURCES = [
@@ -190,23 +190,19 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
         riskPct = Math.round(20 + (zone.waterDepth % 20));
       }
 
-      // Permanent high-tech label
-      const alertIcon = zone.risk === 'high' ? '🚨' : zone.risk === 'medium' ? '⚠️' : '✅';
-      const tooltipContent = `
-        <div class="zone-label-content">
-          <div class="zone-label-title">
-            <span class="zone-label-icon">${alertIcon}</span>
-            <span>${zone.name}</span>
-          </div>
-          <div class="zone-label-risk">Risk: ${riskPct}%</div>
-        </div>
-      `;
-
-      poly.bindTooltip(tooltipContent, {
-        permanent: true,
-        direction: 'center',
-        className: `custom-zone-tooltip tooltip-${zone.risk}`,
-      });
+      // Permanent status badge replaced with clean smooth polygon hover popups
+      poly.bindTooltip(
+        `<div style="font-size:11px;font-weight:700;color:#fff;display:flex;align-items:center;gap:4px">
+          <span>${zone.risk === 'high' ? '🚨' : zone.risk === 'medium' ? '⚠️' : '✅'}</span>
+          <span>${zone.name}: ${riskPct}% Risk</span>
+        </div>`,
+        {
+          permanent: false,
+          sticky: true,
+          direction: 'top',
+          className: `custom-zone-tooltip tooltip-${zone.risk}`,
+        }
+      );
 
       // Pulse marker for high risk
       if (zone.risk === 'high') {
