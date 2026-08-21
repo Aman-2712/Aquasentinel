@@ -189,12 +189,10 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
       const isSelected = selected?.id === zone.id;
 
       const poly = L.polygon(zone.coordinates, {
-        color: colors.stroke,
-        fillColor: colors.fill,
-        fillOpacity: isSelected ? 0.6 : colors.opacity,
-        weight: isSelected ? 3 : 2,
-        dashArray: zone.risk === 'high' ? '0' : '4',
-        className: `flood-zone-poly flood-zone-${zone.risk} ${isSelected ? 'is-selected' : ''}`,
+        color: 'transparent',
+        fillColor: 'transparent',
+        fillOpacity: 0,
+        weight: 0,
       });
 
       // Popup
