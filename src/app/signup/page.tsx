@@ -56,12 +56,14 @@ function SignupForm() {
           <div className={styles.logoIcon}><Droplets size={22} /></div>
           <div>
             <span className={styles.logoText}>AquaSentinel</span>
-            <span className={styles.logoSub}>Create your account</span>
+            <span className={styles.logoSub}>Early Warning System</span>
           </div>
         </div>
 
-        <h1 className={styles.title}>Join AquaSentinel</h1>
-        <p className={styles.subtitle}>Get early flood warnings, safe route guidance and protection for free.</p>
+        <div className={styles.headerText}>
+          <h1 className={styles.title}>Join AquaSentinel</h1>
+          <p className={styles.subtitle}>Get early flood warnings, safe route guidance and protection for free.</p>
+        </div>
 
         <button type="button" className={styles.googleBtn} onClick={handleGoogle} disabled={gLoading}>
           {gLoading ? <Loader size={18} className={styles.spin} /> : (
