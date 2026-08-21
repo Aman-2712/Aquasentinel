@@ -96,7 +96,7 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
       maxZoom: 15,
       max: 1.0,
       gradient: {
-        0.2: '#00d4ff', // Safe cyan
+        0.2: '#30d158', // Safe green
         0.4: '#ffe600', // Yellow watch
         0.65: '#ff8800', // Orange elevated
         0.85: '#ff2a00', // Red critical
