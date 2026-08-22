@@ -5,8 +5,8 @@ import 'leaflet/dist/leaflet.css';
 
 interface Props {
   zones: FloodZone[];
-  onSelect: (zone: FloodZone) => void;
-  selected: FloodZone | null;
+  onSelect?: (zone: FloodZone) => void;
+  selected?: FloodZone | null;
 }
 
 const RISK_COLORS = {
@@ -85,8 +85,8 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
     });
 
     // Remove previous heat layer if exists
-    if ((map as any)._heatLayer) {
-      map.removeLayer((map as any)._heatLayer);
+    if (map && (map as any)._heatLayer) {
+      (map as any).removeLayer((map as any)._heatLayer);
     }
 
     // Add realistic weather station gradient heatmap layer (Red -> Orange -> Yellow -> Cyan)
@@ -218,7 +218,7 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
         </div>
       `, { maxWidth: 280 });
 
-      poly.on('click', () => onSelect(zone));
+      poly.on('click', () => onSelect && onSelect(zone));
       poly.addTo(map);
       polygonsRef.current.push(poly);
 

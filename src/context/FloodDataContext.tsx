@@ -12,6 +12,9 @@ export interface WeatherData {
     visibility: number;
     pressure: number;
     soilMoisture: number; // calculated soil moisture index (0 to 1)
+    surfaceTemp: number; // Heat wave sensor land surface temp
+    ambientTemp: number; // Air temp
+    heatIndex: number; // Calculated heat stress index
   };
   forecast: {
     day: string;
@@ -21,10 +24,21 @@ export interface WeatherData {
   }[];
 }
 
+export interface AuthorityBroadcast {
+  id: string;
+  sender: string;
+  area: string;
+  risk: RiskLevel;
+  message: string;
+  timestamp: string;
+  active: boolean;
+}
+
 interface FloodDataContextType {
   weatherData: WeatherData;
   zones: FloodZone[];
   alerts: AlertData[];
+  broadcastAlerts: AuthorityBroadcast[];
   safeRoutes: RouteOption[];
   fieldShields: typeof FIELD_SHIELDS;
   isLoading: boolean;
@@ -32,6 +46,8 @@ interface FloodDataContextType {
   setWeatherMode: (mode: 'live' | 'monsoon' | 'flash_flood' | 'clear') => void;
   triggerDeviceShield: (id: string, action: 'deploy' | 'idle') => Promise<void>;
   refreshWeather: () => Promise<void>;
+  sendAuthorityBroadcast: (broadcast: { area: string; risk: RiskLevel; message: string }) => void;
+  dismissBroadcast: (id: string) => void;
 }
 
 const FloodDataContext = createContext<FloodDataContextType | null>(null);
@@ -53,7 +69,7 @@ const ZONE_METADATA = {
 // Weather mock datasets for simulation controls
 const SIMULATED_WEATHER = {
   monsoon: {
-    current: { temp: 26, humidity: 95, rainfall: 65, windSpeed: 48, condition: 'Heavy Monsoon Rain', visibility: 1.8, pressure: 994, soilMoisture: 0.85 },
+    current: { temp: 26, humidity: 95, rainfall: 65, windSpeed: 48, condition: 'Heavy Monsoon Rain', visibility: 1.8, pressure: 994, soilMoisture: 0.85, surfaceTemp: 27.5, ambientTemp: 26.0, heatIndex: 31.2 },
     forecast: [
       { day: 'Today', rainfall: 65, risk: 'high' as RiskLevel, temp: 26 },
       { day: 'Tomorrow', rainfall: 82, risk: 'high' as RiskLevel, temp: 25 },
@@ -65,7 +81,7 @@ const SIMULATED_WEATHER = {
     ]
   },
   flash_flood: {
-    current: { temp: 25, humidity: 98, rainfall: 115, windSpeed: 56, condition: 'Cloudburst Downpour', visibility: 0.8, pressure: 988, soilMoisture: 0.98 },
+    current: { temp: 25, humidity: 98, rainfall: 115, windSpeed: 56, condition: 'Cloudburst Downpour', visibility: 0.8, pressure: 988, soilMoisture: 0.98, surfaceTemp: 25.0, ambientTemp: 25.0, heatIndex: 29.5 },
     forecast: [
       { day: 'Today', rainfall: 115, risk: 'high' as RiskLevel, temp: 25 },
       { day: 'Tomorrow', rainfall: 120, risk: 'high' as RiskLevel, temp: 24 },
@@ -77,13 +93,13 @@ const SIMULATED_WEATHER = {
     ]
   },
   clear: {
-    current: { temp: 32, humidity: 55, rainfall: 0, windSpeed: 12, condition: 'Sunny & Clear', visibility: 10.0, pressure: 1012, soilMoisture: 0.15 },
+    current: { temp: 36, humidity: 65, rainfall: 0, windSpeed: 12, condition: 'Sunny & Heatwave Advisory', visibility: 10.0, pressure: 1012, soilMoisture: 0.15, surfaceTemp: 44.8, ambientTemp: 36.2, heatIndex: 42.5 },
     forecast: [
-      { day: 'Today', rainfall: 0, risk: 'low' as RiskLevel, temp: 32 },
-      { day: 'Tomorrow', rainfall: 0, risk: 'low' as RiskLevel, temp: 33 },
-      { day: 'Day 3', rainfall: 0, risk: 'low' as RiskLevel, temp: 32 },
-      { day: 'Day 4', rainfall: 0, risk: 'low' as RiskLevel, temp: 31 },
-      { day: 'Day 5', rainfall: 1, risk: 'low' as RiskLevel, temp: 31 },
+      { day: 'Today', rainfall: 0, risk: 'low' as RiskLevel, temp: 36 },
+      { day: 'Tomorrow', rainfall: 0, risk: 'low' as RiskLevel, temp: 37 },
+      { day: 'Day 3', rainfall: 0, risk: 'low' as RiskLevel, temp: 35 },
+      { day: 'Day 4', rainfall: 0, risk: 'low' as RiskLevel, temp: 34 },
+      { day: 'Day 5', rainfall: 1, risk: 'low' as RiskLevel, temp: 33 },
       { day: 'Day 6', rainfall: 3, risk: 'low' as RiskLevel, temp: 32 },
       { day: 'Day 7', rainfall: 0, risk: 'low' as RiskLevel, temp: 32 },
     ]
@@ -91,7 +107,7 @@ const SIMULATED_WEATHER = {
 };
 
 const DEFAULT_WEATHER: WeatherData = {
-  current: { temp: 28, humidity: 82, rainfall: 0, windSpeed: 15, condition: 'Partly Cloudy', visibility: 8.0, pressure: 1008, soilMoisture: 0.35 },
+  current: { temp: 28, humidity: 82, rainfall: 0, windSpeed: 15, condition: 'Partly Cloudy', visibility: 8.0, pressure: 1008, soilMoisture: 0.35, surfaceTemp: 31.2, ambientTemp: 28.5, heatIndex: 32.4 },
   forecast: [
     { day: 'Today', rainfall: 0, risk: 'low', temp: 28 },
     { day: 'Tomorrow', rainfall: 5, risk: 'low', temp: 28 },
@@ -108,6 +124,17 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
   const [weatherData, setWeatherData] = useState<WeatherData>(DEFAULT_WEATHER);
   const [zones, setZones] = useState<FloodZone[]>([]);
   const [alerts, setAlerts] = useState<AlertData[]>([]);
+  const [broadcastAlerts, setBroadcastAlerts] = useState<AuthorityBroadcast[]>([
+    {
+      id: 'b-init-1',
+      sender: 'Visakhapatnam Disaster Management Authority (VDMA)',
+      area: 'Poorna Market & Gajuwaka Basins',
+      risk: 'medium',
+      message: 'MUNICIPAL ADVISORY: Drainage pumps engaged at Gajuwaka junction. Keep emergency battery packs charged.',
+      timestamp: '10 mins ago',
+      active: true,
+    }
+  ]);
   const [safeRoutes, setSafeRoutes] = useState<RouteOption[]>([]);
   const [fieldShields, setFieldShields] = useState<typeof FIELD_SHIELDS>(FIELD_SHIELDS);
   const [isLoading, setIsLoading] = useState(true);
@@ -116,7 +143,6 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
   const calculateFloodPrediction = (currentRain: number, soilMoisture: number) => {
     // 1. Calculate zone water depth & risk
     const calculatedZones: FloodZone[] = Object.entries(ZONE_METADATA).map(([id, meta]) => {
-      // Depth calculation: Rain intensity * 1.8 + Soil saturation * 30cm - Drainage capacity, scaled by area elevation
       const waterDepth = Math.max(
         0,
         Math.round((currentRain * 1.8 + soilMoisture * 30 - meta.drainageCapacity) * meta.elevationMultiplier)
@@ -285,10 +311,8 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
       const windVal = Math.round(data.current?.wind_speed_10m || 15);
       const pressureVal = Math.round(data.current?.pressure_msl || 1008);
       
-      // Calculate current soil moisture from hourly API or use fallback
       let soilMoistureVal = 0.35;
       if (data.hourly?.soil_moisture_0_to_1cm) {
-        // Grab current hour index
         const currentHourStr = new Date().toISOString().substring(0, 13) + ':00';
         const hrIndex = data.hourly.time.indexOf(currentHourStr);
         if (hrIndex !== -1) {
@@ -296,7 +320,6 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Map weather code to text condition
       const code = data.current?.weather_code || 0;
       let condition = 'Clear';
       if (code > 0 && code <= 3) condition = 'Partly Cloudy';
@@ -306,7 +329,6 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
       else if (code >= 80 && code <= 82) condition = 'Rain Showers';
       else if (code >= 95) condition = 'Thunderstorm';
 
-      // Parse 7-day forecast
       const forecastDays = ['Today', 'Tomorrow', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
       const parsedForecast = forecastDays.map((day, idx) => {
         const dailyRain = data.daily?.precipitation_sum?.[idx] || 0;
@@ -333,6 +355,9 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
           visibility: rainVal > 30 ? 1.5 : rainVal > 5 ? 4.0 : 8.0,
           pressure: pressureVal,
           soilMoisture: soilMoistureVal,
+          surfaceTemp: Math.round((tempVal + 4.2) * 10) / 10,
+          ambientTemp: tempVal,
+          heatIndex: Math.round((tempVal + (humidityVal > 70 ? 3.5 : 1.0)) * 10) / 10,
         },
         forecast: parsedForecast
       };
@@ -341,7 +366,6 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
       calculateFloodPrediction(rainVal, soilMoistureVal);
     } catch (err) {
       console.error('Failed to fetch open-meteo weather data, loading default metrics', err);
-      // Fallback if API fails
       setWeatherData(DEFAULT_WEATHER);
       calculateFloodPrediction(DEFAULT_WEATHER.current.rainfall, DEFAULT_WEATHER.current.soilMoisture);
     } finally {
@@ -354,9 +378,25 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weatherMode]);
 
-  // ESP Trigger function
+  const sendAuthorityBroadcast = (broadcast: { area: string; risk: RiskLevel; message: string }) => {
+    const newBroadcast: AuthorityBroadcast = {
+      id: `broadcast-${Date.now()}`,
+      sender: 'Visakhapatnam Disaster Management Authority (VDMA)',
+      area: broadcast.area,
+      risk: broadcast.risk,
+      message: broadcast.message,
+      timestamp: 'Just now',
+      active: true,
+    };
+    setBroadcastAlerts(prev => [newBroadcast, ...prev]);
+  };
+
+  const dismissBroadcast = (id: string) => {
+    setBroadcastAlerts(prev => prev.filter(b => b.id !== id));
+  };
+
   const triggerDeviceShield = async (id: string, action: 'deploy' | 'idle') => {
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 1000));
     setFieldShields((prev: any) =>
       prev.map((fs: any) =>
         fs.id === id
@@ -377,6 +417,7 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         weatherData,
         zones,
         alerts,
+        broadcastAlerts,
         safeRoutes,
         fieldShields,
         isLoading,
@@ -384,6 +425,8 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         setWeatherMode,
         triggerDeviceShield,
         refreshWeather: fetchWeatherData,
+        sendAuthorityBroadcast,
+        dismissBroadcast,
       }}
     >
       {children}
