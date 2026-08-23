@@ -329,10 +329,13 @@ export default function DashboardPage() {
 
               <div className="grid-2" style={{ gap: '1.5rem', alignItems: 'center' }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                    <span style={{ fontSize: '1.25rem' }}>{weatherData.current.conditionEmoji}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.35rem' }}>
+                    <span style={{ fontSize: '1.35rem' }}>{weatherData.current.conditionEmoji}</span>
                     <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#00d4ff' }}>
                       {weatherData.current.conditionLabel}
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: '#ffea00', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: 'rgba(255, 234, 0, 0.15)', border: '1px solid rgba(255, 234, 0, 0.3)' }}>
+                      {weatherData.current.temp}°C (Feels like {weatherData.current.feelsLike}°C)
                     </span>
                   </div>
 
@@ -407,16 +410,16 @@ export default function DashboardPage() {
                 </span>
               </div>
 
-              <div className="card" style={{ border: weatherData.current.surfaceTemp > 40 ? '1px solid rgba(255, 170, 0, 0.4)' : undefined }}>
+              <div className="card" style={{ border: weatherData.current.surfaceTemp > 38 ? '1px solid rgba(255, 170, 0, 0.4)' : undefined }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                   <span style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>Heat Wave Sensors</span>
                   <Flame size={16} color="#ffaa00" />
                 </div>
                 <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#fff' }}>
-                  {weatherData.current.surfaceTemp}°C
+                  {weatherData.current.temp}°C
                 </div>
-                <span style={{ fontSize: '0.75rem', color: weatherData.current.surfaceTemp > 40 ? '#ffaa00' : '#00ff88', marginTop: '0.25rem', display: 'block' }}>
-                  Land Surface Temp • Heat Index: {weatherData.current.heatIndex}°C
+                <span style={{ fontSize: '0.75rem', color: weatherData.current.surfaceTemp > 38 ? '#ffaa00' : '#00ff88', marginTop: '0.25rem', display: 'block' }}>
+                  Air Temp • Feels Like: {weatherData.current.feelsLike}°C
                 </span>
               </div>
 
@@ -465,11 +468,16 @@ export default function DashboardPage() {
                   <div style={{ fontSize: '0.825rem', fontWeight: 600, color: '#00d4ff', margin: '0.35rem 0' }}>
                     {f.conditionLabel}
                   </div>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', margin: '0.2rem 0' }}>
+                    {f.tempMax}° / {f.tempMin}°C
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)', marginBottom: '0.4rem' }}>
+                    Feels like {f.feelsLikeMax}°C
+                  </div>
                   <div className={styles.forecastRainVal}>{f.rainfall}<span>mm</span></div>
                   <span className={`badge ${f.risk === 'high' ? 'badge-danger' : f.risk === 'medium' ? 'badge-warning' : 'badge-safe'}`} style={{ margin: '0.35rem auto' }}>
                     {f.risk.toUpperCase()}
                   </span>
-                  <span className={styles.forecastTemp}>{f.temp}°C</span>
                   <p style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)', margin: '0.5rem 0 0 0', lineHeight: 1.3 }}>
                     {f.predictionSummary}
                   </p>
