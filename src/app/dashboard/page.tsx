@@ -22,6 +22,7 @@ import {
   Megaphone,
   Sun,
   Flame,
+  CloudSun,
 } from 'lucide-react';
 import { FarmerOnboardingModal } from '@/components/onboarding/FarmerOnboardingModal';
 import WindyRadar from '@/components/radar/WindyRadar';
@@ -55,7 +56,7 @@ export default function DashboardPage() {
       <ProtectedLayout>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80vh', gap: '1rem', color: 'var(--clr-text-muted)' }}>
           <div style={{ width: 40, height: 40, border: '3px solid rgba(0,214,255,0.1)', borderTopColor: 'var(--clr-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-          <p>Initializing XGBoost hydrological engine & satellite radar...</p>
+          <p>Initializing XGBoost hydrological engine & meteorological forecast models...</p>
         </div>
       </ProtectedLayout>
     );
@@ -63,7 +64,6 @@ export default function DashboardPage() {
 
   const role = user?.role || 'citizen';
   const currentRain = weatherData.current.rainfall;
-  const highestRainForecast = Math.max(...weatherData.forecast.map(f => f.rainfall));
   const highRiskZones = zones.filter(z => z.risk === 'high');
   const mediumRiskZones = zones.filter(z => z.risk === 'medium');
 
@@ -192,7 +192,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Navigation Tabs Bar (Matching Teammate's Layout Image 1) */}
+        {/* Navigation Tabs Bar */}
         <div style={{
           display: 'flex',
           gap: '0.5rem',
@@ -268,7 +268,7 @@ export default function DashboardPage() {
         {/* Tab 1: Flood Warnings & Overview */}
         {activeTab === 'overview' && (
           <>
-            {/* Top Intelligence Engine Card (Matching Teammate's Design) */}
+            {/* Top Intelligence Engine Card */}
             <div className="card" style={{
               background: 'linear-gradient(135deg, rgba(9, 24, 45, 0.9), rgba(5, 14, 28, 0.95))',
               border: `1px solid ${overallRisk === 'high' ? 'rgba(255, 68, 68, 0.4)' : overallRisk === 'medium' ? 'rgba(255, 170, 0, 0.4)' : 'rgba(0, 214, 255, 0.25)'}`,
@@ -328,9 +328,13 @@ export default function DashboardPage() {
 
               <div className="grid-2" style={{ gap: '1.5rem', alignItems: 'center' }}>
                 <div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Current Classified Risk
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                    <span style={{ fontSize: '1.25rem' }}>{weatherData.current.conditionEmoji}</span>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#00d4ff' }}>
+                      {weatherData.current.conditionLabel}
+                    </span>
+                  </div>
+
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', margin: '0.25rem 0' }}>
                     <h2 style={{
                       fontSize: '2.5rem',
@@ -345,12 +349,9 @@ export default function DashboardPage() {
                       CODE {overallRisk === 'high' ? '2' : overallRisk === 'medium' ? '1' : '0'}
                     </span>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--clr-text-muted)' }}>
-                    {overallRisk === 'high'
-                      ? 'Heavy downpour in progress. Municipal drainage pumps working at 100% capacity.'
-                      : overallRisk === 'medium'
-                      ? 'Waterlogging detected in low-lying basins (Poorna Market & Gajuwaka).'
-                      : 'Conditions safe. Standard municipal drainage operational.'}
+
+                  <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.875rem', color: 'var(--clr-text-muted)', lineHeight: 1.4 }}>
+                    {weatherData.current.predictionSummary}
                   </p>
                 </div>
 
@@ -377,7 +378,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Hydrological Metrics Grid */}
+            {/* Hydrological & Atmospheric Metrics Grid */}
             <div className="grid-4">
               <div className="card">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -388,7 +389,7 @@ export default function DashboardPage() {
                   {weatherData.current.rainfall} <span style={{ fontSize: '0.9rem', color: 'var(--clr-text-muted)' }}>mm/h</span>
                 </div>
                 <span style={{ fontSize: '0.75rem', color: weatherData.current.rainfall > 20 ? '#ff4444' : '#00ff88', marginTop: '0.25rem', display: 'block' }}>
-                  {weatherData.current.rainfall > 20 ? 'High Runoff Potential' : 'Normal Intensity'}
+                  {weatherData.current.rainfall > 20 ? 'Torrential Cloudburst' : 'Normal Intensity'}
                 </span>
               </div>
 
@@ -405,7 +406,6 @@ export default function DashboardPage() {
                 </span>
               </div>
 
-              {/* Heatwave Sensor Metric for Authority/Citizens */}
               <div className="card" style={{ border: weatherData.current.surfaceTemp > 40 ? '1px solid rgba(255, 170, 0, 0.4)' : undefined }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                   <span style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>Heat Wave Sensors</span>
@@ -458,14 +458,20 @@ export default function DashboardPage() {
           <div>
             <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
               {weatherData.forecast.map(f => (
-                <div key={f.day} className={`card ${styles.forecastCard}`}>
+                <div key={f.day} className={`card ${styles.forecastCard}`} style={{ padding: '1rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.8rem', marginBottom: '0.25rem' }}>{f.conditionEmoji}</div>
                   <span className={styles.forecastDay}>{f.day}</span>
+                  <div style={{ fontSize: '0.825rem', fontWeight: 600, color: '#00d4ff', margin: '0.35rem 0' }}>
+                    {f.conditionLabel}
+                  </div>
                   <div className={styles.forecastRainVal}>{f.rainfall}<span>mm</span></div>
-                  <div className={`risk-dot ${f.risk === 'low' ? 'low' : f.risk}`} style={{ margin: '0.5rem auto' }} />
-                  <span className={`badge ${f.risk === 'high' ? 'badge-danger' : f.risk === 'medium' ? 'badge-warning' : 'badge-safe'}`}>
+                  <span className={`badge ${f.risk === 'high' ? 'badge-danger' : f.risk === 'medium' ? 'badge-warning' : 'badge-safe'}`} style={{ margin: '0.35rem auto' }}>
                     {f.risk.toUpperCase()}
                   </span>
                   <span className={styles.forecastTemp}>{f.temp}°C</span>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)', margin: '0.5rem 0 0 0', lineHeight: 1.3 }}>
+                    {f.predictionSummary}
+                  </p>
                 </div>
               ))}
             </div>

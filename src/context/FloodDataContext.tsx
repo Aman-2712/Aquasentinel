@@ -2,6 +2,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { FIELD_SHIELDS, type RiskLevel, type FloodZone, type AlertData, type RouteOption } from '@/data/visakhapatnam_zones';
 
+export interface WeatherForecastItem {
+  day: string;
+  rainfall: number; // daily total rain in mm
+  risk: RiskLevel;
+  temp: number;
+  conditionLabel: string; // e.g. "Sunny & Clear", "Mostly Cloudy", "Heavy Rain"
+  conditionEmoji: string; // e.g. "☀️", "⛅", "🌧️", "⛈️"
+  predictionSummary: string; // e.g. "High heat index in afternoon", "Cloudburst risk by evening"
+}
+
 export interface WeatherData {
   current: {
     temp: number;
@@ -15,13 +25,11 @@ export interface WeatherData {
     surfaceTemp: number; // Heat wave sensor land surface temp
     ambientTemp: number; // Air temp
     heatIndex: number; // Calculated heat stress index
+    conditionLabel: string;
+    conditionEmoji: string;
+    predictionSummary: string;
   };
-  forecast: {
-    day: string;
-    rainfall: number; // daily total rain in mm
-    risk: RiskLevel;
-    temp: number;
-  }[];
+  forecast: WeatherForecastItem[];
 }
 
 export interface AuthorityBroadcast {
@@ -66,56 +74,166 @@ const ZONE_METADATA = {
   'steel-plant': { elevationMultiplier: 1.4, drainageCapacity: 10.0, popDensity: 15600, coordinates: [[17.681, 83.23], [17.681, 83.239], [17.67, 83.239], [17.67, 83.23]], center: [17.6756, 83.2342], roads: ['Steel Plant Gate Road', 'RINL Access Road'], name: 'Steel Plant Area', area: 'Industrial' },
 };
 
+const getWeatherConditionDetails = (code: number, rainfall: number, temp: number) => {
+  if (rainfall > 60 || code >= 95) {
+    return {
+      conditionLabel: 'Severe Thunderstorm & Cloudburst',
+      conditionEmoji: '⛈️',
+      predictionSummary: 'Heavy cloudburst rain with high inundation risk & lightning strikes.',
+    };
+  }
+  if (rainfall > 20 || (code >= 61 && code <= 82)) {
+    return {
+      conditionLabel: 'Heavy Monsoon Downpour',
+      conditionEmoji: '🌧️',
+      predictionSummary: 'Continuous precipitation across coastal basins. Waterlogging in low areas.',
+    };
+  }
+  if (rainfall > 3 || (code >= 51 && code <= 57)) {
+    return {
+      conditionLabel: 'Light Drizzle & Passing Showers',
+      conditionEmoji: '🌦️',
+      predictionSummary: 'Intermittent light rain showers with wet road surface conditions.',
+    };
+  }
+  if (code === 45 || code === 48) {
+    return {
+      conditionLabel: 'Dense Fog & Low Visibility',
+      conditionEmoji: '🌫️',
+      predictionSummary: 'Morning mist and reduced visibility along Beach Road corridors.',
+    };
+  }
+  if (code >= 1 && code <= 3) {
+    return {
+      conditionLabel: 'Mostly Cloudy & Overcast',
+      conditionEmoji: '⛅',
+      predictionSummary: 'Thick cloud cover over coastal basins with mild sea breeze.',
+    };
+  }
+  if (temp >= 35) {
+    return {
+      conditionLabel: 'Sunny & Heatwave Advisory',
+      conditionEmoji: '☀️',
+      predictionSummary: 'High surface temperature peak with intense solar radiation.',
+    };
+  }
+  return {
+    conditionLabel: 'Clear & Sunny Weather',
+    conditionEmoji: '☀️',
+    predictionSummary: 'Bright sunny skies, dry soil, and normal municipal drainage flow.',
+  };
+};
+
 // Weather mock datasets for simulation controls
 const SIMULATED_WEATHER = {
   monsoon: {
-    current: { temp: 26, humidity: 95, rainfall: 65, windSpeed: 48, condition: 'Heavy Monsoon Rain', visibility: 1.8, pressure: 994, soilMoisture: 0.85, surfaceTemp: 27.5, ambientTemp: 26.0, heatIndex: 31.2 },
+    current: {
+      temp: 26,
+      humidity: 95,
+      rainfall: 65,
+      windSpeed: 48,
+      condition: 'Heavy Monsoon Rain',
+      visibility: 1.8,
+      pressure: 994,
+      soilMoisture: 0.85,
+      surfaceTemp: 27.5,
+      ambientTemp: 26.0,
+      heatIndex: 31.2,
+      conditionLabel: 'Heavy Monsoon Downpour',
+      conditionEmoji: '🌧️',
+      predictionSummary: 'Torrential rains expected to saturate low drainage basins across Poorna Market and Gajuwaka.',
+    },
     forecast: [
-      { day: 'Today', rainfall: 65, risk: 'high' as RiskLevel, temp: 26 },
-      { day: 'Tomorrow', rainfall: 82, risk: 'high' as RiskLevel, temp: 25 },
-      { day: 'Day 3', rainfall: 45, risk: 'medium' as RiskLevel, temp: 27 },
-      { day: 'Day 4', rainfall: 20, risk: 'medium' as RiskLevel, temp: 29 },
-      { day: 'Day 5', rainfall: 10, risk: 'low' as RiskLevel, temp: 30 },
-      { day: 'Day 6', rainfall: 5, risk: 'low' as RiskLevel, temp: 31 },
-      { day: 'Day 7', rainfall: 12, risk: 'low' as RiskLevel, temp: 29 },
+      { day: 'Today', rainfall: 65, risk: 'high' as RiskLevel, temp: 26, conditionLabel: 'Heavy Monsoon Downpour', conditionEmoji: '🌧️', predictionSummary: 'Severe waterlogging risk in low-lying basins' },
+      { day: 'Tomorrow', rainfall: 82, risk: 'high' as RiskLevel, temp: 25, conditionLabel: 'Severe Cloudburst Risk', conditionEmoji: '⛈️', predictionSummary: 'Peak rain intensity with gale force coastal winds' },
+      { day: 'Day 3', rainfall: 45, risk: 'medium' as RiskLevel, temp: 27, conditionLabel: 'Continuous Heavy Rain', conditionEmoji: '🌧️', predictionSummary: 'Sustained precipitation and runoff in river basins' },
+      { day: 'Day 4', rainfall: 20, risk: 'medium' as RiskLevel, temp: 29, conditionLabel: 'Moderate Rain Showers', conditionEmoji: '🌦️', predictionSummary: 'Gradual easing of monsoon trough over coastal Vizag' },
+      { day: 'Day 5', rainfall: 10, risk: 'low' as RiskLevel, temp: 30, conditionLabel: 'Light Drizzle & Clouds', conditionEmoji: '⛅', predictionSummary: 'Scattered light showers with improving visibility' },
+      { day: 'Day 6', rainfall: 5, risk: 'low' as RiskLevel, temp: 31, conditionLabel: 'Partly Cloudy', conditionEmoji: '🌤️', predictionSummary: 'Mild weather with partial sunshine returning' },
+      { day: 'Day 7', rainfall: 12, risk: 'low' as RiskLevel, temp: 29, conditionLabel: 'Passing Coastal Showers', conditionEmoji: '🌦️', predictionSummary: 'Brief coastal drizzle, normal road conditions' },
     ]
   },
   flash_flood: {
-    current: { temp: 25, humidity: 98, rainfall: 115, windSpeed: 56, condition: 'Cloudburst Downpour', visibility: 0.8, pressure: 988, soilMoisture: 0.98, surfaceTemp: 25.0, ambientTemp: 25.0, heatIndex: 29.5 },
+    current: {
+      temp: 25,
+      humidity: 98,
+      rainfall: 115,
+      windSpeed: 56,
+      condition: 'Cloudburst Downpour',
+      visibility: 0.8,
+      pressure: 988,
+      soilMoisture: 0.98,
+      surfaceTemp: 25.0,
+      ambientTemp: 25.0,
+      heatIndex: 29.5,
+      conditionLabel: 'Severe Cloudburst & Thunderstorm',
+      conditionEmoji: '⛈️',
+      predictionSummary: 'CRITICAL: Extreme cloudburst rain causing rapid urban submersion and flash floods.',
+    },
     forecast: [
-      { day: 'Today', rainfall: 115, risk: 'high' as RiskLevel, temp: 25 },
-      { day: 'Tomorrow', rainfall: 120, risk: 'high' as RiskLevel, temp: 24 },
-      { day: 'Day 3', rainfall: 75, risk: 'high' as RiskLevel, temp: 26 },
-      { day: 'Day 4', rainfall: 35, risk: 'medium' as RiskLevel, temp: 28 },
-      { day: 'Day 5', rainfall: 15, risk: 'low' as RiskLevel, temp: 30 },
-      { day: 'Day 6', rainfall: 2, risk: 'low' as RiskLevel, temp: 32 },
-      { day: 'Day 7', rainfall: 8, risk: 'low' as RiskLevel, temp: 31 },
+      { day: 'Today', rainfall: 115, risk: 'high' as RiskLevel, temp: 25, conditionLabel: 'Severe Cloudburst & Thunderstorm', conditionEmoji: '⛈️', predictionSummary: 'Flash flood alert active. Low-lying roads submerged.' },
+      { day: 'Tomorrow', rainfall: 120, risk: 'high' as RiskLevel, temp: 24, conditionLabel: 'Torrential Cyclone Downpour', conditionEmoji: '⛈️', predictionSummary: 'Maximum water depth peak across all coastal wards' },
+      { day: 'Day 3', rainfall: 75, risk: 'high' as RiskLevel, temp: 26, conditionLabel: 'Heavy Monsoon Storm', conditionEmoji: '🌧️', predictionSummary: 'High soil saturation preventing drainage discharge' },
+      { day: 'Day 4', rainfall: 35, risk: 'medium' as RiskLevel, temp: 28, conditionLabel: 'Moderate Rain Showers', conditionEmoji: '🌦️', predictionSummary: 'Drainage pumps active, slow water level recession' },
+      { day: 'Day 5', rainfall: 15, risk: 'low' as RiskLevel, temp: 30, conditionLabel: 'Scattered Showers', conditionEmoji: '⛅', predictionSummary: 'Weather stabilizing, main evacuation routes clear' },
+      { day: 'Day 6', rainfall: 2, risk: 'low' as RiskLevel, temp: 32, conditionLabel: 'Mostly Sunny', conditionEmoji: '☀️', predictionSummary: 'Clear skies returning across northern districts' },
+      { day: 'Day 7', rainfall: 8, risk: 'low' as RiskLevel, temp: 31, conditionLabel: 'Light Afternoon Drizzle', conditionEmoji: '🌦️', predictionSummary: 'Routine weather pattern, safe hydrology' },
     ]
   },
   clear: {
-    current: { temp: 36, humidity: 65, rainfall: 0, windSpeed: 12, condition: 'Sunny & Heatwave Advisory', visibility: 10.0, pressure: 1012, soilMoisture: 0.15, surfaceTemp: 44.8, ambientTemp: 36.2, heatIndex: 42.5 },
+    current: {
+      temp: 36,
+      humidity: 65,
+      rainfall: 0,
+      windSpeed: 12,
+      condition: 'Sunny & Heatwave Advisory',
+      visibility: 10.0,
+      pressure: 1012,
+      soilMoisture: 0.15,
+      surfaceTemp: 44.8,
+      ambientTemp: 36.2,
+      heatIndex: 42.5,
+      conditionLabel: 'Sunny & Heatwave Advisory',
+      conditionEmoji: '☀️',
+      predictionSummary: 'Bright sunny skies with elevated land surface heat index and dry agricultural topsoil.',
+    },
     forecast: [
-      { day: 'Today', rainfall: 0, risk: 'low' as RiskLevel, temp: 36 },
-      { day: 'Tomorrow', rainfall: 0, risk: 'low' as RiskLevel, temp: 37 },
-      { day: 'Day 3', rainfall: 0, risk: 'low' as RiskLevel, temp: 35 },
-      { day: 'Day 4', rainfall: 0, risk: 'low' as RiskLevel, temp: 34 },
-      { day: 'Day 5', rainfall: 1, risk: 'low' as RiskLevel, temp: 33 },
-      { day: 'Day 6', rainfall: 3, risk: 'low' as RiskLevel, temp: 32 },
-      { day: 'Day 7', rainfall: 0, risk: 'low' as RiskLevel, temp: 32 },
+      { day: 'Today', rainfall: 0, risk: 'low' as RiskLevel, temp: 36, conditionLabel: 'Sunny & Heatwave Advisory', conditionEmoji: '☀️', predictionSummary: 'Intense sunshine with high surface temperature' },
+      { day: 'Tomorrow', rainfall: 0, risk: 'low' as RiskLevel, temp: 37, conditionLabel: 'Hot & Clear Skies', conditionEmoji: '☀️', predictionSummary: 'Maximum thermal radiation, stay hydrated' },
+      { day: 'Day 3', rainfall: 0, risk: 'low' as RiskLevel, temp: 35, conditionLabel: 'Sunny with Warm Breeze', conditionEmoji: '☀️', predictionSummary: 'Clear coastal weather, zero rain threat' },
+      { day: 'Day 4', rainfall: 0, risk: 'low' as RiskLevel, temp: 34, conditionLabel: 'Mostly Sunny', conditionEmoji: '🌤️', predictionSummary: 'Pleasant clear weather across all urban zones' },
+      { day: 'Day 5', rainfall: 1, risk: 'low' as RiskLevel, temp: 33, conditionLabel: 'Fair & Partly Cloudy', conditionEmoji: '⛅', predictionSummary: 'Light cloud cover bringing mild shade' },
+      { day: 'Day 6', rainfall: 3, risk: 'low' as RiskLevel, temp: 32, conditionLabel: 'Scattered Light Clouds', conditionEmoji: '⛅', predictionSummary: 'Comfortable weather, optimal soil moisture' },
+      { day: 'Day 7', rainfall: 0, risk: 'low' as RiskLevel, temp: 32, conditionLabel: 'Clear & Sunny Weather', conditionEmoji: '☀️', predictionSummary: 'Dry skies and safe urban hydrology' },
     ]
   }
 };
 
 const DEFAULT_WEATHER: WeatherData = {
-  current: { temp: 28, humidity: 82, rainfall: 0, windSpeed: 15, condition: 'Partly Cloudy', visibility: 8.0, pressure: 1008, soilMoisture: 0.35, surfaceTemp: 31.2, ambientTemp: 28.5, heatIndex: 32.4 },
+  current: {
+    temp: 28,
+    humidity: 82,
+    rainfall: 0,
+    windSpeed: 15,
+    condition: 'Partly Cloudy',
+    visibility: 8.0,
+    pressure: 1008,
+    soilMoisture: 0.35,
+    surfaceTemp: 31.2,
+    ambientTemp: 28.5,
+    heatIndex: 32.4,
+    conditionLabel: 'Partly Cloudy & Fair',
+    conditionEmoji: '⛅',
+    predictionSummary: 'Pleasant weather with mild sea breeze and safe drainage levels.',
+  },
   forecast: [
-    { day: 'Today', rainfall: 0, risk: 'low', temp: 28 },
-    { day: 'Tomorrow', rainfall: 5, risk: 'low', temp: 28 },
-    { day: 'Day 3', rainfall: 18, risk: 'medium', temp: 27 },
-    { day: 'Day 4', rainfall: 12, risk: 'low', temp: 29 },
-    { day: 'Day 5', rainfall: 4, risk: 'low', temp: 30 },
-    { day: 'Day 6', rainfall: 0, risk: 'low', temp: 31 },
-    { day: 'Day 7', rainfall: 0, risk: 'low', temp: 31 },
+    { day: 'Today', rainfall: 0, risk: 'low', temp: 28, conditionLabel: 'Partly Cloudy & Fair', conditionEmoji: '⛅', predictionSummary: 'Mild weather with light sea breeze' },
+    { day: 'Tomorrow', rainfall: 5, risk: 'low', temp: 28, conditionLabel: 'Light Passing Drizzle', conditionEmoji: '🌦️', predictionSummary: 'Brief morning drizzle, dry by afternoon' },
+    { day: 'Day 3', rainfall: 18, risk: 'medium', temp: 27, conditionLabel: 'Moderate Rain Showers', conditionEmoji: '🌧️', predictionSummary: 'Scattered rain in low-lying market basins' },
+    { day: 'Day 4', rainfall: 12, risk: 'low', temp: 29, conditionLabel: 'Light Rain & Clouds', conditionEmoji: '🌦️', predictionSummary: 'Intermittent rain showers, clear roads' },
+    { day: 'Day 5', rainfall: 4, risk: 'low', temp: 30, conditionLabel: 'Mostly Sunny', conditionEmoji: '🌤️', predictionSummary: 'Clearing skies with warm sunshine' },
+    { day: 'Day 6', rainfall: 0, risk: 'low', temp: 31, conditionLabel: 'Clear & Sunny Weather', conditionEmoji: '☀️', predictionSummary: 'Bright sunny skies across all sectors' },
+    { day: 'Day 7', rainfall: 0, risk: 'low', temp: 31, conditionLabel: 'Clear & Sunny Weather', conditionEmoji: '☀️', predictionSummary: 'Dry conditions, safe municipal hydrology' },
   ]
 };
 
@@ -321,27 +439,26 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
       }
 
       const code = data.current?.weather_code || 0;
-      let condition = 'Clear';
-      if (code > 0 && code <= 3) condition = 'Partly Cloudy';
-      else if (code === 45 || code === 48) condition = 'Foggy';
-      else if (code >= 51 && code <= 55) condition = 'Drizzle';
-      else if (code >= 61 && code <= 65) condition = 'Moderate Rain';
-      else if (code >= 80 && code <= 82) condition = 'Rain Showers';
-      else if (code >= 95) condition = 'Thunderstorm';
+      const currDetails = getWeatherConditionDetails(code, rainVal, tempVal);
 
       const forecastDays = ['Today', 'Tomorrow', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
-      const parsedForecast = forecastDays.map((day, idx) => {
-        const dailyRain = data.daily?.precipitation_sum?.[idx] || 0;
+      const parsedForecast: WeatherForecastItem[] = forecastDays.map((day, idx) => {
+        const dailyRain = Math.round((data.daily?.precipitation_sum?.[idx] || 0) * 10) / 10;
         const dailyTemp = Math.round(data.daily?.temperature_2m_max?.[idx] || 30);
         let risk: RiskLevel = 'low';
         if (dailyRain > 60) risk = 'high';
         else if (dailyRain > 20) risk = 'medium';
 
+        const dayDetails = getWeatherConditionDetails(idx === 0 ? code : dailyRain > 40 ? 95 : dailyRain > 15 ? 63 : dailyRain > 2 ? 51 : 0, dailyRain, dailyTemp);
+
         return {
           day,
-          rainfall: Math.round(dailyRain * 10) / 10,
+          rainfall: dailyRain,
           risk,
-          temp: dailyTemp
+          temp: dailyTemp,
+          conditionLabel: dayDetails.conditionLabel,
+          conditionEmoji: dayDetails.conditionEmoji,
+          predictionSummary: dayDetails.predictionSummary,
         };
       });
 
@@ -351,13 +468,16 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
           humidity: humidityVal,
           rainfall: rainVal,
           windSpeed: windVal,
-          condition,
+          condition: currDetails.conditionLabel,
           visibility: rainVal > 30 ? 1.5 : rainVal > 5 ? 4.0 : 8.0,
           pressure: pressureVal,
           soilMoisture: soilMoistureVal,
           surfaceTemp: Math.round((tempVal + 4.2) * 10) / 10,
           ambientTemp: tempVal,
           heatIndex: Math.round((tempVal + (humidityVal > 70 ? 3.5 : 1.0)) * 10) / 10,
+          conditionLabel: currDetails.conditionLabel,
+          conditionEmoji: currDetails.conditionEmoji,
+          predictionSummary: currDetails.predictionSummary,
         },
         forecast: parsedForecast
       };
