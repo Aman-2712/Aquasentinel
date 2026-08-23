@@ -1,10 +1,13 @@
 'use client';
 import { useEffect, useRef } from 'react';
-import type { FloodZone } from '@/data/visakhapatnam_zones';
+import type { FloodZone, RouteOption } from '@/data/visakhapatnam_zones';
 import 'leaflet/dist/leaflet.css';
 
 interface Props {
   zones: FloodZone[];
+  routes?: RouteOption[];
+  selectedRouteId?: string | null;
+  onSelectRoute?: (routeId: string) => void;
   onSelect?: (zone: FloodZone) => void;
   selected?: FloodZone | null;
 }
@@ -13,6 +16,12 @@ const RISK_COLORS = {
   high: { fill: '#ff2a00', stroke: '#ff5500', opacity: 0.65 },
   medium: { fill: '#ff8800', stroke: '#ffaa00', opacity: 0.50 },
   low: { fill: '#00e676', stroke: '#00b0ff', opacity: 0.20 },
+};
+
+const ROUTE_COLORS = {
+  high: '#ff4444',
+  medium: '#ffaa00',
+  low: '#00ff88',
 };
 
 const RESOURCES = [
@@ -26,11 +35,60 @@ const RESOURCES = [
   { type: 'rescue', name: 'Rescue Unit 03 (Emergency Ambulance)', coords: [17.732, 83.315] as [number, number], status: 'Deployed' },
 ];
 
-export default function FloodMap({ zones, onSelect, selected }: Props) {
+export default function FloodMap({ zones, routes, selectedRouteId, onSelectRoute, onSelect, selected }: Props) {
   const mapRef = useRef<ReturnType<typeof import('leaflet').map> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const polygonsRef = useRef<ReturnType<typeof import('leaflet').polygon>[]>([]);
+  const polylinesRef = useRef<ReturnType<typeof import('leaflet').polyline>[]>([]);
   const markersRef = useRef<ReturnType<typeof import('leaflet').marker>[]>([]);
+  const userMarkerRef = useRef<ReturnType<typeof import('leaflet').marker> | null>(null);
+
+  const locateUser = () => {
+    if (!mapRef.current || typeof window === 'undefined' || !navigator.geolocation) return;
+    // eslint-disable-next-line
+    const L = require('leaflet');
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const userLat = pos.coords.latitude;
+        const userLng = pos.coords.longitude;
+        const userCoords: [number, number] = [userLat, userLng];
+
+        if (userMarkerRef.current) {
+          userMarkerRef.current.remove();
+        }
+
+        const userIcon = L.divIcon({
+          html: `
+            <div style="position:relative;width:32px;height:32px;">
+              <div style="position:absolute;inset:-6px;border-radius:50%;background:rgba(0,212,255,0.3);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite;"></div>
+              <div style="position:relative;width:32px;height:32px;border-radius:50%;background:#00d4ff;border:3px solid #ffffff;box-shadow:0 0 20px #00d4ff;display:flex;align-items:center;justify-content:center;color:#000;font-weight:bold;font-size:14px;">📍</div>
+            </div>
+          `,
+          className: '',
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+        });
+
+        const m = L.marker(userCoords, { icon: userIcon })
+          .bindPopup(`
+            <div style="padding:8px;background:rgba(10,25,47,0.95);color:#fff;border-radius:8px;text-align:center">
+              <strong style="color:#00d4ff;font-size:13px;display:block">Your Live Location</strong>
+              <span style="font-size:11px;color:#6b8cae">Lat: ${userLat.toFixed(4)}, Lon: ${userLng.toFixed(4)}</span>
+            </div>
+          `)
+          .addTo(mapRef.current);
+
+        if (mapRef.current) {
+          mapRef.current.flyTo(userCoords, 14, { duration: 1 });
+        }
+      },
+      (err) => {
+        console.warn('Geolocation denied:', err.message);
+      },
+      { enableHighAccuracy: true }
+    );
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -48,7 +106,7 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
 
     if (!mapRef.current) {
       mapRef.current = L.map(containerRef.current, {
-        center: [17.7231, 83.3012],
+        center: [17.7350, 83.3100],
         zoom: 12,
         zoomControl: true,
       });
@@ -63,20 +121,32 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
 
     const map = mapRef.current;
 
+    // Clear existing markers & polylines
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+
+    polygonsRef.current.forEach(p => p.remove());
+    polygonsRef.current = [];
+
+    polylinesRef.current.forEach(pl => pl.remove());
+    polylinesRef.current = [];
+
     // Load leaflet.heat plugin dynamically
     require('leaflet.heat');
 
     // Generate smooth continuous weather radar heatmap points
     const heatPoints: [number, number, number][] = [];
     zones.forEach(zone => {
-      const [centerLat, centerLng] = zone.center;
-      const intensity = zone.risk === 'high' ? 1.0 : zone.risk === 'medium' ? 0.6 : 0.25;
+      let intensity = 0.2;
+      if (zone.risk === 'high') intensity = 0.9;
+      else if (zone.risk === 'medium') intensity = 0.55;
 
-      // Add central high-intensity point
+      const centerLat = zone.center[0];
+      const centerLng = zone.center[1];
+
       heatPoints.push([centerLat, centerLng, intensity]);
 
-      // Generate surrounding radar heat points to create smooth blended weather gradient
-      for (let i = 0; i < 25; i++) {
+      for (let i = 0; i < 6; i++) {
         const offsetLat = (Math.random() - 0.5) * 0.025;
         const offsetLng = (Math.random() - 0.5) * 0.025;
         const subIntensity = intensity * (0.4 + Math.random() * 0.5);
@@ -89,55 +159,44 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
       (map as any).removeLayer((map as any)._heatLayer);
     }
 
-    // Add realistic weather station gradient heatmap layer (Red -> Orange -> Yellow -> Cyan)
+    // Add weather station gradient heatmap layer
     const heatLayer = (L as any).heatLayer(heatPoints, {
       radius: 40,
       blur: 25,
       maxZoom: 15,
       max: 1.0,
       gradient: {
-        0.2: '#30d158', // Safe green
-        0.4: '#ffe600', // Yellow watch
-        0.65: '#ff8800', // Orange elevated
-        0.85: '#ff2a00', // Red critical
-        1.0: '#990000'  // Dark red extreme
-      }
-    }).addTo(map);
-
+        0.2: '#30d158',
+        0.4: '#ffe600',
+        0.7: '#ff9500',
+        1.0: '#ff3b30',
+      },
+    });
+    heatLayer.addTo(map);
     (map as any)._heatLayer = heatLayer;
 
-    // Clear old polygons
-    polygonsRef.current.forEach(p => p.remove());
-    polygonsRef.current = [];
+    // Trigger initial geolocation lookup
+    locateUser();
 
-    // Clear old markers (pulse and resource markers)
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
+    // Draw resource markers (Sensors, Shelters, Rescue Units)
+    RESOURCES.forEach(r => {
+      let iconEmoji = '📡';
+      let iconColor = '#00d4ff';
+      if (r.type === 'shelter') { iconEmoji = '⛺'; iconColor = '#00ff88'; }
+      else if (r.type === 'rescue') { iconEmoji = '🚤'; iconColor = '#ff4444'; }
 
-    // Draw resources (sensors, shelters, rescues)
-    RESOURCES.forEach(res => {
-      let iconHtml = '';
-      if (res.type === 'sensor') {
-        iconHtml = `<div style="width:24px;height:24px;border-radius:50%;background:rgba(0,212,255,0.15);border:2.5px solid #00d4ff;display:flex;align-items:center;justify-content:center;color:#00d4ff;font-size:10px;box-shadow:0 0 10px rgba(0,212,255,0.5)">📡</div>`;
-      } else if (res.type === 'shelter') {
-        iconHtml = `<div style="width:24px;height:24px;border-radius:50%;background:rgba(48,209,88,0.15);border:2.5px solid #30d158;display:flex;align-items:center;justify-content:center;color:#30d158;font-size:10px;box-shadow:0 0 10px rgba(48,209,88,0.5)">🏠</div>`;
-      } else if (res.type === 'rescue') {
-        iconHtml = `<div style="width:24px;height:24px;border-radius:50%;background:rgba(255,149,0,0.15);border:2.5px solid #ff9500;display:flex;align-items:center;justify-content:center;color:#ff9500;font-size:10px;box-shadow:0 0 10px rgba(255,149,0,0.5)">🚒</div>`;
-      }
-
-      const customIcon = L.divIcon({
-        html: iconHtml,
+      const icon = L.divIcon({
+        html: `<div style="width:26px;height:26px;border-radius:50%;background:${iconColor};box-shadow:0 0 10px ${iconColor};display:flex;align-items:center;justify-content:center;font-size:12px;">${iconEmoji}</div>`,
         className: '',
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
+        iconSize: [26, 26],
+        iconAnchor: [13, 13],
       });
 
-      const m = L.marker(res.coords, { icon: customIcon })
+      const m = L.marker(r.coords, { icon })
         .bindPopup(`
-          <div style="padding:6px;min-width:180px;background:rgba(10,25,47,0.9);color:#fff;border-radius:8px;">
-            <strong style="color:#00d4ff;font-size:12px;display:block;margin-bottom:4px">${res.name}</strong>
-            <span style="color:#6b8cae;font-size:10px;display:block;">Type: ${res.type.charAt(0).toUpperCase() + res.type.slice(1)}</span>
-            <span style="color:#30d158;font-weight:700;font-size:10px;display:block;margin-top:2px">Status: ${res.status}</span>
+          <div style="padding:6px;background:#091322;color:#fff;border-radius:6px;min-width:160px">
+            <strong style="color:${iconColor};font-size:12px;display:block">${r.name}</strong>
+            <span style="font-size:11px;color:#88a0c0">Type: ${r.type.toUpperCase()} • Status: ${r.status}</span>
           </div>
         `)
         .addTo(map);
@@ -145,49 +204,8 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
       markersRef.current.push(m);
     });
 
-    // 📡 LIVE LOCATION TRACKING VIA BROWSER GEOLOCATION
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const userLat = pos.coords.latitude;
-          const userLng = pos.coords.longitude;
-          const userCoords: [number, number] = [userLat, userLng];
-
-          const userIcon = L.divIcon({
-            html: `
-              <div style="position:relative;width:28px;height:28px;">
-                <div style="position:absolute;inset:0;border-radius:50%;background:rgba(0,212,255,0.3);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite;"></div>
-                <div style="position:relative;width:24px;height:24px;border-radius:50%;background:#00d4ff;border:3px solid #ffffff;box-shadow:0 0 15px #00d4ff;display:flex;align-items:center;justify-content:center;color:#000;font-weight:bold;font-size:10px;">📍</div>
-              </div>
-            `,
-            className: '',
-            iconSize: [28, 28],
-            iconAnchor: [14, 14],
-          });
-
-          const userMarker = L.marker(userCoords, { icon: userIcon })
-            .bindPopup(`
-              <div style="padding:8px;background:rgba(10,25,47,0.95);color:#fff;border-radius:8px;text-align:center">
-                <strong style="color:#00d4ff;font-size:13px;display:block">Your Live Location</strong>
-                <span style="font-size:10px;color:#6b8cae">Lat: ${userLat.toFixed(4)}, Lon: ${userLng.toFixed(4)}</span>
-              </div>
-            `)
-            .addTo(map);
-
-          markersRef.current.push(userMarker);
-        },
-        (err) => {
-          console.warn('Geolocation permission denied or unavailable:', err.message);
-        },
-        { enableHighAccuracy: true }
-      );
-    }
-
-    // Draw zones
+    // Draw zones polygons
     zones.forEach(zone => {
-      const colors = RISK_COLORS[zone.risk];
-      const isSelected = selected?.id === zone.id;
-
       const poly = L.polygon(zone.coordinates, {
         color: 'transparent',
         fillColor: 'transparent',
@@ -195,7 +213,6 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
         weight: 0,
       });
 
-      // Popup
       poly.bindPopup(`
         <div style="min-width:200px;padding:4px 0">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -214,58 +231,120 @@ export default function FloodMap({ zones, onSelect, selected }: Props) {
             </div>
           </div>
           <div style="font-size:11px;color:#6b8cae;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;margin-top:6px">${zone.action}</div>
-          <div style="font-size:10px;color:#3d5a7a;margin-top:4px">Updated ${zone.lastUpdated}</div>
         </div>
       `, { maxWidth: 280 });
 
       poly.on('click', () => onSelect && onSelect(zone));
       poly.addTo(map);
       polygonsRef.current.push(poly);
-
-      // Map risk to mock percentage
-      let riskPct = 40;
-      if (zone.risk === 'high') {
-        riskPct = Math.min(99, Math.round(75 + (zone.waterDepth % 25)));
-      } else if (zone.risk === 'medium') {
-        riskPct = Math.round(50 + (zone.waterDepth % 15));
-      } else {
-        riskPct = Math.round(20 + (zone.waterDepth % 20));
-      }
-
-      // Permanent status badge replaced with clean smooth polygon hover popups
-      poly.bindTooltip(
-        `<div style="font-size:11px;font-weight:700;color:#fff;display:flex;align-items:center;gap:4px">
-          <span>${zone.risk === 'high' ? '🚨' : zone.risk === 'medium' ? '⚠️' : '✅'}</span>
-          <span>${zone.name}: ${riskPct}% Risk</span>
-        </div>`,
-        {
-          permanent: false,
-          sticky: true,
-          direction: 'top',
-          className: `custom-zone-tooltip tooltip-${zone.risk}`,
-        }
-      );
-
-      // Pulse marker for high risk
-      if (zone.risk === 'high') {
-        const pulseIcon = L.divIcon({
-          html: `<div style="width:20px;height:20px;border-radius:50%;background:rgba(255,59,48,0.8);border:2px solid #ff3b30;box-shadow:0 0 0 6px rgba(255,59,48,0.3);animation:pulse-danger 2s infinite"></div>`,
-          className: '',
-          iconSize: [20, 20],
-          iconAnchor: [10, 10],
-        });
-        const mPulse = L.marker(zone.center, { icon: pulseIcon }).addTo(map);
-        markersRef.current.push(mPulse);
-      }
     });
 
-    // Fly to selected
+    // DRAW ROUTE POLYLINES (Safe Evacuation Routes)
+    if (routes && routes.length > 0) {
+      routes.forEach(r => {
+        const isSelected = selectedRouteId === r.id;
+        const color = isSelected ? '#00d4ff' : ROUTE_COLORS[r.risk];
+        const weight = isSelected ? 8 : 5;
+        const opacity = isSelected ? 1.0 : 0.75;
+
+        // Route Polyline
+        const polyline = L.polyline(r.waypoints, {
+          color,
+          weight,
+          opacity,
+          dashArray: r.risk === 'low' ? '8, 8' : undefined,
+        });
+
+        polyline.bindPopup(`
+          <div style="padding:8px;background:#091322;color:#fff;border-radius:8px;min-width:210px">
+            <strong style="color:${color};font-size:13px;display:block;margin-bottom:4px">${r.name}</strong>
+            <span style="font-size:11px;color:#a0b8d0;display:block">${r.from} ➔ ${r.to}</span>
+            <span style="font-size:11px;color:#a0b8d0;display:block;margin-top:2px">Distance: ${r.distance} • ETA: ${r.eta}</span>
+            <div style="margin-top:6px;font-size:10px;padding:4px 6px;border-radius:4px;background:rgba(0,214,255,0.1);color:#00d4ff">
+              ${r.description}
+            </div>
+          </div>
+        `);
+
+        polyline.on('click', () => {
+          if (onSelectRoute) onSelectRoute(r.id);
+        });
+
+        polyline.addTo(map);
+        polylinesRef.current.push(polyline);
+
+        // Start & End Pins for Routes
+        const startCoords = r.waypoints[0];
+        const endCoords = r.waypoints[r.waypoints.length - 1];
+
+        const startIcon = L.divIcon({
+          html: `<div style="padding:2px 6px;border-radius:10px;background:#00ff88;color:#000;font-weight:bold;font-size:10px;box-shadow:0 0 10px #00ff88;white-space:nowrap;">🟢 Start: ${r.from}</div>`,
+          className: '',
+          iconSize: [80, 20],
+          iconAnchor: [40, 20],
+        });
+
+        const endIcon = L.divIcon({
+          html: `<div style="padding:2px 6px;border-radius:10px;background:${color};color:#000;font-weight:bold;font-size:10px;box-shadow:0 0 10px ${color};white-space:nowrap;">🏁 End: ${r.to}</div>`,
+          className: '',
+          iconSize: [80, 20],
+          iconAnchor: [40, 0],
+        });
+
+        const mStart = L.marker(startCoords, { icon: startIcon }).addTo(map);
+        const mEnd = L.marker(endCoords, { icon: endIcon }).addTo(map);
+
+        markersRef.current.push(mStart, mEnd);
+      });
+
+      // Fly to selected route if selected
+      if (selectedRouteId) {
+        const targetRoute = routes.find(r => r.id === selectedRouteId);
+        if (map && targetRoute && targetRoute.waypoints.length > 0) {
+          const bounds = L.latLngBounds(targetRoute.waypoints);
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+        }
+      }
+    }
+
+    // Fly to selected zone if selected
     if (selected && map) {
       map.flyTo(selected.center, 14, { duration: 0.8 });
     }
 
     return () => {};
-  }, [zones, selected, onSelect]);
+  }, [zones, routes, selectedRouteId, onSelectRoute, selected, onSelect]);
 
-  return <div ref={containerRef} style={{ width: '100%', height: '100%', borderRadius: '16px', overflow: 'hidden' }} />;
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '16px', overflow: 'hidden' }}>
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+
+      {/* Locate Me Overlay Button */}
+      <button
+        type="button"
+        onClick={locateUser}
+        style={{
+          position: 'absolute',
+          bottom: '16px',
+          right: '16px',
+          zIndex: 1000,
+          background: 'rgba(9, 19, 34, 0.9)',
+          border: '1px solid rgba(0, 214, 255, 0.4)',
+          color: '#00d4ff',
+          padding: '0.45rem 0.85rem',
+          borderRadius: '10px',
+          fontSize: '0.8rem',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem',
+          cursor: 'pointer',
+          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <span>📍 Locate My Location</span>
+      </button>
+    </div>
+  );
 }

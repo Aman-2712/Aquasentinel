@@ -23,6 +23,7 @@ import {
   Sun,
   Flame,
   CloudSun,
+  Navigation,
 } from 'lucide-react';
 import { FarmerOnboardingModal } from '@/components/onboarding/FarmerOnboardingModal';
 import WindyRadar from '@/components/radar/WindyRadar';
@@ -48,6 +49,7 @@ export default function DashboardPage() {
   } = useFloodData();
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+  const [selectedRouteId, setSelectedRouteId] = useState<string>('r1');
   const [autoDefense, setAutoDefense] = useState(true);
   const [emergencyReportSent, setEmergencyReportSent] = useState(false);
 
@@ -56,7 +58,7 @@ export default function DashboardPage() {
       <ProtectedLayout>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80vh', gap: '1rem', color: 'var(--clr-text-muted)' }}>
           <div style={{ width: 40, height: 40, border: '3px solid rgba(0,214,255,0.1)', borderTopColor: 'var(--clr-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-          <p>Initializing XGBoost hydrological engine & meteorological forecast models...</p>
+          <p>Initializing XGBoost hydrological engine & satellite radar...</p>
         </div>
       </ProtectedLayout>
     );
@@ -81,7 +83,7 @@ export default function DashboardPage() {
       {/* Farmer Interactive Onboarding Modal */}
       <FarmerOnboardingModal />
 
-      <div className="page-content" style={{ gap: '1.25rem' }}>
+      <div className="page-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* Real-Time Authority Broadcast Alert Banner for Citizens */}
         {broadcastAlerts.filter(b => b.active).map(b => (
           <div
@@ -128,14 +130,13 @@ export default function DashboardPage() {
           </div>
         ))}
 
-        {/* Top Header & Mode Panel Bar */}
+        {/* Top Header Panel Bar */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: '1rem',
-          marginBottom: '0.5rem',
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -195,9 +196,9 @@ export default function DashboardPage() {
         {/* Navigation Tabs Bar */}
         <div style={{
           display: 'flex',
-          gap: '0.5rem',
+          gap: '0.55rem',
           borderBottom: '1px solid rgba(0, 214, 255, 0.15)',
-          paddingBottom: '0.5rem',
+          paddingBottom: '0.65rem',
           overflowX: 'auto',
         }}>
           <button
@@ -267,7 +268,7 @@ export default function DashboardPage() {
 
         {/* Tab 1: Flood Warnings & Overview */}
         {activeTab === 'overview' && (
-          <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {/* Top Intelligence Engine Card */}
             <div className="card" style={{
               background: 'linear-gradient(135deg, rgba(9, 24, 45, 0.9), rgba(5, 14, 28, 0.95))',
@@ -441,11 +442,11 @@ export default function DashboardPage() {
                 </span>
                 <span className="badge badge-safe">10 Zones Monitored</span>
               </div>
-              <div style={{ height: '420px', width: '100%' }}>
+              <div style={{ height: '480px', width: '100%' }}>
                 <FloodMap zones={zones} />
               </div>
             </div>
-          </>
+          </div>
         )}
 
         {/* Tab 2: Live Windy.com Radar */}
@@ -455,8 +456,8 @@ export default function DashboardPage() {
 
         {/* Tab 3: 7-Day Weather Forecast */}
         {activeTab === 'forecast' && (
-          <div>
-            <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div className="grid-4">
               {weatherData.forecast.map(f => (
                 <div key={f.day} className={`card ${styles.forecastCard}`} style={{ padding: '1rem', textAlign: 'center' }}>
                   <div style={{ fontSize: '1.8rem', marginBottom: '0.25rem' }}>{f.conditionEmoji}</div>
@@ -482,43 +483,70 @@ export default function DashboardPage() {
 
         {/* Tab 4: Safe Evacuation Routes */}
         {activeTab === 'routes' && (
-          <div className="grid-2" style={{ gap: '1.5rem' }}>
-            <div className="card">
-              <h3 style={{ margin: '0 0 1rem 0', color: '#fff' }}>AI Calculated Safe Evacuation Corridors</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {safeRoutes.map(r => (
-                  <div
-                    key={r.id}
-                    style={{
-                      padding: '1rem',
-                      borderRadius: '12px',
-                      background: 'rgba(10, 20, 35, 0.6)',
-                      borderLeft: `4px solid ${r.risk === 'high' ? '#ff4444' : r.risk === 'medium' ? '#ffaa00' : '#00ff88'}`,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                      <strong style={{ color: '#fff', fontSize: '0.95rem' }}>{r.name}</strong>
-                      <span className={`badge ${r.risk === 'high' ? 'badge-danger' : r.risk === 'medium' ? 'badge-warning' : 'badge-safe'}`}>
-                        {r.risk.toUpperCase()} RISK
+          <div className="grid-2" style={{ gap: '1.25rem', alignItems: 'stretch' }}>
+            <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Navigation size={18} color="#00d4ff" />
+                  AI Calculated Safe Evacuation Corridors
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)' }}>Click card to highlight route</span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', flex: 1 }}>
+                {safeRoutes.map(r => {
+                  const isSelected = selectedRouteId === r.id;
+                  return (
+                    <div
+                      key={r.id}
+                      onClick={() => setSelectedRouteId(r.id)}
+                      style={{
+                        padding: '1rem',
+                        borderRadius: '14px',
+                        background: isSelected ? 'rgba(0, 214, 255, 0.12)' : 'rgba(10, 20, 35, 0.6)',
+                        border: isSelected ? '2px solid #00d4ff' : '1px solid rgba(0, 214, 255, 0.15)',
+                        borderLeft: `5px solid ${r.risk === 'high' ? '#ff4444' : r.risk === 'medium' ? '#ffaa00' : '#00ff88'}`,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: isSelected ? '0 0 15px rgba(0, 214, 255, 0.25)' : undefined,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                        <strong style={{ color: isSelected ? '#00d4ff' : '#fff', fontSize: '0.95rem' }}>{r.name}</strong>
+                        <span className={`badge ${r.risk === 'high' ? 'badge-danger' : r.risk === 'medium' ? 'badge-warning' : 'badge-safe'}`}>
+                          {r.risk.toUpperCase()} RISK
+                        </span>
+                      </div>
+                      <p style={{ margin: '0.25rem 0', fontSize: '0.85rem', color: 'var(--clr-text-muted)' }}>
+                        📍 {r.from} ➔ 🏁 {r.to} • {r.distance} • Est. ETA: {r.eta}
+                      </p>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--clr-text-main)', display: 'block', marginTop: '0.35rem' }}>
+                        {r.description}
                       </span>
                     </div>
-                    <p style={{ margin: '0.25rem 0', fontSize: '0.85rem', color: 'var(--clr-text-muted)' }}>
-                      {r.from} ➔ {r.to} • {r.distance} • Est. ETA: {r.eta}
-                    </p>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--clr-text-main)', display: 'block', marginTop: '0.35rem' }}>
-                      {r.description}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-              <div style={{ padding: '0.85rem 1rem', background: 'rgba(5, 12, 24, 0.9)', borderBottom: '1px solid rgba(0, 214, 255, 0.15)' }}>
-                <span style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>Interactive Safe Navigation Map</span>
+            {/* Interactive Leaflet Navigation Map with Polyline Routes */}
+            <div className="card" style={{ padding: 0, overflow: 'hidden', height: '580px' }}>
+              <div style={{ padding: '0.85rem 1.1rem', background: 'rgba(5, 12, 24, 0.95)', borderBottom: '1px solid rgba(0, 214, 255, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <MapPin size={16} color="#00d4ff" />
+                  Interactive Evacuation Route Polyline Map
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#00d4ff' }}>
+                  Selected: {safeRoutes.find(r => r.id === selectedRouteId)?.name}
+                </span>
               </div>
-              <div style={{ height: '420px' }}>
-                <FloodMap zones={zones} />
+              <div style={{ height: 'calc(100% - 45px)', width: '100%' }}>
+                <FloodMap
+                  zones={zones}
+                  routes={safeRoutes}
+                  selectedRouteId={selectedRouteId}
+                  onSelectRoute={(id) => setSelectedRouteId(id)}
+                />
               </div>
             </div>
           </div>
@@ -526,7 +554,7 @@ export default function DashboardPage() {
 
         {/* Tab 5: FieldShield Hardware (Farmers Only) */}
         {activeTab === 'fieldshield' && (
-          <div className="grid-3" style={{ gap: '1.5rem' }}>
+          <div className="grid-3" style={{ gap: '1.25rem' }}>
             {fieldShields.map(fs => (
               <div key={fs.id} className="card" style={{ border: '1px solid rgba(0, 255, 136, 0.25)', background: 'rgba(5, 20, 15, 0.6)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
