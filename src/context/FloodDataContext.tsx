@@ -417,10 +417,15 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Live Mode: Fetch from Open-Meteo API
+      // Live Mode: Fetch from Open-Meteo API with 2.5s timeout abort safeguard
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+
       const res = await fetch(
-        'https://api.open-meteo.com/v1/forecast?latitude=17.6868&longitude=83.2185&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m,pressure_msl&hourly=temperature_2m,precipitation,precipitation_probability,soil_moisture_0_to_1cm&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&timezone=Asia%2FKolkata'
+        'https://api.open-meteo.com/v1/forecast?latitude=17.6868&longitude=83.2185&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m,pressure_msl&hourly=temperature_2m,precipitation,precipitation_probability,soil_moisture_0_to_1cm&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&timezone=Asia%2FKolkata',
+        { signal: controller.signal }
       );
+      clearTimeout(timeoutId);
       const data = await res.json();
 
       const rainVal = data.current?.precipitation || 0; // precipitation mm/h
@@ -494,6 +499,9 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // Initial pre-calculation with default metrics so UI renders immediately without loading screen delay
+    calculateFloodPrediction(DEFAULT_WEATHER.current.rainfall, DEFAULT_WEATHER.current.soilMoisture);
+    setIsLoading(false);
     fetchWeatherData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weatherMode]);

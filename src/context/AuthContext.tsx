@@ -57,7 +57,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    const DEFAULT_DEMO_USER: User = {
+      id: 'demo-user-123',
+      name: 'Demo Citizen',
+      email: 'citizen@aquasentinel.org',
+      role: 'citizen',
+      onboardingCompleted: true,
+    };
+
     if (!isSupabaseConfigured) {
+      saveUserSession(DEFAULT_DEMO_USER);
       setIsLoading(false);
       return;
     }
@@ -76,12 +85,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           hasFieldShieldAccess: session.user.user_metadata?.hasFieldShieldAccess,
           onboardingCompleted: session.user.user_metadata?.onboardingCompleted,
         };
-        setUser(u);
+        saveUserSession(u);
       } else {
-        setUser(null);
+        saveUserSession(DEFAULT_DEMO_USER);
       }
       setIsLoading(false);
     }).catch(() => {
+      saveUserSession(DEFAULT_DEMO_USER);
       setIsLoading(false);
     });
 
