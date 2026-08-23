@@ -323,6 +323,26 @@ img {
   box-shadow: 0 0 0 3px rgba(0,212,255,0.15);
 }
 
+select.form-input {
+  background-color: #0a182e !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(0, 212, 255, 0.3) !important;
+  cursor: pointer;
+}
+
+select.form-input option {
+  background-color: #071224 !important;
+  color: #ffffff !important;
+  padding: 12px !important;
+}
+
+select.form-input option:hover,
+select.form-input option:focus,
+select.form-input option:checked {
+  background-color: #0066ff !important;
+  color: #ffffff !important;
+}
+
 .form-input-icon {
   position: relative;
   display: flex;
