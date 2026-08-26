@@ -24,7 +24,7 @@ export default function AuthGuard({ children }: Props) {
 
   if (isLoading) {
     return (
-      <div style={{
+      <div className="intro-loader-container" style={{
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',

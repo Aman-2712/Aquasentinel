@@ -64,7 +64,7 @@ export default function LandingPage() {
 
   if (isLoading || user) {
     return (
-      <div style={{
+      <div className="intro-loader-container" style={{
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',

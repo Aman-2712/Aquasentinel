@@ -57,16 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    const DEFAULT_DEMO_USER: User = {
-      id: 'demo-user-123',
-      name: 'Demo Citizen',
-      email: 'citizen@aquasentinel.org',
-      role: 'citizen',
-      onboardingCompleted: true,
-    };
-
     if (!isSupabaseConfigured) {
-      saveUserSession(DEFAULT_DEMO_USER);
+      setUser(null);
       setIsLoading(false);
       return;
     }
@@ -87,16 +79,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         saveUserSession(u);
       } else {
-        saveUserSession(DEFAULT_DEMO_USER);
+        setUser(null);
       }
       setIsLoading(false);
     }).catch(() => {
-      saveUserSession(DEFAULT_DEMO_USER);
+      setUser(null);
       setIsLoading(false);
     });
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         const u: User = {
           id: session.user.id,
@@ -110,6 +102,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           onboardingCompleted: session.user.user_metadata?.onboardingCompleted,
         };
         setUser(u);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        try { localStorage.removeItem('aquasentinel_user'); } catch (e) {}
       }
     });
 

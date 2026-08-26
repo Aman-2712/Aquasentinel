@@ -682,3 +682,22 @@ select.form-input option:checked {
     stroke-dashoffset: -320;
   }
 }
+
+/* Intro Pending Style overrides to prevent loading screen flash */
+.intro-pending {
+  background-color: #000000 !important;
+}
+
+.intro-pending body {
+  background-color: #000000 !important;
+  overflow: hidden !important;
+}
+
+/* Hide the loader when intro is pending */
+.intro-pending .intro-loader-container {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+

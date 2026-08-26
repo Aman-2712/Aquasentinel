@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { FloodDataProvider } from '@/context/FloodDataContext';
+import IntroWrapper from '@/components/layout/IntroWrapper';
 
 export const metadata: Metadata = {
   title: 'AquaSentinel – Urban Flood Early Warning System',
@@ -17,10 +18,27 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  if (!sessionStorage.getItem('aquasentinel_intro_played')) {
+                    document.documentElement.classList.add('intro-pending');
+                  }
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
+      </head>
       <body>
         <AuthProvider>
           <FloodDataProvider>
-            {children}
+            <IntroWrapper>
+              {children}
+            </IntroWrapper>
           </FloodDataProvider>
         </AuthProvider>
       </body>

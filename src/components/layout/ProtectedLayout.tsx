@@ -28,7 +28,7 @@ export default function ProtectedLayout({ children }: Props) {
   // Full-page loader while checking auth
   if (isLoading) {
     return (
-      <div style={{
+      <div className="intro-loader-container" style={{
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
