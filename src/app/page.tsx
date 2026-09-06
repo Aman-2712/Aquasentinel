@@ -1,10 +1,11 @@
 'use client';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-import { Droplets, Shield, Map, Bell, Navigation, BarChart3, ChevronRight, Zap, Activity, CloudRain } from 'lucide-react';
+import { Droplets, Shield, Map, Bell, Navigation, BarChart3, ChevronRight, Zap, Activity, CloudRain, UserCheck, Sprout, Lock } from 'lucide-react';
 import styles from './landing.module.css';
+import RoleSelectionModal from '@/components/auth/RoleSelectionModal';
 
 const STATS = [
   { value: '10K+', label: 'Citizens Protected' },
@@ -55,6 +56,8 @@ const FEATURES = [
 export default function LandingPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalAction, setModalAction] = useState<'login' | 'signup'>('login');
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -91,6 +94,11 @@ export default function LandingPage() {
     );
   }
 
+  const openRoleModal = (action: 'login' | 'signup') => {
+    setModalAction(action);
+    setModalOpen(true);
+  };
+
   return (
     <div className={styles.page}>
       {/* Background elements */}
@@ -110,8 +118,20 @@ export default function LandingPage() {
           <a href="#modules">Modules</a>
         </div>
         <div className={styles.navActions}>
-          <Link href="/login" className="btn btn-outline btn-sm">Sign In</Link>
-          <Link href="/signup" className="btn btn-primary btn-sm">Get Started</Link>
+          <button 
+            type="button" 
+            onClick={() => openRoleModal('login')} 
+            className="btn btn-outline btn-sm"
+          >
+            Sign In
+          </button>
+          <button 
+            type="button" 
+            onClick={() => openRoleModal('signup')} 
+            className="btn btn-primary btn-sm"
+          >
+            Get Started
+          </button>
         </div>
       </nav>
 
@@ -130,14 +150,22 @@ export default function LandingPage() {
           and IoT-based agricultural field protection — powered by AI for Visakhapatnam and beyond.
         </p>
         <div className={styles.heroActions}>
-          <Link href="/signup" className="btn btn-primary btn-lg">
+          <button 
+            type="button" 
+            onClick={() => openRoleModal('signup')} 
+            className="btn btn-primary btn-lg"
+          >
             Get Early Warning Access
             <ChevronRight size={18} />
-          </Link>
-          <Link href="/map" className="btn btn-outline btn-lg">
+          </button>
+          <button 
+            type="button" 
+            onClick={() => openRoleModal('login')} 
+            className="btn btn-outline btn-lg"
+          >
             View Live Flood Map
             <Map size={16} />
-          </Link>
+          </button>
         </div>
 
         {/* Live indicator */}
@@ -186,9 +214,13 @@ export default function LandingPage() {
           ))}
         </div>
         <div className={styles.riskCta}>
-          <Link href="/login" className="btn btn-primary">
+          <button 
+            type="button" 
+            onClick={() => openRoleModal('login')} 
+            className="btn btn-primary"
+          >
             View Full Map &amp; Details <ChevronRight size={16} />
-          </Link>
+          </button>
         </div>
       </section>
 
@@ -242,8 +274,20 @@ export default function LandingPage() {
         <h2 className={styles.ctaTitle}>Ready to Stay Safe During Floods?</h2>
         <p className={styles.ctaDesc}>Join thousands of citizens and farmers in Visakhapatnam protected by AquaSentinel.</p>
         <div className={styles.ctaActions}>
-          <Link href="/signup" className="btn btn-primary btn-lg">Create Free Account</Link>
-          <Link href="/login" className="btn btn-ghost btn-lg">Sign In</Link>
+          <button 
+            type="button" 
+            onClick={() => openRoleModal('signup')} 
+            className="btn btn-primary btn-lg"
+          >
+            Create Free Account
+          </button>
+          <button 
+            type="button" 
+            onClick={() => openRoleModal('login')} 
+            className="btn btn-ghost btn-lg"
+          >
+            Sign In
+          </button>
         </div>
       </section>
 
@@ -256,6 +300,13 @@ export default function LandingPage() {
         <p className={styles.footerText}>AI + IoT Powered Flood Intelligence & Field Protection System</p>
         <p className={styles.footerCopy}>© 2025 AquaSentinel. Built for Visakhapatnam &amp; beyond.</p>
       </footer>
+
+      {/* Role Choice Selection Modal */}
+      <RoleSelectionModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        actionType={modalAction}
+      />
     </div>
   );
 }

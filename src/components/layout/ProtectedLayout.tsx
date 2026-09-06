@@ -1,70 +1,60 @@
-'use client';
+﻿'use client';
+
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { ROLE_DASHBOARD, ROLE_LOGIN, UserRole } from '@/context/AuthContext';
 import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
 import { Droplets } from 'lucide-react';
 
-interface Props {
+interface ProtectedLayoutProps {
   children: React.ReactNode;
+  requiredRole?: UserRole;
 }
 
-export default function ProtectedLayout({ children }: Props) {
+export default function ProtectedLayout({ children, requiredRole }: ProtectedLayoutProps) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      // If URL has OAuth hash tokens, don't redirect yet — Supabase is processing the session
-      const hash = window.location.hash;
-      const hasOAuthToken = hash.includes('access_token') || hash.includes('code=');
-      if (!hasOAuthToken) {
-        router.replace('/login');
+    if (!isLoading) {
+      if (!user) {
+        const loginPath = requiredRole ? ROLE_LOGIN[requiredRole] : '/citizen/login';
+        router.replace(loginPath);
+        return;
+      }
+
+      if (requiredRole && user.role && user.role !== requiredRole) {
+        console.warn(`User role '${user.role}' does not match required role '${requiredRole}'. Redirecting.`);
+        const correctDashboard = ROLE_DASHBOARD[user.role] || '/citizen/dashboard';
+        router.replace(correctDashboard);
       }
     }
-  }, [user, isLoading, router]);
+  }, [isLoading, user, requiredRole, router]);
 
-  // Full-page loader while checking auth
   if (isLoading) {
     return (
-      <div className="intro-loader-container" style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--clr-bg)',
-        gap: '1rem',
-      }}>
-        <div style={{
-          width: 56,
-          height: 56,
-          borderRadius: 14,
-          background: 'linear-gradient(135deg, #00d4ff, #0066ff)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#000',
-          animation: 'float 2s ease-in-out infinite',
-        }}>
-          <Droplets size={28} />
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--clr-bg)', color: '#ffffff' }}>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div style={{ width: 48, height: 48, border: '3px solid rgba(0,212,255,0.1)', borderTopColor: 'var(--clr-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }} />
+          <p style={{ color: 'var(--clr-text-muted)', fontSize: '0.9rem' }}>Loading session...</p>
         </div>
-        <p style={{ color: 'var(--clr-text-muted)', fontSize: '0.875rem' }}>Loading AquaSentinel...</p>
       </div>
     );
   }
 
-  // Redirect happening — show nothing to avoid flash
-  if (!user) return null;
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="app-layout">
       <Sidebar />
-      <main className="app-main">
+      <div className="app-main">
         <Navbar />
         {children}
-      </main>
+      </div>
     </div>
   );
 }

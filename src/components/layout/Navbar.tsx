@@ -1,39 +1,27 @@
 'use client';
-import { Bell, Search, Wifi, CloudRain, Shield, Sparkles, UserCheck, Sprout, Building2 } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, Search, Wifi, Megaphone, X, CheckCircle } from 'lucide-react';
 import styles from './Navbar.module.css';
 import { useAuth } from '@/context/AuthContext';
 import { useFloodData } from '@/context/FloodDataContext';
 
 export default function Navbar() {
-  const { user, switchRole } = useAuth();
-  const { weatherMode, setWeatherMode, weatherData } = useFloodData();
+  const { user } = useAuth();
+  const { weatherMode, setWeatherMode, broadcastAlerts, dismissBroadcast } = useFloodData();
+  const [showNotifs, setShowNotifs] = useState(false);
+
+  const activeBroadcasts = broadcastAlerts.filter(b => b.active);
 
   return (
     <header className={styles.navbar}>
       <div className={styles.left}>
-        {/* Role Switcher Pill */}
-        <div className={styles.statusPill} style={{ background: 'rgba(0, 214, 255, 0.08)', borderColor: 'rgba(0, 214, 255, 0.25)' }}>
-          <Shield size={13} color="#00d4ff" />
-          <span style={{ fontSize: '0.775rem', fontWeight: 600, color: '#00d4ff' }}>Panel View:</span>
-          <select 
-            className={styles.simulationSelect}
-            value={user?.role || 'citizen'}
-            onChange={e => switchRole(e.target.value as any)}
-            style={{ fontWeight: 600 }}
-          >
-            <option value="citizen">👤 Citizen Dashboard</option>
-            <option value="farmer">🌾 Farmer (FieldShield)</option>
-            <option value="authority">🏛️ Authority Command Center</option>
-          </select>
-        </div>
-
-        {/* Weather Scenario Switcher */}
+        {/* Weather Scenario Simulation Switcher */}
         <div className={styles.statusPill}>
           <Wifi size={12} />
           <span style={{ marginRight: '0.2rem', fontSize: '0.775rem' }}>Scenario:</span>
-          <select 
-            className={styles.simulationSelect} 
-            value={weatherMode} 
+          <select
+            className={styles.simulationSelect}
+            value={weatherMode}
             onChange={e => setWeatherMode(e.target.value as any)}
           >
             <option value="live">🌍 Live Open-Meteo</option>
@@ -51,21 +39,96 @@ export default function Navbar() {
         </div>
       </div>
 
-      <div className={styles.right}>
-        {/* AI Advisory Button */}
-        <button 
-          type="button" 
-          className="btn btn-secondary" 
-          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', gap: '0.4rem', border: '1px solid rgba(0, 214, 255, 0.3)', background: 'rgba(0, 214, 255, 0.1)', color: '#00d4ff' }}
+      <div className={styles.right} style={{ position: 'relative' }}>
+        <button
+          className={styles.iconBtn}
+          title="Notifications & Authority Broadcasts"
+          onClick={() => setShowNotifs(prev => !prev)}
+          style={{ position: 'relative' }}
         >
-          <Sparkles size={14} />
-          <span>AI Advisory</span>
+          <Bell size={18} color={activeBroadcasts.length > 0 ? '#ffea00' : 'inherit'} />
+          {activeBroadcasts.length > 0 && (
+            <span className={styles.notifBadge}>{activeBroadcasts.length}</span>
+          )}
         </button>
 
-        <button className={styles.iconBtn} title="Notifications">
-          <Bell size={18} />
-          <span className={styles.notifBadge}>3</span>
-        </button>
+        {/* Notifications Popover Dropdown */}
+        {showNotifs && (
+          <div style={{
+            position: 'absolute',
+            top: 'calc(100% + 12px)',
+            right: 0,
+            width: '360px',
+            maxHeight: '420px',
+            overflowY: 'auto',
+            background: 'rgba(10, 18, 30, 0.96)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(0, 214, 255, 0.3)',
+            borderRadius: '16px',
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6)',
+            padding: '1rem',
+            zIndex: 9999,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Megaphone size={16} color="#ffaa00" />
+                <strong style={{ fontSize: '0.9rem', color: '#fff' }}>Official Authority Broadcasts</strong>
+              </div>
+              <button
+                onClick={() => setShowNotifs(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--clr-text-muted)', cursor: 'pointer' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {activeBroadcasts.length === 0 ? (
+              <div style={{ padding: '1rem 0', textAlign: 'center', color: 'var(--clr-text-muted)', fontSize: '0.85rem' }}>
+                <CheckCircle size={24} color="#00ff88" style={{ marginBottom: '0.4rem' }} />
+                <p style={{ margin: 0 }}>No active emergency broadcasts from authority.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                {activeBroadcasts.map(b => (
+                  <div
+                    key={b.id}
+                    style={{
+                      padding: '0.75rem',
+                      borderRadius: '10px',
+                      background: b.risk === 'high' ? 'rgba(255, 68, 68, 0.12)' : 'rgba(255, 170, 0, 0.12)',
+                      borderLeft: `3px solid ${b.risk === 'high' ? '#ff4444' : '#ffaa00'}`,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: b.risk === 'high' ? '#ff4444' : '#ffaa00' }}>
+                        {b.area}
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--clr-text-muted)' }}>{b.timestamp}</span>
+                    </div>
+                    <p style={{ margin: '0.2rem 0', fontSize: '0.8rem', color: '#fff', lineHeight: 1.35 }}>
+                      {b.message}
+                    </p>
+                    <button
+                      onClick={() => dismissBroadcast(b.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--clr-text-muted)',
+                        fontSize: '0.7rem',
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                        marginTop: '0.25rem',
+                        padding: 0,
+                      }}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {user && (
           <div className={styles.userChip}>
@@ -89,3 +152,4 @@ export default function Navbar() {
     </header>
   );
 }
+

@@ -101,6 +101,21 @@ body {
   overflow-x: hidden;
 }
 
+/* Sleek Dark Mode OpenStreetMap Filter (Maps White Map to Pitch-Black Map) */
+.leaflet-container {
+  background: #000000 !important;
+  font-family: inherit;
+}
+
+.osm-black-map {
+  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(110%) !important;
+}
+
+
+
+
+
+
 a {
   color: inherit;
   text-decoration: none;

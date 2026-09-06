@@ -1,33 +1,61 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Mail, Lock, Eye, EyeOff, Droplets, ArrowRight, Loader } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Mail, Lock, Eye, EyeOff, Droplets, ArrowRight, Loader, UserCheck, Sprout, ShieldCheck, Key, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { ROLE_DASHBOARD, ROLE_LOGIN, UserRole } from '@/context/AuthContext';
 import styles from '@/app/login/auth.module.css';
 
 type Tab = 'email-pass' | 'email-otp';
 
-export function LoginForm() {
+interface LoginFormProps {
+  /** When provided, the role selector is hidden and this role is used. */
+  lockedRole?: UserRole;
+}
+
+function LoginFormContent({ lockedRole }: LoginFormProps) {
   const { login, loginWithGoogle, sendOTP } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialRole: UserRole = lockedRole || (searchParams.get('role') as UserRole) || 'citizen';
+
+  const [role, setRole] = useState<UserRole>(initialRole);
   const [tab, setTab] = useState<Tab>('email-pass');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [govPasskey, setGovPasskey] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    // If locked, always use lockedRole; otherwise read URL param
+    if (!lockedRole) {
+      const urlRole = searchParams.get('role') as UserRole;
+      if (urlRole) setRole(urlRole);
+    }
+  }, [searchParams, lockedRole]);
+
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) { setError('Please fill all fields'); return; }
+    if (!email || !password) { setError('Please fill all required fields'); return; }
+
+    if (role === 'authority') {
+      const validKeys = ['GVMC-2025', 'GOVT-AUTH-88', 'DISASTER-ADMIN', '0000'];
+      if (!validKeys.includes(govPasskey.trim().toUpperCase())) {
+        setError('Invalid Government Authorization Passkey. Access restricted to verified officials.');
+        return;
+      }
+    }
+
     setLoading(true); setError('');
     try {
-      await login(email, password);
-      router.push('/dashboard');
+      await login(email, password, role);
+      router.push(ROLE_DASHBOARD[role]);
     } catch (err: any) {
-      setError(err?.message || 'Invalid credentials. Try again.');
+      setError(err?.message || 'Invalid email or password. Please try again or create an account.');
     }
     finally { setLoading(false); }
   };
@@ -35,7 +63,12 @@ export function LoginForm() {
   const handleGoogle = async () => {
     setGoogleLoading(true); setError('');
     try {
-      await loginWithGoogle();
+      await loginWithGoogle(role);
+      // For Supabase OAuth, the redirect is handled by /auth/role-callback.
+      // For local fallback (no Supabase), redirect now.
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === '') {
+        router.push(ROLE_DASHBOARD[role]);
+      }
     } catch (err: any) {
       setError(err?.message || 'Google sign-in failed.');
     }
@@ -70,8 +103,38 @@ export function LoginForm() {
           </div>
         </div>
 
-        <h1 className={styles.title}>Welcome Back</h1>
-        <p className={styles.subtitle}>Sign in to access flood alerts and your dashboard</p>
+        {/* Dedicated Role Badge Header */}
+        <div style={{
+          margin: '1.25rem 0 0.5rem 0',
+          padding: '0.85rem 1rem',
+          borderRadius: '14px',
+          background: role === 'authority' ? 'rgba(255, 68, 68, 0.12)' : role === 'farmer' ? 'rgba(0, 255, 136, 0.12)' : 'rgba(0, 214, 255, 0.12)',
+          border: `1px solid ${role === 'authority' ? 'rgba(255, 68, 68, 0.35)' : role === 'farmer' ? 'rgba(0, 255, 136, 0.35)' : 'rgba(0, 214, 255, 0.35)'}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            {role === 'authority' ? <ShieldCheck size={22} color="#ff4444" /> : role === 'farmer' ? <Sprout size={22} color="#00ff88" /> : <UserCheck size={22} color="#00d4ff" />}
+            <div>
+              <strong style={{
+                color: role === 'authority' ? '#ff6666' : role === 'farmer' ? '#00ff88' : '#00d4ff',
+                fontSize: '1rem',
+                display: 'block',
+              }}>
+                {role === 'authority' ? 'Authority Command Login' : role === 'farmer' ? 'Farmer FieldShield Login' : 'Citizen Safety Login'}
+              </strong>
+              <span style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)' }}>
+                {role === 'authority' ? 'Restricted Official Command Portal' : role === 'farmer' ? 'Agriculture Barrier & Field Telemetry Portal' : 'Urban Alerts & Evacuation Portal'}
+              </span>
+            </div>
+          </div>
+
+          <Link href="/" style={{ color: 'var(--clr-text-muted)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.2rem', textDecoration: 'none' }} title="Change Role">
+            <RefreshCw size={12} />
+            <span>Change</span>
+          </Link>
+        </div>
 
         <button type="button" className={styles.googleBtn} onClick={handleGoogle} disabled={googleLoading}>
           {googleLoading ? (
@@ -87,7 +150,7 @@ export function LoginForm() {
           <span>{googleLoading ? 'Signing in...' : 'Continue with Google'}</span>
         </button>
 
-        <div className={styles.divider}><span>or sign in with</span></div>
+        <div className={styles.divider}><span>or sign in with email</span></div>
 
         <div className={styles.tabs}>
           <button
@@ -114,15 +177,35 @@ export function LoginForm() {
               <label className="form-label">Email Address</label>
               <div className="form-input-icon">
                 <Mail size={16} className="icon" />
-                <input className="form-input" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+                <input className="form-input" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
             </div>
+
+            {role === 'authority' && (
+              <div className="form-group" style={{ background: 'rgba(255,68,68,0.1)', padding: '0.85rem', borderRadius: '12px', border: '1px solid rgba(255,68,68,0.3)' }}>
+                <label className="form-label" style={{ color: '#ff8888' }}>
+                  Government Passkey / Officer Security ID *
+                </label>
+                <div className="form-input-icon">
+                  <Key size={16} className="icon" style={{ color: '#ff4444' }} />
+                  <input
+                    className="form-input"
+                    type="password"
+                    placeholder="Enter Official Security Passkey"
+                    value={govPasskey}
+                    onChange={e => setGovPasskey(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="form-group">
               <label className="form-label">Password</label>
               <div className={styles.passwordWrap}>
                 <div className="form-input-icon" style={{ flex: 1 }}>
                   <Lock size={16} className="icon" />
-                  <input className="form-input" type={showPass ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} style={{ paddingRight: '2.5rem' }} />
+                  <input className="form-input" type={showPass ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required style={{ paddingRight: '2.5rem' }} />
                 </div>
                 <button type="button" className={styles.eyeBtn} onClick={() => setShowPass(!showPass)}>
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -130,7 +213,7 @@ export function LoginForm() {
               </div>
             </div>
             <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading}>
-              {loading ? <Loader size={16} className={styles.spin} /> : <><span>Sign In</span><ArrowRight size={16} /></>}
+              {loading ? <Loader size={16} className={styles.spin} /> : <><span>Sign In as {role === 'authority' ? 'Authority' : role === 'farmer' ? 'Farmer' : 'Citizen'}</span><ArrowRight size={16} /></>}
             </button>
           </form>
         )}
@@ -161,9 +244,20 @@ export function LoginForm() {
         )}
 
         <p className={styles.switchText}>
-          Don&apos;t have an account? <Link href="/signup">Create one free</Link>
+          Don&apos;t have an account?{' '}
+          <Link href={`/signup?role=${role}`}>
+            Create {role === 'farmer' ? 'Farmer' : role === 'authority' ? 'Authority' : 'Citizen'} account
+          </Link>
         </p>
       </div>
     </div>
+  );
+}
+
+export function LoginForm({ lockedRole }: LoginFormProps) {
+  return (
+    <Suspense fallback={<div>Loading login...</div>}>
+      <LoginFormContent lockedRole={lockedRole} />
+    </Suspense>
   );
 }

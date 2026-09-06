@@ -1,0 +1,361 @@
+.introContainer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #040d1f;
+  color: #e8f4f8;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Background high-tech grid */
+.gridBg {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(0, 212, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gridBg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 30%, rgba(4, 13, 31, 0.8) 80%);
+}
+
+/* Moving scanline effect */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.06),
+    rgba(0, 255, 0, 0.02),
+    rgba(0, 0, 255, 0.06)
+  );
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.4;
+}
+
+/* Dynamic radar scanning HUD */
+.radarContainer {
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.radarCircle {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgba(0, 212, 255, 0.1);
+}
+
+.radarCircle1 {
+  width: 75%;
+  height: 75%;
+}
+
+.radarCircle2 {
+  width: 50%;
+  height: 50%;
+}
+
+.radarCircle3 {
+  width: 25%;
+  height: 25%;
+}
+
+/* Rotating Radar Sweep Line */
+.radarSweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(0, 212, 255, 0.15) 0deg,
+    rgba(0, 212, 255, 0.05) 90deg,
+    transparent 180deg
+  );
+  animation: rotateSweep 4s linear infinite;
+  z-index: 2;
+}
+
+/* Crosshairs in the center */
+.crosshairX {
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2) 20%, rgba(0, 212, 255, 0.2) 80%, transparent);
+}
+
+.crosshairY {
+  position: absolute;
+  height: 100%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.2) 20%, rgba(0, 212, 255, 0.2) 80%, transparent);
+}
+
+/* HUD Data overlays */
+.hudDataBox {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  width: 280px;
+  padding: 15px;
+  background: rgba(7, 18, 40, 0.7);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: 6px;
+  backdrop-filter: blur(5px);
+  z-index: 5;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #6b8cae;
+  font-family: monospace;
+}
+
+.hudDataBoxHeader {
+  color: #00d4ff;
+  font-weight: bold;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+  padding-bottom: 4px;
+}
+
+.terminalLogLine {
+  margin: 3px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.terminalLogLineGreen {
+  color: #30d158;
+}
+
+.terminalLogLineOrange {
+  color: #ff9500;
+}
+
+/* Warnings overlays */
+.hudWarningAlert {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-align: center;
+  z-index: 5;
+  box-shadow: 0 0 20px rgba(255, 59, 48, 0.15);
+  animation: warningPulse 1.5s infinite;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hudWarningAlertText {
+  color: #ff3b30;
+}
+
+/* Topographic City map representation */
+.cityGridOutline {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  opacity: 0.25;
+  z-index: 2;
+  transform: rotate(-10deg) scale(0.95);
+}
+
+.cityGridGridPath {
+  stroke: #00d4ff;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 3;
+}
+
+/* Logo Reveal Container */
+.brandContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.logoGlowRing {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logoGlowRing::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.2) 0%, transparent 70%);
+  filter: blur(10px);
+}
+
+.logoTitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.8rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  margin-top: 25px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #ffffff 20%, #00d4ff 60%, #0066ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 40px rgba(0, 212, 255, 0.4);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.logoSubtitle {
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  color: #6b8cae;
+  text-transform: uppercase;
+  text-align: center;
+  opacity: 0.85;
+}
+
+/* Skip Intro button styling */
+.skipBtn {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  background: rgba(10, 26, 54, 0.6);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  padding: 8px 18px;
+  border-radius: 9999px;
+  color: #6b8cae;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.2s ease;
+  font-family: monospace;
+}
+
+.skipBtn:hover {
+  background: rgba(0, 212, 255, 0.15);
+  border-color: #00d4ff;
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Canvas styling */
+.rainCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.65;
+}
+
+/* Animations declarations */
+@keyframes rotateSweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes warningPulse {
+  0%, 100% {
+    background-color: rgba(255, 59, 48, 0.05);
+    border: 1px solid rgba(255, 59, 48, 0.2);
+  }
+  50% {
+    background-color: rgba(255, 59, 48, 0.18);
+    border: 1px solid rgba(255, 59, 48, 0.6);
+  }
+}
+
+/* Scanning line overlay */
+.scanlineBar {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.25) 50%, transparent);
+  animation: scanMove 4s ease-in-out infinite;
+  z-index: 3;
+}
+
+@keyframes scanMove {
+  0% { top: 0%; opacity: 0; }
+  5% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .radarContainer {
+    width: 300px;
+    height: 300px;
+  }
+  .cityGridOutline {
+    width: 320px;
+    height: 320px;
+  }
+  .logoTitle {
+    font-size: 1.8rem;
+    letter-spacing: 0.15em;
+  }
+  .logoSubtitle {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+  }
+  .hudDataBox {
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    width: auto;
+  }
+  .hudWarningAlert {
+    width: calc(100% - 40px);
+    font-size: 10px;
+    padding: 8px 12px;
+  }
+}

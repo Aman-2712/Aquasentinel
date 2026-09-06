@@ -1,34 +1,34 @@
-'use client';
+﻿'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { FIELD_SHIELDS, type RiskLevel, type FloodZone, type AlertData, type RouteOption } from '@/data/visakhapatnam_zones';
 
 export interface WeatherForecastItem {
   day: string;
-  rainfall: number; // daily total rain in mm
+  rainfall: number;
   risk: RiskLevel;
-  temp: number; // Max temperature °C
-  tempMax: number; // High °C
-  tempMin: number; // Low °C
-  feelsLikeMax: number; // Apparent Max °C
-  conditionLabel: string; // e.g. "Sunny & Clear", "Mostly Cloudy", "Heavy Rain"
-  conditionEmoji: string; // e.g. "☀️", "⛅", "🌧️", "⛈️"
-  predictionSummary: string; // e.g. "High heat index in afternoon", "Cloudburst risk by evening"
+  temp: number;
+  tempMax: number;
+  tempMin: number;
+  feelsLikeMax: number;
+  conditionLabel: string;
+  conditionEmoji: string;
+  predictionSummary: string;
 }
 
 export interface WeatherData {
   current: {
-    temp: number; // Air temp °C
-    feelsLike: number; // Apparent feels like °C
+    temp: number;
+    feelsLike: number;
     humidity: number;
-    rainfall: number; // precipitation mm/h
+    rainfall: number;
     windSpeed: number;
     condition: string;
     visibility: number;
     pressure: number;
-    soilMoisture: number; // calculated soil moisture index (0 to 1)
-    surfaceTemp: number; // Heat wave sensor land surface temp
-    ambientTemp: number; // Air temp
-    heatIndex: number; // Calculated heat stress index
+    soilMoisture: number;
+    surfaceTemp: number;
+    ambientTemp: number;
+    heatIndex: number;
     conditionLabel: string;
     conditionEmoji: string;
     predictionSummary: string;
@@ -46,11 +46,22 @@ export interface AuthorityBroadcast {
   active: boolean;
 }
 
+export interface IncidentReport {
+  id: string;
+  area: string;
+  type: string;
+  severity: string;
+  desc: string;
+  time: string;
+  status: 'pending' | 'in-progress' | 'resolved';
+}
+
 interface FloodDataContextType {
   weatherData: WeatherData;
   zones: FloodZone[];
   alerts: AlertData[];
   broadcastAlerts: AuthorityBroadcast[];
+  incidentReports: IncidentReport[];
   safeRoutes: RouteOption[];
   fieldShields: typeof FIELD_SHIELDS;
   isLoading: boolean;
@@ -60,11 +71,11 @@ interface FloodDataContextType {
   refreshWeather: () => Promise<void>;
   sendAuthorityBroadcast: (broadcast: { area: string; risk: RiskLevel; message: string }) => void;
   dismissBroadcast: (id: string) => void;
+  addIncidentReport: (report: { area: string; type: string; severity: string; desc: string }) => void;
 }
 
 const FloodDataContext = createContext<FloodDataContextType | null>(null);
 
-// Static topography constants for Visakhapatnam zones
 const ZONE_METADATA = {
   'poorna-market': { elevationMultiplier: 2.0, drainageCapacity: 5.0, popDensity: 24500, coordinates: [[17.701, 83.295], [17.701, 83.302], [17.696, 83.302], [17.696, 83.295]], center: [17.6983, 83.2984], roads: ['Old Town Road', 'Jagadamba Junction'], name: 'Poorna Market', area: 'Old Town' },
   'gajuwaka': { elevationMultiplier: 1.5, drainageCapacity: 10.0, popDensity: 31000, coordinates: [[17.692, 83.205], [17.692, 83.214], [17.681, 83.214], [17.681, 83.205]], center: [17.6867, 83.2095], roads: ['Gajuwaka Main Road', 'Steel Plant Road'], name: 'Gajuwaka', area: 'Industrial Zone' },
@@ -100,143 +111,34 @@ const getWeatherConditionDetails = (code: number, rainfall: number, temp: number
       predictionSummary: 'Intermittent light rain showers with wet road surface conditions.',
     };
   }
-  if (code === 45 || code === 48) {
-    return {
-      conditionLabel: 'Dense Fog & Low Visibility',
-      conditionEmoji: '🌫️',
-      predictionSummary: 'Morning mist and reduced visibility along Beach Road corridors.',
-    };
-  }
-  if (code >= 1 && code <= 3) {
-    return {
-      conditionLabel: 'Mostly Cloudy & Overcast',
-      conditionEmoji: '⛅',
-      predictionSummary: 'Thick cloud cover over coastal basins with mild sea breeze.',
-    };
-  }
-  if (temp >= 34) {
-    return {
-      conditionLabel: 'Sunny & Heatwave Advisory',
-      conditionEmoji: '☀️',
-      predictionSummary: 'High surface temperature peak with intense solar radiation.',
-    };
-  }
   return {
-    conditionLabel: 'Clear & Sunny Weather',
+    conditionLabel: 'Clear & Normal Hydrology',
     conditionEmoji: '☀️',
-    predictionSummary: 'Bright sunny skies, dry soil, and normal municipal drainage flow.',
+    predictionSummary: 'Standard municipal drainage levels. No flooding expected.',
   };
-};
-
-// Weather mock datasets for simulation controls
-const SIMULATED_WEATHER = {
-  monsoon: {
-    current: {
-      temp: 26.1,
-      feelsLike: 31.0,
-      humidity: 95,
-      rainfall: 65,
-      windSpeed: 48,
-      condition: 'Heavy Monsoon Rain',
-      visibility: 1.8,
-      pressure: 994,
-      soilMoisture: 0.85,
-      surfaceTemp: 29.5,
-      ambientTemp: 26.1,
-      heatIndex: 31.0,
-      conditionLabel: 'Heavy Monsoon Downpour',
-      conditionEmoji: '🌧️',
-      predictionSummary: 'Torrential rains expected to saturate low drainage basins across Poorna Market and Gajuwaka.',
-    },
-    forecast: [
-      { day: 'Today', rainfall: 65, risk: 'high' as RiskLevel, temp: 26, tempMax: 28.8, tempMin: 24.2, feelsLikeMax: 34.1, conditionLabel: 'Heavy Monsoon Downpour', conditionEmoji: '🌧️', predictionSummary: 'Severe waterlogging risk in low-lying basins' },
-      { day: 'Tomorrow', rainfall: 82, risk: 'high' as RiskLevel, temp: 25, tempMax: 27.5, tempMin: 23.8, feelsLikeMax: 32.5, conditionLabel: 'Severe Cloudburst Risk', conditionEmoji: '⛈️', predictionSummary: 'Peak rain intensity with gale force coastal winds' },
-      { day: 'Day 3', rainfall: 45, risk: 'medium' as RiskLevel, temp: 27, tempMax: 29.2, tempMin: 24.5, feelsLikeMax: 33.8, conditionLabel: 'Continuous Heavy Rain', conditionEmoji: '🌧️', predictionSummary: 'Sustained precipitation and runoff in river basins' },
-      { day: 'Day 4', rainfall: 20, risk: 'medium' as RiskLevel, temp: 29, tempMax: 30.5, tempMin: 25.1, feelsLikeMax: 35.2, conditionLabel: 'Moderate Rain Showers', conditionEmoji: '🌦️', predictionSummary: 'Gradual easing of monsoon trough over coastal Vizag' },
-      { day: 'Day 5', rainfall: 10, risk: 'low' as RiskLevel, temp: 30, tempMax: 31.8, tempMin: 25.8, feelsLikeMax: 36.4, conditionLabel: 'Light Drizzle & Clouds', conditionEmoji: '⛅', predictionSummary: 'Scattered light showers with improving visibility' },
-      { day: 'Day 6', rainfall: 5, risk: 'low' as RiskLevel, temp: 31, tempMax: 32.4, tempMin: 26.0, feelsLikeMax: 37.1, conditionLabel: 'Partly Cloudy', conditionEmoji: '🌤️', predictionSummary: 'Mild weather with partial sunshine returning' },
-      { day: 'Day 7', rainfall: 12, risk: 'low' as RiskLevel, temp: 29, tempMax: 30.1, tempMin: 25.2, feelsLikeMax: 34.8, conditionLabel: 'Passing Coastal Showers', conditionEmoji: '🌦️', predictionSummary: 'Brief coastal drizzle, normal road conditions' },
-    ]
-  },
-  flash_flood: {
-    current: {
-      temp: 25.0,
-      feelsLike: 29.5,
-      humidity: 98,
-      rainfall: 115,
-      windSpeed: 56,
-      condition: 'Cloudburst Downpour',
-      visibility: 0.8,
-      pressure: 988,
-      soilMoisture: 0.98,
-      surfaceTemp: 27.0,
-      ambientTemp: 25.0,
-      heatIndex: 29.5,
-      conditionLabel: 'Severe Cloudburst & Thunderstorm',
-      conditionEmoji: '⛈️',
-      predictionSummary: 'CRITICAL: Extreme cloudburst rain causing rapid urban submersion and flash floods.',
-    },
-    forecast: [
-      { day: 'Today', rainfall: 115, risk: 'high' as RiskLevel, temp: 25, tempMax: 26.5, tempMin: 23.0, feelsLikeMax: 30.2, conditionLabel: 'Severe Cloudburst & Thunderstorm', conditionEmoji: '⛈️', predictionSummary: 'Flash flood alert active. Low-lying roads submerged.' },
-      { day: 'Tomorrow', rainfall: 120, risk: 'high' as RiskLevel, temp: 24, tempMax: 25.8, tempMin: 22.5, feelsLikeMax: 29.8, conditionLabel: 'Torrential Cyclone Downpour', conditionEmoji: '⛈️', predictionSummary: 'Maximum water depth peak across all coastal wards' },
-      { day: 'Day 3', rainfall: 75, risk: 'high' as RiskLevel, temp: 26, tempMax: 27.8, tempMin: 24.0, feelsLikeMax: 32.1, conditionLabel: 'Heavy Monsoon Storm', conditionEmoji: '🌧️', predictionSummary: 'High soil saturation preventing drainage discharge' },
-      { day: 'Day 4', rainfall: 35, risk: 'medium' as RiskLevel, temp: 28, tempMax: 29.5, tempMin: 24.8, feelsLikeMax: 34.0, conditionLabel: 'Moderate Rain Showers', conditionEmoji: '🌦️', predictionSummary: 'Drainage pumps active, slow water level recession' },
-      { day: 'Day 5', rainfall: 15, risk: 'low' as RiskLevel, temp: 30, tempMax: 31.2, tempMin: 25.5, feelsLikeMax: 35.8, conditionLabel: 'Scattered Showers', conditionEmoji: '⛅', predictionSummary: 'Weather stabilizing, main evacuation routes clear' },
-      { day: 'Day 6', rainfall: 2, risk: 'low' as RiskLevel, temp: 32, tempMax: 33.0, tempMin: 26.0, feelsLikeMax: 38.0, conditionLabel: 'Mostly Sunny', conditionEmoji: '☀️', predictionSummary: 'Clear skies returning across northern districts' },
-      { day: 'Day 7', rainfall: 8, risk: 'low' as RiskLevel, temp: 31, tempMax: 32.1, tempMin: 25.8, feelsLikeMax: 36.5, conditionLabel: 'Light Afternoon Drizzle', conditionEmoji: '🌦️', predictionSummary: 'Routine weather pattern, safe hydrology' },
-    ]
-  },
-  clear: {
-    current: {
-      temp: 36.2,
-      feelsLike: 42.5,
-      humidity: 65,
-      rainfall: 0,
-      windSpeed: 12,
-      condition: 'Sunny & Heatwave Advisory',
-      visibility: 10.0,
-      pressure: 1012,
-      soilMoisture: 0.15,
-      surfaceTemp: 44.8,
-      ambientTemp: 36.2,
-      heatIndex: 42.5,
-      conditionLabel: 'Sunny & Heatwave Advisory',
-      conditionEmoji: '☀️',
-      predictionSummary: 'Bright sunny skies with elevated land surface heat index and dry agricultural topsoil.',
-    },
-    forecast: [
-      { day: 'Today', rainfall: 0, risk: 'low' as RiskLevel, temp: 36, tempMax: 36.2, tempMin: 26.5, feelsLikeMax: 42.5, conditionLabel: 'Sunny & Heatwave Advisory', conditionEmoji: '☀️', predictionSummary: 'Intense sunshine with high surface temperature' },
-      { day: 'Tomorrow', rainfall: 0, risk: 'low' as RiskLevel, temp: 37, tempMax: 37.4, tempMin: 27.1, feelsLikeMax: 43.8, conditionLabel: 'Hot & Clear Skies', conditionEmoji: '☀️', predictionSummary: 'Maximum thermal radiation, stay hydrated' },
-      { day: 'Day 3', rainfall: 0, risk: 'low' as RiskLevel, temp: 35, tempMax: 35.8, tempMin: 26.0, feelsLikeMax: 40.5, conditionLabel: 'Sunny with Warm Breeze', conditionEmoji: '☀️', predictionSummary: 'Clear coastal weather, zero rain threat' },
-      { day: 'Day 4', rainfall: 0, risk: 'low' as RiskLevel, temp: 34, tempMax: 34.5, tempMin: 25.8, feelsLikeMax: 39.2, conditionLabel: 'Mostly Sunny', conditionEmoji: '🌤️', predictionSummary: 'Pleasant clear weather across all urban zones' },
-      { day: 'Day 5', rainfall: 1, risk: 'low' as RiskLevel, temp: 33, tempMax: 33.8, tempMin: 25.2, feelsLikeMax: 38.0, conditionLabel: 'Fair & Partly Cloudy', conditionEmoji: '⛅', predictionSummary: 'Light cloud cover bringing mild shade' },
-      { day: 'Day 6', rainfall: 3, risk: 'low' as RiskLevel, temp: 32, tempMax: 32.9, tempMin: 24.8, feelsLikeMax: 36.8, conditionLabel: 'Scattered Light Clouds', conditionEmoji: '⛅', predictionSummary: 'Comfortable weather, optimal soil moisture' },
-      { day: 'Day 7', rainfall: 0, risk: 'low' as RiskLevel, temp: 32, tempMax: 32.5, tempMin: 24.5, feelsLikeMax: 36.2, conditionLabel: 'Clear & Sunny Weather', conditionEmoji: '☀️', predictionSummary: 'Dry skies and safe urban hydrology' },
-    ]
-  }
 };
 
 const DEFAULT_WEATHER: WeatherData = {
   current: {
-    temp: 26.1,
-    feelsLike: 31.0,
-    humidity: 82,
-    rainfall: 0,
-    windSpeed: 15,
-    condition: 'Partly Cloudy',
-    visibility: 8.0,
-    pressure: 1008,
-    soilMoisture: 0.35,
-    surfaceTemp: 29.8,
-    ambientTemp: 26.1,
-    heatIndex: 31.0,
-    conditionLabel: 'Partly Cloudy & Fair',
-    conditionEmoji: '⛅',
-    predictionSummary: 'Pleasant weather with mild sea breeze and safe drainage levels.',
+    temp: 32.6,
+    feelsLike: 38.2,
+    humidity: 84,
+    rainfall: 48.5,
+    windSpeed: 24,
+    condition: 'Heavy Monsoon Downpour',
+    visibility: 2.8,
+    pressure: 1004,
+    soilMoisture: 0.85,
+    surfaceTemp: 34.2,
+    ambientTemp: 32.6,
+    heatIndex: 38.2,
+    conditionLabel: 'Heavy Rain Showers',
+    conditionEmoji: '🌧️',
+    predictionSummary: 'Cloudburst precipitation detected over Poorna Market and Gajuwaka basins.',
   },
   forecast: [
-    { day: 'Today', rainfall: 10.9, risk: 'low', temp: 32, tempMax: 31.9, tempMin: 24.2, feelsLikeMax: 35.6, conditionLabel: 'Partly Cloudy & Fair', conditionEmoji: '⛅', predictionSummary: 'Mild weather with light sea breeze' },
-    { day: 'Tomorrow', rainfall: 47.1, risk: 'high', temp: 29, tempMax: 28.8, tempMin: 24.9, feelsLikeMax: 34.1, conditionLabel: 'Heavy Monsoon Downpour', conditionEmoji: '🌧️', predictionSummary: 'Heavy precipitation in low-lying market basins' },
+    { day: 'Today', rainfall: 48.5, risk: 'high', temp: 32, tempMax: 32.6, tempMin: 26.4, feelsLikeMax: 38.2, conditionLabel: 'Heavy Monsoon Downpour', conditionEmoji: '🌧️', predictionSummary: 'Severe rainfall with flash flood alerts in low elevation basins' },
+    { day: 'Tomorrow', rainfall: 12.4, risk: 'medium', temp: 31, tempMax: 31.0, tempMin: 25.8, feelsLikeMax: 36.4, conditionLabel: 'Moderate Rain Showers', conditionEmoji: '🌦️', predictionSummary: 'Intermittent downpours, gradual water recession' },
     { day: 'Day 3', rainfall: 0.6, risk: 'low', temp: 32, tempMax: 31.7, tempMin: 25.2, feelsLikeMax: 36.6, conditionLabel: 'Passing Light Drizzle', conditionEmoji: '🌦️', predictionSummary: 'Brief morning drizzle, dry by afternoon' },
     { day: 'Day 4', rainfall: 1.4, risk: 'low', temp: 33, tempMax: 32.5, tempMin: 25.1, feelsLikeMax: 38.5, conditionLabel: 'Light Rain & Clouds', conditionEmoji: '🌦️', predictionSummary: 'Intermittent rain showers, clear roads' },
     { day: 'Day 5', rainfall: 0.9, risk: 'low', temp: 33, tempMax: 33.2, tempMin: 26.2, feelsLikeMax: 39.6, conditionLabel: 'Mostly Sunny', conditionEmoji: '🌤️', predictionSummary: 'Clearing skies with warm sunshine' },
@@ -245,29 +147,144 @@ const DEFAULT_WEATHER: WeatherData = {
   ]
 };
 
+const SIMULATED_WEATHER: Record<'monsoon' | 'flash_flood' | 'clear', WeatherData> = {
+  monsoon: {
+    current: {
+      temp: 29.5,
+      feelsLike: 35.1,
+      humidity: 89,
+      rainfall: 32.5,
+      windSpeed: 28,
+      condition: 'Heavy Monsoon Downpour',
+      visibility: 3.5,
+      pressure: 1002,
+      soilMoisture: 0.78,
+      surfaceTemp: 31.0,
+      ambientTemp: 29.5,
+      heatIndex: 35.1,
+      conditionLabel: 'Monsoon Downpour',
+      conditionEmoji: '🌧️',
+      predictionSummary: 'Continuous heavy rainfall across coastal drainage basins.',
+    },
+    forecast: DEFAULT_WEATHER.forecast,
+  },
+  flash_flood: {
+    current: {
+      temp: 27.8,
+      feelsLike: 33.5,
+      humidity: 95,
+      rainfall: 72.0,
+      windSpeed: 45,
+      condition: 'Severe Cloudburst & Cyclone Storm',
+      visibility: 1.0,
+      pressure: 994,
+      soilMoisture: 0.95,
+      surfaceTemp: 29.0,
+      ambientTemp: 27.8,
+      heatIndex: 33.5,
+      conditionLabel: 'Severe Cloudburst',
+      conditionEmoji: '⛈️',
+      predictionSummary: 'CRITICAL: Severe cloudburst rain with high inundation risk & storm surges.',
+    },
+    forecast: DEFAULT_WEATHER.forecast,
+  },
+  clear: {
+    current: {
+      temp: 33.4,
+      feelsLike: 38.8,
+      humidity: 62,
+      rainfall: 0.0,
+      windSpeed: 12,
+      condition: 'Clear & Sunny Weather',
+      visibility: 10.0,
+      pressure: 1012,
+      soilMoisture: 0.25,
+      surfaceTemp: 37.2,
+      ambientTemp: 33.4,
+      heatIndex: 38.8,
+      conditionLabel: 'Clear & Sunny',
+      conditionEmoji: '☀️',
+      predictionSummary: 'Sunny skies. Municipal drainage channels clear and dry.',
+    },
+    forecast: DEFAULT_WEATHER.forecast,
+  },
+};
+
+const DEFAULT_BROADCASTS: AuthorityBroadcast[] = [
+  {
+    id: 'b-init-1',
+    sender: 'Visakhapatnam Disaster Management Authority (VDMA)',
+    area: 'Poorna Market & Gajuwaka Basins',
+    risk: 'medium',
+    message: 'MUNICIPAL ADVISORY: Drainage pumps engaged at Gajuwaka junction. Keep emergency battery packs charged.',
+    timestamp: '10 mins ago',
+    active: true,
+  }
+];
+
+const DEFAULT_INCIDENTS: IncidentReport[] = [
+  { id: 'i1', area: 'Poorna Market', type: 'Road Flooding', severity: 'Critical', desc: 'Main road submerged. 20+ vehicles stuck. Immediate rescue needed.', time: '8 min ago', status: 'in-progress' },
+  { id: 'i2', area: 'Gajuwaka', type: 'People Trapped', severity: 'High', desc: 'Family of 4 trapped on second floor. Water level rising.', time: '15 min ago', status: 'in-progress' },
+  { id: 'i3', area: 'MVP Colony', type: 'Drainage Overflow', severity: 'Medium', desc: 'Storm drain overflowing near sector 5. Road partially blocked.', time: '30 min ago', status: 'pending' },
+  { id: 'i4', area: 'PM Palem', type: 'Waterlogging', severity: 'Low', desc: 'Minor waterlogging near bus stand. Passable on foot.', time: '1 hr ago', status: 'resolved' },
+];
+
 export function FloodDataProvider({ children }: { children: React.ReactNode }) {
   const [weatherMode, setWeatherMode] = useState<'live' | 'monsoon' | 'flash_flood' | 'clear'>('live');
   const [weatherData, setWeatherData] = useState<WeatherData>(DEFAULT_WEATHER);
   const [zones, setZones] = useState<FloodZone[]>([]);
   const [alerts, setAlerts] = useState<AlertData[]>([]);
-  const [broadcastAlerts, setBroadcastAlerts] = useState<AuthorityBroadcast[]>([
-    {
-      id: 'b-init-1',
-      sender: 'Visakhapatnam Disaster Management Authority (VDMA)',
-      area: 'Poorna Market & Gajuwaka Basins',
-      risk: 'medium',
-      message: 'MUNICIPAL ADVISORY: Drainage pumps engaged at Gajuwaka junction. Keep emergency battery packs charged.',
-      timestamp: '10 mins ago',
-      active: true,
-    }
-  ]);
+  const [broadcastAlerts, setBroadcastAlerts] = useState<AuthorityBroadcast[]>(DEFAULT_BROADCASTS);
+  const [incidentReports, setIncidentReports] = useState<IncidentReport[]>(DEFAULT_INCIDENTS);
   const [safeRoutes, setSafeRoutes] = useState<RouteOption[]>([]);
   const [fieldShields, setFieldShields] = useState<typeof FIELD_SHIELDS>(FIELD_SHIELDS);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Dynamic predictions calculator representing XGBoost inference logic
+  // Load persisted broadcasts and incidents on mount & listen for cross-tab realtime updates
+  useEffect(() => {
+    try {
+      const storedBroadcasts = localStorage.getItem('aquasentinel_broadcasts');
+      if (storedBroadcasts) {
+        setBroadcastAlerts(JSON.parse(storedBroadcasts));
+      }
+      const storedIncidents = localStorage.getItem('aquasentinel_incidents');
+      if (storedIncidents) {
+        setIncidentReports(JSON.parse(storedIncidents));
+      }
+    } catch (e) {}
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('aquasentinel_alert_channel');
+        bc.onmessage = (event) => {
+          if (event.data?.type === 'UPDATE_BROADCASTS') {
+            setBroadcastAlerts(event.data.payload);
+          }
+          if (event.data?.type === 'UPDATE_INCIDENTS') {
+            setIncidentReports(event.data.payload);
+          }
+        };
+      }
+    } catch (e) {}
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'aquasentinel_broadcasts' && e.newValue) {
+        try { setBroadcastAlerts(JSON.parse(e.newValue)); } catch (err) {}
+      }
+      if (e.key === 'aquasentinel_incidents' && e.newValue) {
+        try { setIncidentReports(JSON.parse(e.newValue)); } catch (err) {}
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      if (bc) bc.close();
+    };
+  }, []);
+
   const calculateFloodPrediction = (currentRain: number, soilMoisture: number) => {
-    // 1. Calculate zone water depth & risk
     const calculatedZones: FloodZone[] = Object.entries(ZONE_METADATA).map(([id, meta]) => {
       const waterDepth = Math.max(
         0,
@@ -300,7 +317,6 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
       };
     });
 
-    // 2. Generate active alerts based on risk levels
     const activeAlerts: AlertData[] = [];
     calculatedZones.forEach(zone => {
       if (zone.risk === 'high') {
@@ -350,7 +366,6 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
       });
     }
 
-    // 3. Dynamic route planning risk evaluation
     const getZoneDepth = (id: string) => calculatedZones.find(z => z.id === id)?.waterDepth || 0;
     const calculateRouteRisk = (depth: number): RiskLevel => {
       if (depth > 55) return 'high';
@@ -425,7 +440,6 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Live Mode: Fetch real-time Visakhapatnam data from Open-Meteo API
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000);
 
@@ -448,34 +462,33 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         const currentHourStr = new Date().toISOString().substring(0, 13) + ':00';
         const hrIndex = data.hourly.time.indexOf(currentHourStr);
         if (hrIndex !== -1) {
-          soilMoistureVal = data.hourly.soil_moisture_0_to_1cm[hrIndex] || 0.35;
+          soilMoistureVal = Math.min(1.0, data.hourly.soil_moisture_0_to_1cm[hrIndex] * 2.5);
         }
       }
 
       const code = data.current?.weather_code || 0;
       const currDetails = getWeatherConditionDetails(code, rainVal, tempVal);
 
-      const forecastDays = ['Today', 'Tomorrow', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
-      const parsedForecast: WeatherForecastItem[] = forecastDays.map((day, idx) => {
-        const dailyRain = Math.round((data.daily?.precipitation_sum?.[idx] ?? 0) * 10) / 10;
-        const dailyTempMax = Math.round((data.daily?.temperature_2m_max?.[idx] ?? 30) * 10) / 10;
-        const dailyTempMin = Math.round((data.daily?.temperature_2m_min?.[idx] ?? 24) * 10) / 10;
-        const dailyFeelsMax = Math.round((data.daily?.apparent_temperature_max?.[idx] ?? 33) * 10) / 10;
+      const parsedForecast: WeatherForecastItem[] = (data.daily?.time || []).slice(0, 7).map((timeStr: string, idx: number) => {
+        const pSum = data.daily.precipitation_sum?.[idx] || 0;
+        const fRain = Math.round(pSum * 10) / 10;
+        const fMaxTemp = Math.round((data.daily.temperature_2m_max?.[idx] ?? 32) * 10) / 10;
+        const fMinTemp = Math.round((data.daily.temperature_2m_min?.[idx] ?? 25) * 10) / 10;
+        const dayName = idx === 0 ? 'Today' : idx === 1 ? 'Tomorrow' : `Day ${idx + 1}`;
+        const dayDetails = getWeatherConditionDetails(fRain > 20 ? 63 : 0, fRain, fMaxTemp);
 
         let risk: RiskLevel = 'low';
-        if (dailyRain > 60) risk = 'high';
-        else if (dailyRain > 20) risk = 'medium';
-
-        const dayDetails = getWeatherConditionDetails(idx === 0 ? code : dailyRain > 40 ? 95 : dailyRain > 15 ? 63 : dailyRain > 2 ? 51 : 0, dailyRain, dailyTempMax);
+        if (fRain > 35) risk = 'high';
+        else if (fRain > 10) risk = 'medium';
 
         return {
-          day,
-          rainfall: dailyRain,
+          day: dayName,
+          rainfall: fRain,
           risk,
-          temp: Math.round(dailyTempMax),
-          tempMax: dailyTempMax,
-          tempMin: dailyTempMin,
-          feelsLikeMax: dailyFeelsMax,
+          temp: fMaxTemp,
+          tempMax: fMaxTemp,
+          tempMin: fMinTemp,
+          feelsLikeMax: Math.round(fMaxTemp * 1.15),
           conditionLabel: dayDetails.conditionLabel,
           conditionEmoji: dayDetails.conditionEmoji,
           predictionSummary: dayDetails.predictionSummary,
@@ -515,11 +528,9 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Initial pre-calculation with default metrics so UI renders immediately without loading screen delay
     calculateFloodPrediction(DEFAULT_WEATHER.current.rainfall, DEFAULT_WEATHER.current.soilMoisture);
     setIsLoading(false);
     fetchWeatherData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weatherMode]);
 
   const sendAuthorityBroadcast = (broadcast: { area: string; risk: RiskLevel; message: string }) => {
@@ -532,11 +543,57 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
       timestamp: 'Just now',
       active: true,
     };
-    setBroadcastAlerts(prev => [newBroadcast, ...prev]);
+    setBroadcastAlerts(prev => {
+      const updated = [newBroadcast, ...prev];
+      try {
+        localStorage.setItem('aquasentinel_broadcasts', JSON.stringify(updated));
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('aquasentinel_alert_channel');
+          bc.postMessage({ type: 'UPDATE_BROADCASTS', payload: updated });
+          bc.close();
+        }
+      } catch (e) {}
+      return updated;
+    });
   };
 
   const dismissBroadcast = (id: string) => {
-    setBroadcastAlerts(prev => prev.filter(b => b.id !== id));
+    setBroadcastAlerts(prev => {
+      const updated = prev.filter(b => b.id !== id);
+      try {
+        localStorage.setItem('aquasentinel_broadcasts', JSON.stringify(updated));
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('aquasentinel_alert_channel');
+          bc.postMessage({ type: 'UPDATE_BROADCASTS', payload: updated });
+          bc.close();
+        }
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const addIncidentReport = (report: { area: string; type: string; severity: string; desc: string }) => {
+    const newIncident: IncidentReport = {
+      id: `inc-${Date.now()}`,
+      area: report.area,
+      type: report.type,
+      severity: report.severity.split(' – ')[0],
+      desc: report.desc,
+      time: 'Just now',
+      status: 'pending',
+    };
+    setIncidentReports(prev => {
+      const updated = [newIncident, ...prev];
+      try {
+        localStorage.setItem('aquasentinel_incidents', JSON.stringify(updated));
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('aquasentinel_alert_channel');
+          bc.postMessage({ type: 'UPDATE_INCIDENTS', payload: updated });
+          bc.close();
+        }
+      } catch (e) {}
+      return updated;
+    });
   };
 
   const triggerDeviceShield = async (id: string, action: 'deploy' | 'idle') => {
@@ -562,6 +619,7 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         zones,
         alerts,
         broadcastAlerts,
+        incidentReports,
         safeRoutes,
         fieldShields,
         isLoading,
@@ -571,6 +629,7 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         refreshWeather: fetchWeatherData,
         sendAuthorityBroadcast,
         dismissBroadcast,
+        addIncidentReport,
       }}
     >
       {children}

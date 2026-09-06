@@ -7,30 +7,53 @@ import {
   Droplets, Menu, X
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { ROLE_DASHBOARD } from '@/context/AuthContext';
 import { useState } from 'react';
 import styles from './Sidebar.module.css';
 
-const MODULE1_NAV = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Flood Map', href: '/map', icon: Map },
+const CITIZEN_NAV = [
+  { label: 'Dashboard', href: '/citizen/dashboard', icon: LayoutDashboard },
+  { label: 'Live Map AI', href: '/map', icon: Map },
   { label: 'Safe Routes', href: '/safe-routes', icon: Navigation },
   { label: 'Alerts', href: '/alerts', icon: Bell, badge: 5 },
   { label: 'Predictions', href: '/predictions', icon: BarChart3 },
   { label: 'Incident Report', href: '/incident', icon: FileText },
 ];
 
-const MODULE2_NAV = [
+const FARMER_NAV = [
+  { label: 'Farmer Dashboard', href: '/farmer/dashboard', icon: LayoutDashboard },
+  { label: 'Live Map AI', href: '/map', icon: Map },
   { label: 'FieldShield', href: '/fieldshield', icon: Shield },
   { label: 'Shield Status', href: '/fieldshield/status', icon: Activity },
+  { label: 'Alerts', href: '/alerts', icon: Bell, badge: 5 },
+  { label: 'Predictions', href: '/predictions', icon: BarChart3 },
 ];
+
+const AUTHORITY_NAV = [
+  { label: 'Command Center', href: '/authority/dashboard', icon: LayoutDashboard },
+  { label: 'Live Map AI', href: '/map', icon: Map },
+  { label: 'Alerts', href: '/alerts', icon: Bell, badge: 5 },
+  { label: 'Predictions', href: '/predictions', icon: BarChart3 },
+  { label: 'Incident Reports', href: '/incident', icon: FileText },
+];
+
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const NavItem = ({ item }: { item: typeof MODULE1_NAV[0] }) => {
-    const isActive = pathname === item.href;
+  // Pick navigation items based on user's role
+  const navItems = user?.role === 'farmer' ? FARMER_NAV
+    : user?.role === 'authority' ? AUTHORITY_NAV
+    : CITIZEN_NAV;
+
+  const roleLabel = user?.role === 'farmer' ? 'FieldShield'
+    : user?.role === 'authority' ? 'Command Center'
+    : '';
+
+  const NavItem = ({ item }: { item: typeof CITIZEN_NAV[0] }) => {
+    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
     const Icon = item.icon;
     return (
       <Link href={item.href} className={`${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setMobileOpen(false)}>
@@ -64,18 +87,10 @@ export default function Sidebar() {
         </div>
 
         <div className={styles.scrollArea}>
-          {/* Module 1 */}
+          {/* Role-specific navigation */}
           <div className={styles.section}>
-            <span className={styles.sectionLabel}>Module 1 – Intelligence</span>
-            {MODULE1_NAV.map(item => <NavItem key={item.href} item={item} />)}
-          </div>
-
-          <div className={styles.divider} />
-
-          {/* Module 2 */}
-          <div className={styles.section}>
-            <span className={styles.sectionLabel}>Module 2 – FieldShield</span>
-            {MODULE2_NAV.map(item => <NavItem key={item.href} item={item} />)}
+            {roleLabel && <span className={styles.sectionLabel}>{roleLabel}</span>}
+            {navItems.map(item => <NavItem key={item.href} item={item} />)}
           </div>
         </div>
 

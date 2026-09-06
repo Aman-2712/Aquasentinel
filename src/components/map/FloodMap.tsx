@@ -121,10 +121,10 @@ export default function FloodMap({ zones, routes, selectedRouteId, onSelectRoute
       });
       mapRef.current = m;
 
-      // Dark tile layer
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap contributors © CARTO',
-        subdomains: 'abcd',
+      // OpenStreetMap High-Detail Street Map Inverted to Pitch-Black (Zero API Key Required, Zero Watermarks)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        className: 'osm-black-map',
         maxZoom: 19,
       }).addTo(m);
 
@@ -399,7 +399,12 @@ export default function FloodMap({ zones, routes, selectedRouteId, onSelectRoute
       map.flyTo(selected.center, 14, { duration: 0.8 });
     }
 
-    return () => {};
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
   }, [zones, routes, selectedRouteId, onSelectRoute, selected, onSelect, radarMode]);
 
   return (
