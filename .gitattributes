@@ -1,0 +1,8 @@
+# Auto-detect text files and handle line endings consistently across Windows, Mac, and Linux
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mp4 binary
