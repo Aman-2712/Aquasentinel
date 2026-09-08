@@ -1,0 +1,85 @@
+/* ── FARMER FIELD SHIELD CONTROLS ── */
+.fieldShieldGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+@media (max-width: 1024px) { .fieldShieldGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .fieldShieldGrid { grid-template-columns: 1fr; } }
+
+.fieldShieldCard {
+  padding: 1.25rem;
+  border: 1px solid rgba(0, 255, 136, 0.25);
+  background: rgba(5, 20, 15, 0.6);
+  border-radius: var(--radius-lg, 14px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.fieldShieldCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 255, 136, 0.15);
+  border-color: rgba(0, 255, 136, 0.5);
+}
+
+.fieldShieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.fieldShieldName {
+  font-weight: 700;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.fieldShieldMeta {
+  font-size: 0.825rem;
+  color: var(--clr-text-muted);
+  margin: 0 0 1rem 0;
+}
+
+.fieldShieldActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.fieldShieldBtn {
+  flex: 1;
+  padding: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.fieldShieldBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fieldShieldBtnPrimary {
+  background: linear-gradient(135deg, #00ff88, #00b894);
+  color: #000;
+  border: none;
+}
+.fieldShieldBtnPrimary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+}
+
+.fieldShieldBtnSecondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.fieldShieldBtnSecondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
+}

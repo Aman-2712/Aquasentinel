@@ -35,7 +35,7 @@
 .gateCardGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
+  gap: 1.75rem;
 }
 @media (max-width: 860px) { .gateCardGrid { grid-template-columns: 1fr; } }
 
@@ -45,13 +45,13 @@
   border: 1px solid var(--clr-border);
   border-left: 4px solid transparent;
   border-radius: var(--radius-lg);
-  padding: 1.25rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0;
-  transition: box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
-.gateCard2:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.4); }
+.gateCard2:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); border-color: rgba(0,212,255,0.3); }
 
 /* ── WATER STATUS BOX ── */
 .waterStatusBox {
@@ -85,6 +85,11 @@
   border: 3px solid #000;
   box-shadow: 0 0 10px rgba(0,212,255,0.55);
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.gateSlider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 16px rgba(0,212,255,0.7);
 }
 .gateSlider:disabled::-webkit-slider-thumb {
   background: rgba(255,255,255,0.2);
@@ -98,3 +103,13 @@
   border: 3px solid #000;
   cursor: pointer;
 }
+
+/* ── BUTTON HOVER EFFECTS ── */
+.btn { transition: all 0.2s ease !important; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+.btn:active { transform: translateY(0); }
+.btn-primary:hover { background: linear-gradient(135deg, #00ff88, #00b894) !important; box-shadow: 0 6px 20px rgba(0,255,136,0.4) !important; }
+.btn-safe:hover { background: linear-gradient(135deg, #00ff88, #00b894) !important; box-shadow: 0 6px 20px rgba(0,255,136,0.4) !important; }
+.btn-ghost:hover { background: rgba(255,255,255,0.1) !important; color: #fff !important; box-shadow: 0 6px 20px rgba(255,255,255,0.1) !important; }
+.btn-outline:hover { background: rgba(255,255,255,0.08) !important; box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important; }
+.btn-secondary:hover { background: rgba(255,255,255,0.1) !important; box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important; }
