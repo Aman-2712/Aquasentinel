@@ -382,7 +382,6 @@ export default function FarmerDashboard() {
                     <Cpu size={20} color="#00ff88" />
                     <div>
                       <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#fff' }}>{fs.name}</h3>
-                      <span style={{ fontSize: '0.775rem', color: 'var(--clr-text-muted)' }}>{fs.location} • {fs.crop}</span>
                     </div>
                   </div>
                   <span className={`badge ${fs.shieldStatus === 'deployed' ? 'badge-safe' : 'badge-warning'}`}>

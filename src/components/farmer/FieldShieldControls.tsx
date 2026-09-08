@@ -4,10 +4,6 @@ import type { RiskLevel } from '@/data/visakhapatnam_zones';
 interface FieldShieldDevice {
   id: string;
   name: string;
-  farmer: string;
-  location: string;
-  area: string;
-  crop: string;
   risk: RiskLevel;
   shieldStatus: 'deployed' | 'idle' | 'error';
   waterLevel: number;
@@ -36,7 +32,7 @@ export default function FieldShieldControls({
             </span>
           </div>
           <p style={{ fontSize: '0.825rem', color: 'var(--clr-text-muted)', margin: '0 0 1rem 0' }}>
-            Location: {fs.location} • Crop: {fs.crop} • Area: {fs.area} • Soil Saturation: {fs.soilMoisture}%
+            Soil Saturation: {fs.soilMoisture}%
           </p>
 
           <div style={{ display: 'flex', gap: '0.5rem' }}>

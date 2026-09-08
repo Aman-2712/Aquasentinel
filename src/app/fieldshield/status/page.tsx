@@ -14,40 +14,38 @@ type GateState = 'open' | 'closed' | 'partial' | 'fault';
 interface Gate {
   id: string;
   fieldName: string;
-  location: string;
-  crop: string;
   deviceId: string;
   risk: 'high' | 'medium' | 'low';
   state: GateState;
-  openPercent: number;
-  pendingPercent: number;   // slider value before applying
-  waterDepth: number;       // cm — how much water is at the gate
+  waterDepth: number;
   autoMode: boolean;
   lastAction: string;
   online: boolean;
   batteryLevel: number;
+  sheetHeight: number;      // cm — height of the protective sheet
+  pendingHeight: number;    // slider value before applying
 }
 
 const INITIAL_GATES: Gate[] = [
   {
-    id: 'g1', fieldName: 'North Field – Paddy', location: 'Bheemunipatnam', crop: 'Paddy',
-    deviceId: 'ESP-001', risk: 'high', state: 'open', openPercent: 75, pendingPercent: 75,
+    id: 'g1', fieldName: 'North Face', deviceId: 'ESP-001', risk: 'high', state: 'open',
     waterDepth: 148, autoMode: true, lastAction: '12 min ago', online: true, batteryLevel: 87,
+    sheetHeight: 120, pendingHeight: 120,
   },
   {
-    id: 'g2', fieldName: 'South Field – Groundnut', location: 'Atchutapuram', crop: 'Groundnut',
-    deviceId: 'ESP-002', risk: 'medium', state: 'partial', openPercent: 40, pendingPercent: 40,
+    id: 'g2', fieldName: 'South Face', deviceId: 'ESP-002', risk: 'medium', state: 'partial',
     waterDepth: 74, autoMode: false, lastAction: '1 hr ago', online: true, batteryLevel: 72,
+    sheetHeight: 100, pendingHeight: 100,
   },
   {
-    id: 'g3', fieldName: 'East Field – Maize', location: 'Pendurthi', crop: 'Maize',
-    deviceId: 'ESP-003', risk: 'low', state: 'closed', openPercent: 0, pendingPercent: 0,
+    id: 'g3', fieldName: 'East Face', deviceId: 'ESP-003', risk: 'low', state: 'closed',
     waterDepth: 32, autoMode: true, lastAction: '6 hrs ago', online: true, batteryLevel: 91,
+    sheetHeight: 80, pendingHeight: 80,
   },
   {
-    id: 'g4', fieldName: 'West Field – Banana', location: 'Nakkapalle', crop: 'Banana',
-    deviceId: 'ESP-004', risk: 'high', state: 'fault', openPercent: 0, pendingPercent: 0,
+    id: 'g4', fieldName: 'West Face', deviceId: 'ESP-004', risk: 'high', state: 'fault',
     waterDepth: 112, autoMode: false, lastAction: '45 min ago', online: false, batteryLevel: 14,
+    sheetHeight: 90, pendingHeight: 90,
   },
 ];
 
@@ -56,13 +54,6 @@ function waterStatus(depth: number): { label: string; color: string; emoji: stri
   if (depth > 60)  return { label: 'High – Water rising fast',   color: '#ffaa00', emoji: '⚠️' };
   if (depth > 30)  return { label: 'Moderate – Keep watch',      color: '#ffea00', emoji: '🌊' };
   return               { label: 'Normal – All good',             color: '#00ff88', emoji: '✅' };
-}
-
-function gateLabel(state: GateState, openPercent: number): string {
-  if (state === 'fault')   return 'Device Error';
-  if (state === 'open')    return 'Gate Fully Open';
-  if (state === 'closed')  return 'Gate Closed';
-  return `Gate ${openPercent}% Open`;
 }
 
 function batteryColor(pct: number): string {
@@ -94,28 +85,26 @@ export default function GateControlPage() {
     await new Promise(r => setTimeout(r, 1800));
     setGates(prev => prev.map(g => {
       if (g.id !== id) return g;
-      if (action === 'open')  return { ...g, state: 'open',   openPercent: 100, pendingPercent: 100, lastAction: 'just now' };
-      if (action === 'close') return { ...g, state: 'closed', openPercent: 0,   pendingPercent: 0,   lastAction: 'just now' };
-      if (action === 'reset') return { ...g, state: 'closed', openPercent: 0,   pendingPercent: 0,   lastAction: 'just now', online: true };
+      if (action === 'open')  return { ...g, state: 'open',   lastAction: 'just now' };
+      if (action === 'close') return { ...g, state: 'closed', lastAction: 'just now' };
+      if (action === 'reset') return { ...g, state: 'closed', lastAction: 'just now', online: true };
       return g;
     }));
     setActing(null);
   };
 
-  const setPending = (id: string, val: number) => {
-    setGates(prev => prev.map(g => g.id === id ? { ...g, pendingPercent: val } : g));
+  const setPendingHeight = (id: string, val: number) => {
+    setGates(prev => prev.map(g => g.id === id ? { ...g, pendingHeight: val } : g));
   };
 
-  const applySlider = async (id: string) => {
+  const applyHeightSlider = async (id: string) => {
     const gate = gates.find(g => g.id === id);
     if (!gate) return;
     setActing(id);
     await new Promise(r => setTimeout(r, 1600));
     setGates(prev => prev.map(g => {
       if (g.id !== id) return g;
-      const pct = g.pendingPercent;
-      const newState: GateState = pct === 0 ? 'closed' : pct === 100 ? 'open' : 'partial';
-      return { ...g, openPercent: pct, state: newState, lastAction: 'just now' };
+      return { ...g, sheetHeight: g.pendingHeight, lastAction: 'just now' };
     }));
     setActing(null);
   };
@@ -197,7 +186,6 @@ export default function GateControlPage() {
           {gates.map(gate => {
             const ws = waterStatus(gate.waterDepth);
             const isActing = acting === gate.id;
-            const stateLabel = gateLabel(gate.state, gate.openPercent);
 
             return (
               <div
@@ -216,7 +204,7 @@ export default function GateControlPage() {
                       <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#fff' }}>{gate.fieldName}</h3>
                     </div>
                     <span style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)' }}>
-                      {gate.location} • {gate.crop} • {gate.deviceId}
+                      {gate.deviceId}
                     </span>
                   </div>
                   <span className={`badge ${gate.risk === 'high' ? 'badge-danger' : gate.risk === 'medium' ? 'badge-warning' : 'badge-safe'}`}>
@@ -257,7 +245,9 @@ export default function GateControlPage() {
                       background: gate.state === 'open' ? '#00ff88' : gate.state === 'fault' ? '#ff4444' : gate.state === 'partial' ? '#ffaa00' : '#00d4ff',
                       boxShadow: `0 0 6px ${gate.state === 'open' ? '#00ff88' : gate.state === 'fault' ? '#ff4444' : gate.state === 'partial' ? '#ffaa00' : '#00d4ff'}`,
                     }} />
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>{stateLabel}</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>
+                      {gate.state === 'open' ? 'Gate Fully Open' : gate.state === 'closed' ? 'Gate Closed' : gate.state === 'partial' ? 'Gate Partially Open' : 'Device Error'}
+                    </span>
                     <span style={{ fontSize: '0.7rem', color: 'var(--clr-text-muted)' }}>• {gate.lastAction}</span>
                   </div>
                   <span style={{ fontSize: '0.72rem', color: batteryColor(gate.batteryLevel) }}>
@@ -265,38 +255,38 @@ export default function GateControlPage() {
                   </span>
                 </div>
 
-                {/* ── GATE OPENING SLIDER ── */}
+                {/* ── SHEET HEIGHT ADJUSTMENT SLIDER ── */}
                 {gate.online && gate.state !== 'fault' && (
                   <div style={{
                     padding: '0.9rem 1rem',
-                    background: 'rgba(0,212,255,0.05)',
-                    border: '1px solid rgba(0,212,255,0.18)',
+                    background: 'rgba(0,255,136,0.05)',
+                    border: '1px solid rgba(0,255,136,0.18)',
                     borderRadius: '12px',
                     marginBottom: '0.85rem',
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
                       <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>
-                        🚪 How much to open the gate?
+                        📏 Sheet Height Adjustment
                       </span>
                       <span style={{
                         fontSize: '1rem', fontWeight: 800,
-                        color: gate.pendingPercent !== gate.openPercent ? '#ffaa00' : '#00d4ff',
-                        minWidth: '44px', textAlign: 'right',
+                        color: gate.pendingHeight !== gate.sheetHeight ? '#ffaa00' : '#00ff88',
+                        minWidth: '50px', textAlign: 'right',
                       }}>
-                        {gate.pendingPercent}%
+                        {gate.pendingHeight} cm
                       </span>
                     </div>
 
                     {/* Slider */}
                     <input
                       type="range"
-                      min={0} max={100} step={5}
-                      value={gate.pendingPercent}
+                      min={50} max={200} step={5}
+                      value={gate.pendingHeight}
                       disabled={gate.autoMode || isActing}
-                      onChange={e => setPending(gate.id, Number(e.target.value))}
+                      onChange={e => setPendingHeight(gate.id, Number(e.target.value))}
                       className={styles.gateSlider}
                       style={{
-                        '--fill': `${gate.pendingPercent}%`,
+                        '--fill': `${((gate.pendingHeight - 50) / 150) * 100}%`,
                         opacity: gate.autoMode ? 0.4 : 1,
                         cursor: gate.autoMode ? 'not-allowed' : 'pointer',
                       } as React.CSSProperties}
@@ -304,24 +294,23 @@ export default function GateControlPage() {
 
                     {/* Labels below slider */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--clr-text-muted)', marginTop: '0.3rem' }}>
-                      <span>Closed</span>
-                      <span>Quarter</span>
-                      <span>Half</span>
-                      <span>¾ Open</span>
-                      <span>Fully Open</span>
+                      <span>Low (50cm)</span>
+                      <span>Medium (100cm)</span>
+                      <span>High (150cm)</span>
+                      <span>Max (200cm)</span>
                     </div>
 
                     {/* Apply button — only shown when slider changed */}
-                    {gate.pendingPercent !== gate.openPercent && !gate.autoMode && (
+                    {gate.pendingHeight !== gate.sheetHeight && !gate.autoMode && (
                       <button
-                        className="btn btn-primary"
+                        className="btn btn-safe"
                         style={{ width: '100%', justifyContent: 'center', marginTop: '0.75rem', fontWeight: 700 }}
-                        onClick={() => applySlider(gate.id)}
+                        onClick={() => applyHeightSlider(gate.id)}
                         disabled={isActing}
                       >
                         {isActing
                           ? <><RefreshCw size={14} className={styles.spin} /> Applying...</>
-                          : `✅ Set Gate to ${gate.pendingPercent}%`
+                          : `✅ Set Sheet Height to ${gate.pendingHeight} cm`
                         }
                       </button>
                     )}
