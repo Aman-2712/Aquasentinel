@@ -251,19 +251,27 @@ export default function CitizenDashboard() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div className="grid-4">
             {weatherData.forecast.map(f => (
-              <div key={f.day} className={`card ${styles.forecastCard}`} style={{ padding: '1rem', textAlign: 'center' }}>
+              <div key={f.day} className={`card ${styles.forecastCard}`} style={{ padding: '1.1rem 1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ fontSize: '1.8rem', marginBottom: '0.25rem' }}>{f.conditionEmoji}</div>
-                <span className={styles.forecastDay}>{f.day}</span>
-                <div style={{ fontSize: '0.825rem', fontWeight: 600, color: '#00d4ff', margin: '0.35rem 0' }}>
+                <span className={styles.forecastDay} style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>{f.day}</span>
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#00d4ff', margin: '0.3rem 0' }}>
                   {f.conditionLabel}
                 </div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', margin: '0.2rem 0' }}>
+                <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', margin: '0.15rem 0' }}>
                   {f.tempMax}° / {f.tempMin}°C
                 </div>
-                <div className={styles.forecastRainVal}>{f.rainfall}<span>mm</span></div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)', marginBottom: '0.35rem' }}>
+                  Feels like {f.feelsLikeMax}°C
+                </div>
+                <div className={styles.forecastRainVal} style={{ fontSize: '1rem', margin: '0.2rem 0' }}>
+                  {f.rainfall}<span> mm</span>
+                </div>
                 <span className={`badge ${f.risk === 'high' ? 'badge-danger' : f.risk === 'medium' ? 'badge-warning' : 'badge-safe'}`} style={{ margin: '0.35rem auto' }}>
-                  {f.risk.toUpperCase()}
+                  {f.risk.toUpperCase()} RISK
                 </span>
+                <p style={{ fontSize: '0.725rem', color: 'var(--clr-text-muted)', margin: '0.4rem 0 0 0', lineHeight: 1.35 }}>
+                  {f.predictionSummary}
+                </p>
               </div>
             ))}
           </div>

@@ -1,0 +1,403 @@
+/* ========================================
+   AUTHORITY COMMAND CENTER PALETTE
+   Deep Navy + Steel Blue + Gold Accents
+   ======================================== */
+
+/* --- Tab Bar --- */
+.tabBar {
+  display: flex;
+  gap: 0.4rem;
+  border-bottom: 1px solid rgba(184, 196, 214, 0.1);
+  padding-bottom: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  background: rgba(184, 196, 214, 0.04);
+  color: rgba(184, 196, 214, 0.65);
+  border: 1px solid rgba(184, 196, 214, 0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.015em;
+}
+
+.tabBtn:hover {
+  background: rgba(184, 196, 214, 0.1);
+  color: #fff;
+  border-color: rgba(184, 196, 214, 0.2);
+}
+
+.tabBtnActive {
+  background: linear-gradient(135deg, rgba(212, 195, 156, 0.18), rgba(163, 140, 106, 0.12));
+  color: #d4c39c;
+  border-color: rgba(212, 195, 156, 0.4);
+  box-shadow: 0 0 18px rgba(212, 195, 156, 0.08);
+}
+
+.tabBadge {
+  font-size: 0.65rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 100, 80, 0.25);
+  color: #ff6450;
+  font-weight: 700;
+}
+
+/* --- Gauge Cards (top row) --- */
+.gaugeCard {
+  background: linear-gradient(145deg, rgba(14, 22, 40, 0.95), rgba(10, 17, 32, 0.98));
+  border: 1px solid rgba(148, 163, 191, 0.1);
+  border-radius: 18px;
+  padding: 1.2rem 1.35rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  transition: all 0.25s ease;
+}
+
+.gaugeCard:hover {
+  border-color: rgba(148, 163, 191, 0.2);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
+}
+
+.gaugeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.gaugeLabel {
+  font-size: 0.78rem;
+  color: rgba(184, 196, 214, 0.65);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.gaugeValue {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.gaugeStatus {
+  font-size: 0.73rem;
+  font-weight: 700;
+  margin-top: 0.3rem;
+  display: block;
+}
+
+/* --- Panel Card (used for sub-panels) --- */
+.panel {
+  background: linear-gradient(145deg, rgba(14, 22, 40, 0.95), rgba(10, 17, 32, 0.98));
+  border: 1px solid rgba(148, 163, 191, 0.1);
+  border-radius: 18px;
+  padding: 1.4rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  transition: all 0.25s ease;
+}
+
+.panel:hover {
+  border-color: rgba(148, 163, 191, 0.18);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.1rem;
+  border-bottom: 1px solid rgba(148, 163, 191, 0.08);
+  padding-bottom: 0.6rem;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #e4eaf4;
+}
+
+.panelSubtitle {
+  font-size: 0.775rem;
+  color: rgba(184, 196, 214, 0.55);
+}
+
+.panelIcon {
+  color: #94a3bf;
+}
+
+/* --- Zone Row --- */
+.zoneRow {
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.zoneRow:hover {
+  transform: translateX(3px);
+}
+
+.zoneRowHigh {
+  background: rgba(255, 80, 60, 0.07);
+  border: 1px solid rgba(255, 80, 60, 0.2);
+}
+
+.zoneRowMedium {
+  background: rgba(255, 170, 50, 0.07);
+  border: 1px solid rgba(255, 170, 50, 0.2);
+}
+
+.zoneRowLow {
+  background: rgba(60, 190, 120, 0.07);
+  border: 1px solid rgba(60, 190, 120, 0.2);
+}
+
+.zoneLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.zoneIndex {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(184, 196, 214, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.zoneName {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #e4eaf4;
+  display: block;
+}
+
+.zoneStats {
+  font-size: 0.73rem;
+  color: rgba(184, 196, 214, 0.55);
+}
+
+/* --- Water Level Stats --- */
+.waterStats {
+  padding: 1.1rem;
+  border-radius: 14px;
+  background: rgba(10, 16, 28, 0.6);
+  border: 1px solid rgba(148, 163, 191, 0.1);
+  margin-bottom: 1rem;
+}
+
+.waterStatLabel {
+  font-size: 0.8rem;
+  color: rgba(184, 196, 214, 0.55);
+}
+
+.waterStatValue {
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.waterStatSub {
+  font-size: 0.78rem;
+  margin-top: 0.35rem;
+  display: block;
+  font-weight: 600;
+}
+
+/* --- Weather Day Card --- */
+.dayCard {
+  padding: 0.65rem 0.35rem;
+  border-radius: 12px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.dayCardToday {
+  background: rgba(148, 163, 191, 0.08);
+  border: 1px solid rgba(148, 163, 191, 0.2);
+}
+
+.dayCardOther {
+  background: rgba(148, 163, 191, 0.02);
+  border: 1px solid rgba(148, 163, 191, 0.06);
+}
+
+.dayLabel {
+  font-size: 0.71rem;
+  color: rgba(184, 196, 214, 0.55);
+  display: block;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dayEmoji {
+  font-size: 1.2rem;
+  margin: 0.2rem 0;
+}
+
+.dayTemp {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e4eaf4;
+  display: block;
+}
+
+.dayRain {
+  font-size: 0.68rem;
+  color: #8ba8cc;
+  display: block;
+}
+
+/* --- Complaint Card --- */
+.complaintCard {
+  padding: 0.9rem;
+  border-radius: 14px;
+  background: rgba(14, 22, 40, 0.6);
+  border: 1px solid rgba(148, 163, 191, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.complaintCard:hover {
+  border-color: rgba(148, 163, 191, 0.15);
+}
+
+/* --- Alert Form --- */
+.alertFormInput {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(148, 163, 191, 0.06);
+  border: 1px solid rgba(148, 163, 191, 0.15);
+  color: #e4eaf4;
+  font-size: 0.82rem;
+  transition: all 0.2s ease;
+}
+
+.alertFormInput:focus {
+  border-color: #8ba8cc;
+  background: rgba(148, 163, 191, 0.1);
+  box-shadow: 0 0 0 2px rgba(148, 163, 191, 0.12);
+}
+
+.audienceBtn {
+  padding: 0.35rem;
+  border-radius: 8px;
+  background: rgba(148, 163, 191, 0.05);
+  border: 1px solid rgba(148, 163, 191, 0.08);
+  color: rgba(184, 196, 214, 0.65);
+  font-size: 0.72rem;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.audienceBtnActive {
+  background: rgba(212, 195, 156, 0.15);
+  border-color: rgba(212, 195, 156, 0.4);
+  color: #d4c39c;
+}
+
+.audienceBtn:hover:not(.audienceBtnActive) {
+  background: rgba(148, 163, 191, 0.1);
+  color: #e4eaf4;
+}
+
+/* --- Dispatch Button --- */
+.dispatchBtn {
+  width: 100%;
+  background: linear-gradient(135deg, #8ba8cc, #5a7fa8);
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid rgba(148, 163, 191, 0.4);
+  box-shadow: 0 4px 18px rgba(90, 127, 168, 0.25);
+  transition: all 0.2s ease;
+}
+
+.dispatchBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(90, 127, 168, 0.4);
+}
+
+/* --- Dispatch Success --- */
+.dispatchSuccess {
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(60, 190, 120, 0.1);
+  border: 1px solid rgba(60, 190, 120, 0.3);
+  color: #3cbe78;
+  font-size: 0.78rem;
+  margin-bottom: 0.75rem;
+}
+
+/* --- SOS Button --- */
+.sosBtn {
+  padding: 0.45rem 0.95rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ff4444, #cc0000);
+  color: #ffffff;
+  border: 1px solid rgba(255, 68, 68, 0.5);
+  box-shadow: 0 0 20px rgba(255, 68, 68, 0.35);
+  transition: all 0.2s ease;
+}
+
+.sosBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(255, 68, 68, 0.6);
+}
+
+/* --- Section Label --- */
+.sectionLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: rgba(184, 196, 214, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* --- Status Pill --- */
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* --- Fullscreen Overlay (used in search) --- */
+.searchOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 12, 28, 0.95);
+  z-index: 10;
+  border-radius: 18px;
+}
+
+/* --- responsive --- */
+@media (max-width: 1024px) {
+  .gaugeValue { font-size: 1.5rem; }
+}

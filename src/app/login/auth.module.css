@@ -6,26 +6,32 @@
   padding: 2rem;
   position: relative;
   overflow: hidden;
+  background: var(--clr-bg);
+  transition: background var(--transition-slow);
 }
 
+/* Grid lines tinted with the role color */
 .bgGrid {
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--role-color, #00d4ff) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--role-color, #00d4ff) 4%, transparent) 1px, transparent 1px);
   background-size: 50px 50px;
   pointer-events: none;
+  transition: background-image var(--transition-slow);
 }
 
+/* Glow blobs use role color */
 .bgGlow1 {
   position: fixed;
   top: -150px;
   left: -150px;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(0,102,255,0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--role-color, #0066ff) 18%, transparent) 0%, transparent 70%);
   pointer-events: none;
+  transition: background var(--transition-slow);
 }
 
 .bgGlow2 {
@@ -34,8 +40,9 @@
   right: -150px;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(0,212,255,0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--role-color, #00d4ff) 12%, transparent) 0%, transparent 70%);
   pointer-events: none;
+  transition: background var(--transition-slow);
 }
 
 .card {
@@ -43,13 +50,14 @@
   z-index: 1;
   width: 100%;
   max-width: 520px;
-  background: rgba(7, 18, 40, 0.92);
+  background: var(--clr-card);
   backdrop-filter: blur(30px);
   border: 1px solid var(--clr-border-strong);
   border-radius: var(--radius-xl);
   padding: 2.5rem;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 60px color-mix(in srgb, var(--role-color, #00d4ff) 6%, transparent);
   animation: fadeInUp 0.5s ease both;
+  transition: background var(--transition-slow), border-color var(--transition-slow), box-shadow var(--transition-slow);
 }
 
 .logo {
@@ -59,29 +67,33 @@
   margin-bottom: 2rem;
 }
 
+/* Logo icon uses role gradient */
 .logoIcon {
   width: 44px;
   height: 44px;
-  background: var(--grad-primary);
+  background: var(--role-logo-bg, var(--grad-primary));
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000;
+  color: var(--role-logo-color, #000);
   flex-shrink: 0;
+  box-shadow: 0 0 18px var(--role-color-glow, rgba(0,212,255,0.4));
+  transition: background var(--transition-slow), box-shadow var(--transition-slow);
 }
 
+/* Logo text uses role gradient */
 .logoText {
   display: block;
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
   font-size: 1.2rem;
-  color: #00d4ff;
-  background: var(--grad-primary);
+  background: var(--role-grad, var(--grad-primary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1.2;
+  transition: background var(--transition-slow);
 }
 
 .logoSub {
@@ -174,10 +186,12 @@
 
 .tab:hover { color: var(--clr-text); }
 
+/* Active tab uses role color */
 .tabActive {
-  background: var(--clr-primary-dim);
-  color: var(--clr-primary);
-  border: 1px solid rgba(0,212,255,0.2);
+  background: var(--role-color-dim, var(--clr-primary-dim));
+  color: var(--role-color, var(--clr-primary));
+  border: 1px solid color-mix(in srgb, var(--role-color, #00d4ff) 25%, transparent);
+  transition: background var(--transition-slow), color var(--transition-slow);
 }
 
 .form { display: flex; flex-direction: column; gap: 0; }
@@ -234,9 +248,11 @@
   margin-top: 1.25rem;
 }
 
+/* Switch link uses role color */
 .switchText a {
-  color: var(--clr-primary);
+  color: var(--role-color, var(--clr-primary));
   font-weight: 600;
+  transition: color var(--transition-slow);
 }
 
 .switchText a:hover { text-decoration: underline; }

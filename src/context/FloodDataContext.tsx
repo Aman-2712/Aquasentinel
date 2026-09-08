@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { FIELD_SHIELDS, type RiskLevel, type FloodZone, type AlertData, type RouteOption } from '@/data/visakhapatnam_zones';
 
@@ -90,31 +90,56 @@ const ZONE_METADATA = {
 };
 
 const getWeatherConditionDetails = (code: number, rainfall: number, temp: number) => {
-  if (rainfall > 60 || code >= 95) {
+  // Heavy downpours & cloudbursts
+  if (rainfall >= 40 || (code >= 95 && rainfall >= 25)) {
     return {
-      conditionLabel: 'Severe Thunderstorm & Cloudburst',
+      conditionLabel: 'Severe Cloudburst & Storm',
       conditionEmoji: '⛈️',
-      predictionSummary: 'Heavy cloudburst rain with high inundation risk & lightning strikes.',
+      predictionSummary: 'Continuous heavy rainfall with high inundation risk & lightning.',
     };
   }
-  if (rainfall > 20 || (code >= 61 && code <= 82)) {
+
+  // Moderate to heavy monsoon showers
+  if (rainfall >= 15 || (code >= 63 && rainfall >= 10)) {
     return {
-      conditionLabel: 'Heavy Monsoon Downpour',
+      conditionLabel: 'Moderate Rain Showers',
       conditionEmoji: '🌧️',
-      predictionSummary: 'Continuous precipitation across coastal basins. Waterlogging in low areas.',
+      predictionSummary: 'Moderate precipitation across coastal basins. Watch low-lying roads.',
     };
   }
-  if (rainfall > 3 || (code >= 51 && code <= 57)) {
+
+  // Light passing showers
+  if (rainfall >= 3 || (code >= 51 && code <= 80 && rainfall >= 1)) {
     return {
-      conditionLabel: 'Light Drizzle & Passing Showers',
+      conditionLabel: 'Light Passing Showers',
       conditionEmoji: '🌦️',
-      predictionSummary: 'Intermittent light rain showers with wet road surface conditions.',
+      predictionSummary: 'Scattered light showers. Municipal drainage channels clear.',
     };
   }
+
+  // Very light drizzle / mostly clear
+  if (rainfall > 0.5) {
+    return {
+      conditionLabel: 'Passing Drizzle & Sun',
+      conditionEmoji: '🌤️',
+      predictionSummary: 'Brief isolated drizzle with warm sunshine. No flood risk.',
+    };
+  }
+
+  // Overcast or cloudy
+  if (code === 3 || code === 2) {
+    return {
+      conditionLabel: code === 3 ? 'Overcast Skies' : 'Partly Cloudy',
+      conditionEmoji: code === 3 ? '☁️' : '⛅',
+      predictionSummary: 'Dry skies with cloud cover. Normal municipal drainage.',
+    };
+  }
+
+  // Clear / Sunny
   return {
-    conditionLabel: 'Clear & Normal Hydrology',
+    conditionLabel: 'Clear & Sunny Weather',
     conditionEmoji: '☀️',
-    predictionSummary: 'Standard municipal drainage levels. No flooding expected.',
+    predictionSummary: 'Standard municipal drainage levels. Clear sunny skies.',
   };
 };
 
@@ -444,7 +469,7 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
       const timeoutId = setTimeout(() => controller.abort(), 6000);
 
       const res = await fetch(
-        'https://api.open-meteo.com/v1/forecast?latitude=17.6868&longitude=83.2185&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m,pressure_msl&hourly=temperature_2m,apparent_temperature,precipitation,precipitation_probability,soil_moisture_0_to_1cm&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_probability_max&timezone=Asia%2FKolkata',
+        'https://api.open-meteo.com/v1/forecast?latitude=17.6868&longitude=83.2185&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m,pressure_msl&hourly=temperature_2m,apparent_temperature,precipitation,precipitation_probability,soil_moisture_0_to_1cm&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_probability_max,weather_code&timezone=Asia%2FKolkata',
         { signal: controller.signal }
       );
       clearTimeout(timeoutId);
@@ -474,8 +499,20 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         const fRain = Math.round(pSum * 10) / 10;
         const fMaxTemp = Math.round((data.daily.temperature_2m_max?.[idx] ?? 32) * 10) / 10;
         const fMinTemp = Math.round((data.daily.temperature_2m_min?.[idx] ?? 25) * 10) / 10;
-        const dayName = idx === 0 ? 'Today' : idx === 1 ? 'Tomorrow' : `Day ${idx + 1}`;
-        const dayDetails = getWeatherConditionDetails(fRain > 20 ? 63 : 0, fRain, fMaxTemp);
+        const fFeelsLikeMax = Math.round((data.daily.apparent_temperature_max?.[idx] ?? fMaxTemp * 1.12) * 10) / 10;
+        const dailyWeatherCode = data.daily.weather_code?.[idx] ?? 0;
+        let dayName = 'Today';
+        if (idx === 1) {
+          dayName = 'Tomorrow';
+        } else if (idx > 1 && timeStr) {
+          try {
+            const dateObj = new Date(timeStr);
+            dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          } catch {
+            dayName = `Day ${idx + 1}`;
+          }
+        }
+        const dayDetails = getWeatherConditionDetails(dailyWeatherCode, fRain, fMaxTemp);
 
         let risk: RiskLevel = 'low';
         if (fRain > 35) risk = 'high';
@@ -488,7 +525,7 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
           temp: fMaxTemp,
           tempMax: fMaxTemp,
           tempMin: fMinTemp,
-          feelsLikeMax: Math.round(fMaxTemp * 1.15),
+          feelsLikeMax: fFeelsLikeMax,
           conditionLabel: dayDetails.conditionLabel,
           conditionEmoji: dayDetails.conditionEmoji,
           predictionSummary: dayDetails.predictionSummary,

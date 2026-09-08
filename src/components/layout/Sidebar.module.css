@@ -11,6 +11,15 @@
   flex-direction: column;
   z-index: 200;
   overflow: hidden;
+  transition: border-color var(--transition-slow), background var(--transition-slow);
+}
+
+/* Tint the sidebar bg subtly using the role color */
+body.theme-farmer .sidebar {
+  background: rgba(6, 20, 16, 0.97);
+}
+body.theme-authority .sidebar {
+  background: rgba(24, 13, 0, 0.97);
 }
 
 .logo {
@@ -21,28 +30,33 @@
   border-bottom: 1px solid var(--clr-border);
 }
 
+/* Logo icon uses --role-logo-bg so it becomes green for farmer, amber for authority */
 .logoIcon {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: var(--grad-primary);
+  background: var(--role-logo-bg, var(--grad-primary));
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000;
+  color: var(--role-logo-color, #000);
   flex-shrink: 0;
+  box-shadow: 0 0 16px var(--role-color-glow, var(--clr-primary-glow));
+  transition: background var(--transition-slow), box-shadow var(--transition-slow);
 }
 
+/* Logo text gradient uses --role-grad */
 .logoText {
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
   font-size: 1rem;
-  background: var(--grad-primary);
+  background: var(--role-grad, var(--grad-primary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   display: block;
   line-height: 1.2;
+  transition: background var(--transition-slow);
 }
 
 .logoTagline {
@@ -92,10 +106,23 @@
   background: rgba(255,255,255,0.04);
 }
 
+/* Active nav item uses --role-color so it's green/amber/cyan by role */
 .navItem.active {
-  color: var(--clr-primary);
-  background: var(--clr-primary-dim);
-  border: 1px solid rgba(0,212,255,0.2);
+  color: var(--role-color, var(--clr-primary));
+  background: var(--role-color-dim, var(--clr-primary-dim));
+  border: 1px solid color-mix(in srgb, var(--role-color, #00d4ff) 25%, transparent);
+}
+
+/* Left accent bar on active item */
+.navItem.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--role-grad, var(--grad-primary));
 }
 
 .navItem .badge {
@@ -140,12 +167,13 @@
   min-width: 0;
 }
 
+/* Avatar background uses role gradient */
 .userAvatar {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: var(--grad-primary);
-  color: #000;
+  background: var(--role-grad, var(--grad-primary));
+  color: var(--role-logo-color, #000);
   font-weight: 700;
   font-size: 0.8rem;
   display: flex;
@@ -153,6 +181,8 @@
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
+  box-shadow: 0 0 10px var(--role-color-glow, var(--clr-primary-glow));
+  transition: background var(--transition-slow), box-shadow var(--transition-slow);
 }
 
 .userAvatar img {
@@ -176,10 +206,12 @@
   text-overflow: ellipsis;
 }
 
+/* Role label at the bottom — colored by role */
 .userRole {
   font-size: 0.68rem;
-  color: var(--clr-text-muted);
+  color: var(--role-color, var(--clr-primary));
   text-transform: capitalize;
+  font-weight: 600;
 }
 
 .logoutBtn {

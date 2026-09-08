@@ -3,6 +3,7 @@ import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { FloodDataProvider } from '@/context/FloodDataContext';
 import IntroWrapper from '@/components/layout/IntroWrapper';
+import ThemeApplier from '@/components/layout/ThemeApplier';
 
 export const metadata: Metadata = {
   title: 'AquaSentinel – Urban Flood Early Warning System',
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <AuthProvider>
+          <ThemeApplier />
           <FloodDataProvider>
             <IntroWrapper>
               {children}

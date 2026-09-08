@@ -38,6 +38,17 @@ function LoginFormContent({ lockedRole }: LoginFormProps) {
     }
   }, [searchParams, lockedRole]);
 
+  // Apply role-based theme class to body so the login page uses the correct palette
+  useEffect(() => {
+    const body = document.body;
+    body.classList.remove('theme-citizen', 'theme-farmer', 'theme-authority');
+    body.classList.add(`theme-${role}`);
+    return () => {
+      // Clean up only if no user session will take over (ThemeApplier will re-apply after login)
+      body.classList.remove('theme-citizen', 'theme-farmer', 'theme-authority');
+    };
+  }, [role]);
+
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { setError('Please fill all required fields'); return; }
@@ -108,17 +119,17 @@ function LoginFormContent({ lockedRole }: LoginFormProps) {
           margin: '1.25rem 0 0.5rem 0',
           padding: '0.85rem 1rem',
           borderRadius: '14px',
-          background: role === 'authority' ? 'rgba(255, 68, 68, 0.12)' : role === 'farmer' ? 'rgba(0, 255, 136, 0.12)' : 'rgba(0, 214, 255, 0.12)',
-          border: `1px solid ${role === 'authority' ? 'rgba(255, 68, 68, 0.35)' : role === 'farmer' ? 'rgba(0, 255, 136, 0.35)' : 'rgba(0, 214, 255, 0.35)'}`,
+          background: 'var(--role-color-dim)',
+          border: '1px solid color-mix(in srgb, var(--role-color) 35%, transparent)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            {role === 'authority' ? <ShieldCheck size={22} color="#ff4444" /> : role === 'farmer' ? <Sprout size={22} color="#00ff88" /> : <UserCheck size={22} color="#00d4ff" />}
+            {role === 'authority' ? <ShieldCheck size={22} color="var(--role-color)" /> : role === 'farmer' ? <Sprout size={22} color="var(--role-color)" /> : <UserCheck size={22} color="var(--role-color)" />}
             <div>
               <strong style={{
-                color: role === 'authority' ? '#ff6666' : role === 'farmer' ? '#00ff88' : '#00d4ff',
+                color: 'var(--role-color)',
                 fontSize: '1rem',
                 display: 'block',
               }}>
