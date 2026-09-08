@@ -18,7 +18,7 @@ const CAM_FEEDS = [
     id: 'cam-001',
     label: 'North Corner',
     deviceId: 'ESP-001',
-    fieldName: 'North Field – Paddy',
+    fieldName: 'North Face',
     lastUpdate: '12:32:30 pm',
     status: 'online' as const,
     waterAlert: true,
@@ -27,7 +27,7 @@ const CAM_FEEDS = [
     id: 'cam-002',
     label: 'South Corner',
     deviceId: 'ESP-002',
-    fieldName: 'South Field – Groundnut',
+    fieldName: 'South Face',
     lastUpdate: '12:32:30 pm',
     status: 'online' as const,
     waterAlert: false,
@@ -36,7 +36,7 @@ const CAM_FEEDS = [
     id: 'cam-003',
     label: 'East Corner',
     deviceId: 'ESP-003',
-    fieldName: 'East Field – Maize',
+    fieldName: 'East Face',
     lastUpdate: '12:32:30 pm',
     status: 'offline' as const,
     waterAlert: false,
@@ -45,7 +45,7 @@ const CAM_FEEDS = [
     id: 'cam-004',
     label: 'West Corner',
     deviceId: 'ESP-004',
-    fieldName: 'West Field – Banana',
+    fieldName: 'West Face',
     lastUpdate: '12:32:30 pm',
     status: 'offline' as const,
     waterAlert: false,
@@ -165,7 +165,6 @@ export default function FieldShieldPage() {
                   <div className={styles.fieldHeader}>
                     <div>
                       <h3 className={styles.fieldName}>{field.name}</h3>
-                      <span className={styles.fieldFarmer}>{field.farmer} • {field.location}</span>
                     </div>
                     <span className={`badge ${field.risk === 'high' ? 'badge-danger' : field.risk === 'medium' ? 'badge-warning' : 'badge-safe'}`}>
                       {field.risk.toUpperCase()} RISK
@@ -173,7 +172,6 @@ export default function FieldShieldPage() {
                   </div>
 
                   <div className={styles.fieldMeta}>
-                    <span>{field.area} • {field.crop}</span>
                     <span className={styles.deviceId}>Device: {field.deviceId}</span>
                   </div>
 
