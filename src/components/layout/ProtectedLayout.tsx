@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ROLE_DASHBOARD, ROLE_LOGIN, UserRole } from '@/context/AuthContext';
 import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
+import AIConditionMonitor from '@/components/ai/AIConditionMonitor';
 import { Droplets } from 'lucide-react';
 
 interface ProtectedLayoutProps {
@@ -69,6 +70,7 @@ export default function ProtectedLayout({ children, requiredRole }: ProtectedLay
         <Navbar />
         {children}
       </div>
+      <AIConditionMonitor />
     </div>
   );
 }

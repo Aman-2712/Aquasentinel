@@ -19,21 +19,10 @@ type FilterType = 'all' | 'high' | 'medium' | 'low';
 type ViewMode = 'risk' | 'radar';
 
 export default function MapPage() {
-  const { zones, isLoading } = useFloodData();
+  const { zones } = useFloodData();
   const [selected, setSelected] = useState<FloodZone | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('risk');
-
-  if (isLoading) {
-    return (
-      <ProtectedLayout>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80vh', gap: '1rem', color: 'var(--clr-text-muted)' }}>
-          <div style={{ width: 40, height: 40, border: '3px solid rgba(0,212,255,0.1)', borderTopColor: 'var(--clr-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-          <p>Rendering geographical flood zones mapping...</p>
-        </div>
-      </ProtectedLayout>
-    );
-  }
 
   const filtered = filter === 'all' ? zones : zones.filter(z => z.risk === filter);
 

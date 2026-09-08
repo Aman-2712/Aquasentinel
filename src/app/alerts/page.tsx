@@ -14,17 +14,6 @@ export default function AlertsPage() {
   const [filter, setFilter] = useState<'all' | RiskLevel>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | AlertData['type']>('all');
 
-  if (isLoading) {
-    return (
-      <ProtectedLayout>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80vh', gap: '1rem', color: 'var(--clr-text-muted)' }}>
-          <div style={{ width: 40, height: 40, border: '3px solid rgba(0,212,255,0.1)', borderTopColor: 'var(--clr-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-          <p>Processing active early warning sirens...</p>
-        </div>
-      </ProtectedLayout>
-    );
-  }
-
   const filtered = alerts.filter(a => {
     if (filter !== 'all' && a.risk !== filter) return false;
     if (typeFilter !== 'all' && a.type !== typeFilter) return false;

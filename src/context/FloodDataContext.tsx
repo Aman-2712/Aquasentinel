@@ -1,6 +1,7 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { FIELD_SHIELDS, type RiskLevel, type FloodZone, type AlertData, type RouteOption } from '@/data/visakhapatnam_zones';
+import { predictFloodRiskXGBoost, type XGBoostPredictionResult } from '@/utils/xgboostEngine';
 
 export interface WeatherForecastItem {
   day: string;
@@ -66,7 +67,11 @@ interface FloodDataContextType {
   fieldShields: typeof FIELD_SHIELDS;
   isLoading: boolean;
   weatherMode: 'live' | 'monsoon' | 'flash_flood' | 'clear';
+  xgboostPrediction: XGBoostPredictionResult;
+  isSimulationActive: boolean;
   setWeatherMode: (mode: 'live' | 'monsoon' | 'flash_flood' | 'clear') => void;
+  triggerCriticalSimulation: (customRain?: number) => void;
+  resetSimulation: () => void;
   triggerDeviceShield: (id: string, action: 'deploy' | 'idle') => Promise<void>;
   refreshWeather: () => Promise<void>;
   sendAuthorityBroadcast: (broadcast: { area: string; risk: RiskLevel; message: string }) => void;
@@ -89,57 +94,76 @@ const ZONE_METADATA = {
   'steel-plant': { elevationMultiplier: 1.4, drainageCapacity: 10.0, popDensity: 15600, coordinates: [[17.681, 83.23], [17.681, 83.239], [17.67, 83.239], [17.67, 83.23]], center: [17.6756, 83.2342], roads: ['Steel Plant Gate Road', 'RINL Access Road'], name: 'Steel Plant Area', area: 'Industrial' },
 };
 
-const getWeatherConditionDetails = (code: number, rainfall: number, temp: number) => {
-  // Heavy downpours & cloudbursts
-  if (rainfall >= 40 || (code >= 95 && rainfall >= 25)) {
+export const getWeatherConditionDetails = (code: number, rainfall: number, temp?: number) => {
+  // WMO 95, 96, 99: Thunderstorms
+  if (code >= 95) {
     return {
-      conditionLabel: 'Severe Cloudburst & Storm',
+      conditionLabel: code >= 96 ? 'Thunderstorm with Severe Hail' : 'Severe Thunderstorm & Squalls',
       conditionEmoji: '⛈️',
-      predictionSummary: 'Continuous heavy rainfall with high inundation risk & lightning.',
+      predictionSummary: 'Convective storm cells with lightning, high winds, and localized runoff surges.',
     };
   }
-
-  // Moderate to heavy monsoon showers
-  if (rainfall >= 15 || (code >= 63 && rainfall >= 10)) {
+  // WMO 82, 65 or extreme rainfall: Cloudburst / Violent Rain
+  if (code === 82 || code === 65 || rainfall >= 35) {
+    return {
+      conditionLabel: 'Violent Cloudburst & Torrential Rain',
+      conditionEmoji: '⛈️',
+      predictionSummary: 'Intense precipitation with critical surface water buildup and drainage saturation.',
+    };
+  }
+  // WMO 81, 63: Moderate Rain
+  if (code === 81 || code === 63 || rainfall >= 8) {
     return {
       conditionLabel: 'Moderate Rain Showers',
       conditionEmoji: '🌧️',
-      predictionSummary: 'Moderate precipitation across coastal basins. Watch low-lying roads.',
+      predictionSummary: 'Continuous steady rain. Localized pooling in low elevation depressions.',
     };
   }
-
-  // Light passing showers
-  if (rainfall >= 3 || (code >= 51 && code <= 80 && rainfall >= 1)) {
+  // WMO 80, 61: Slight Rain / Passing Showers
+  if (code === 80 || code === 61 || rainfall >= 1.5) {
     return {
-      conditionLabel: 'Light Passing Showers',
+      conditionLabel: 'Light Rain Showers',
       conditionEmoji: '🌦️',
-      predictionSummary: 'Scattered light showers. Municipal drainage channels clear.',
+      predictionSummary: 'Scattered light showers. Municipal drainage channels fully clear.',
     };
   }
-
-  // Very light drizzle / mostly clear
-  if (rainfall > 0.5) {
+  // WMO 51, 53, 55, 56, 57: Drizzle
+  if ((code >= 51 && code <= 57) || rainfall > 0.1) {
     return {
-      conditionLabel: 'Passing Drizzle & Sun',
-      conditionEmoji: '🌤️',
-      predictionSummary: 'Brief isolated drizzle with warm sunshine. No flood risk.',
+      conditionLabel: 'Passing Drizzle & Clouds',
+      conditionEmoji: '🌦️',
+      predictionSummary: 'Brief isolated drizzle with cloudy intervals. No inundation risk.',
     };
   }
-
-  // Overcast or cloudy
-  if (code === 3 || code === 2) {
+  // WMO 45, 48: Fog
+  if (code === 45 || code === 48) {
     return {
-      conditionLabel: code === 3 ? 'Overcast Skies' : 'Partly Cloudy',
-      conditionEmoji: code === 3 ? '☁️' : '⛅',
-      predictionSummary: 'Dry skies with cloud cover. Normal municipal drainage.',
+      conditionLabel: 'Dense Fog & Low Visibility',
+      conditionEmoji: '🌫️',
+      predictionSummary: 'High humidity with reduced ground visibility. Dry drainage.',
     };
   }
-
-  // Clear / Sunny
+  // WMO 3: Overcast
+  if (code === 3) {
+    return {
+      conditionLabel: 'Overcast Skies',
+      conditionEmoji: '☁️',
+      predictionSummary: 'Heavy cloud cover. Dry surface hydrology.',
+    };
+  }
+  // WMO 1, 2: Partly Cloudy
+  if (code === 1 || code === 2) {
+    return {
+      conditionLabel: 'Partly Cloudy',
+      conditionEmoji: '⛅',
+      predictionSummary: 'Mild cloud cover with sunny intervals. Normal hydrology.',
+    };
+  }
+  // WMO 0: Clear
   return {
     conditionLabel: 'Clear & Sunny Weather',
     conditionEmoji: '☀️',
-    predictionSummary: 'Standard municipal drainage levels. Clear sunny skies.',
+    predictionSummary: 'Clear skies with dry conditions. Safe municipal drainage baseline.',
   };
 };
 
@@ -195,23 +219,31 @@ const SIMULATED_WEATHER: Record<'monsoon' | 'flash_flood' | 'clear', WeatherData
   },
   flash_flood: {
     current: {
-      temp: 27.8,
-      feelsLike: 33.5,
-      humidity: 95,
-      rainfall: 72.0,
-      windSpeed: 45,
-      condition: 'Severe Cloudburst & Cyclone Storm',
-      visibility: 1.0,
-      pressure: 994,
-      soilMoisture: 0.95,
-      surfaceTemp: 29.0,
-      ambientTemp: 27.8,
-      heatIndex: 33.5,
-      conditionLabel: 'Severe Cloudburst',
+      temp: 26.4,
+      feelsLike: 32.1,
+      humidity: 98,
+      rainfall: 145.4,
+      windSpeed: 58,
+      condition: 'Violent Cloudburst & Severe Cyclone Inundation',
+      visibility: 0.8,
+      pressure: 988,
+      soilMoisture: 0.96,
+      surfaceTemp: 27.2,
+      ambientTemp: 26.4,
+      heatIndex: 32.1,
+      conditionLabel: 'Violent Cloudburst & Storm',
       conditionEmoji: '⛈️',
-      predictionSummary: 'CRITICAL: Severe cloudburst rain with high inundation risk & storm surges.',
+      predictionSummary: 'CRITICAL: Severe cloudburst rain with extreme inundation risk, gale winds & storm surges.',
     },
-    forecast: DEFAULT_WEATHER.forecast,
+    forecast: [
+      { day: 'Today', rainfall: 145.4, risk: 'high', temp: 26, tempMax: 26.4, tempMin: 23.2, feelsLikeMax: 32.1, conditionLabel: 'Violent Cloudburst & Storm', conditionEmoji: '⛈️', predictionSummary: 'Severe flash flooding active across all coastal drainage basins' },
+      { day: 'Tomorrow', rainfall: 88.0, risk: 'high', temp: 27, tempMax: 27.5, tempMin: 24.0, feelsLikeMax: 33.5, conditionLabel: 'Heavy Downpours', conditionEmoji: '🌧️', predictionSummary: 'High flood risk persists in low-lying agricultural and urban areas' },
+      { day: 'Day 3', rainfall: 35.5, risk: 'high', temp: 29, tempMax: 29.2, tempMin: 24.8, feelsLikeMax: 35.0, conditionLabel: 'Moderate Rain Showers', conditionEmoji: '🌧️', predictionSummary: 'Gradual water drainage but waterlogged roads remain' },
+      { day: 'Day 4', rainfall: 12.0, risk: 'medium', temp: 30, tempMax: 30.5, tempMin: 25.1, feelsLikeMax: 36.2, conditionLabel: 'Passing Showers', conditionEmoji: '🌦️', predictionSummary: 'Localized pooling in Old Town and industrial corridors' },
+      { day: 'Day 5', rainfall: 4.2, risk: 'low', temp: 31, tempMax: 31.8, tempMin: 25.5, feelsLikeMax: 37.0, conditionLabel: 'Scattered Clouds', conditionEmoji: '⛅', predictionSummary: 'Drainage recovery progressing' },
+      { day: 'Day 6', rainfall: 1.0, risk: 'low', temp: 32, tempMax: 32.4, tempMin: 25.8, feelsLikeMax: 38.0, conditionLabel: 'Partly Sunny', conditionEmoji: '🌤️', predictionSummary: 'Clearing skies' },
+      { day: 'Day 7', rainfall: 0.2, risk: 'low', temp: 33, tempMax: 33.0, tempMin: 26.0, feelsLikeMax: 38.5, conditionLabel: 'Clear & Sunny', conditionEmoji: '☀️', predictionSummary: 'Dry normal baseline hydrology restored' },
+    ],
   },
   clear: {
     current: {
@@ -264,6 +296,17 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
   const [safeRoutes, setSafeRoutes] = useState<RouteOption[]>([]);
   const [fieldShields, setFieldShields] = useState<typeof FIELD_SHIELDS>(FIELD_SHIELDS);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSimulationActive, setIsSimulationActive] = useState(false);
+  const [xgboostPrediction, setXgboostPrediction] = useState<XGBoostPredictionResult>(() =>
+    predictFloodRiskXGBoost({
+      rainfall_1h: DEFAULT_WEATHER.current.rainfall,
+      soil_moisture: DEFAULT_WEATHER.current.soilMoisture,
+      elevation_multiplier: 1.2,
+      drainage_capacity: 12.0,
+      pressure_hpa: DEFAULT_WEATHER.current.pressure,
+      humidity: DEFAULT_WEATHER.current.humidity,
+    })
+  );
 
   // Load persisted broadcasts and incidents on mount & listen for cross-tab realtime updates
   useEffect(() => {
@@ -309,21 +352,35 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const calculateFloodPrediction = (currentRain: number, soilMoisture: number) => {
-    const calculatedZones: FloodZone[] = Object.entries(ZONE_METADATA).map(([id, meta]) => {
-      const waterDepth = Math.max(
-        0,
-        Math.round((currentRain * 1.8 + soilMoisture * 30 - meta.drainageCapacity) * meta.elevationMultiplier)
-      );
+  const calculateFloodPrediction = (currentRain: number, soilMoisture: number, pressure: number = 1008, humidity: number = 80) => {
+    // Run district-wide XGBoost prediction
+    const districtXGB = predictFloodRiskXGBoost({
+      rainfall_1h: currentRain,
+      soil_moisture: soilMoisture,
+      elevation_multiplier: 1.2,
+      drainage_capacity: 12.0,
+      pressure_hpa: pressure,
+      humidity: humidity,
+    });
+    setXgboostPrediction(districtXGB);
 
-      let risk: RiskLevel = 'low';
+    const calculatedZones: FloodZone[] = Object.entries(ZONE_METADATA).map(([id, meta]) => {
+      const zonePrediction = predictFloodRiskXGBoost({
+        rainfall_1h: currentRain * meta.elevationMultiplier,
+        soil_moisture: soilMoisture,
+        elevation_multiplier: meta.elevationMultiplier,
+        drainage_capacity: meta.drainageCapacity,
+        pressure_hpa: pressure,
+        humidity: humidity,
+      });
+
+      const waterDepth = zonePrediction.estimatedWaterDepthCm;
+      const risk = zonePrediction.riskLevel;
       let action = 'Safe zone. Normal activities permitted.';
-      if (waterDepth > 75) {
-        risk = 'high';
-        action = 'CRITICAL: Evacuate immediately. Roads submerged.';
-      } else if (waterDepth > 20) {
-        risk = 'medium';
-        action = 'WARNING: Significant waterlogging. Use high ground.';
+      if (risk === 'high') {
+        action = `CRITICAL (${zonePrediction.riskScore}% Risk): Evacuate low roads immediately. Submersion ~${waterDepth}cm.`;
+      } else if (risk === 'medium') {
+        action = `WARNING (${zonePrediction.riskScore}% Risk): Waterlogging ~${waterDepth}cm. Exercise caution.`;
       }
 
       return {
@@ -332,7 +389,7 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         area: meta.area,
         risk,
         waterDepth,
-        populationAffected: Math.round(waterDepth > 0 ? meta.popDensity * (waterDepth / 150) : 0),
+        populationAffected: Math.round(waterDepth > 0 ? meta.popDensity * (waterDepth / 120) : 0),
         coordinates: meta.coordinates as [number, number][],
         center: meta.center as [number, number],
         roads: meta.roads,
@@ -455,13 +512,11 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const fetchWeatherData = useCallback(async () => {
-    setIsLoading(true);
     try {
       if (weatherMode !== 'live') {
         const sim = SIMULATED_WEATHER[weatherMode];
         setWeatherData(sim);
         calculateFloodPrediction(sim.current.rainfall, sim.current.soilMoisture);
-        setIsLoading(false);
         return;
       }
 
@@ -633,6 +688,26 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const triggerCriticalSimulation = (customRain: number = 145.4) => {
+    setIsSimulationActive(true);
+    setWeatherMode('flash_flood');
+    const sim = {
+      ...SIMULATED_WEATHER.flash_flood,
+      current: {
+        ...SIMULATED_WEATHER.flash_flood.current,
+        rainfall: customRain,
+      }
+    };
+    setWeatherData(sim);
+    calculateFloodPrediction(customRain, 0.96, 988, 98);
+  };
+
+  const resetSimulation = () => {
+    setIsSimulationActive(false);
+    setWeatherMode('live');
+    fetchWeatherData();
+  };
+
   const triggerDeviceShield = async (id: string, action: 'deploy' | 'idle') => {
     await new Promise(r => setTimeout(r, 1000));
     setFieldShields((prev: any) =>
@@ -661,7 +736,11 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         fieldShields,
         isLoading,
         weatherMode,
+        xgboostPrediction,
+        isSimulationActive,
         setWeatherMode,
+        triggerCriticalSimulation,
+        resetSimulation,
         triggerDeviceShield,
         refreshWeather: fetchWeatherData,
         sendAuthorityBroadcast,

@@ -1,14 +1,16 @@
 'use client';
 import { useState } from 'react';
-import { Bell, Search, Wifi, Megaphone, X, CheckCircle } from 'lucide-react';
+import { Bell, Search, Wifi, Megaphone, X, CheckCircle, AlertTriangle } from 'lucide-react';
 import styles from './Navbar.module.css';
 import { useAuth } from '@/context/AuthContext';
 import { useFloodData } from '@/context/FloodDataContext';
+import HackathonSimulatorModal from '@/components/demo/HackathonSimulatorModal';
 
 export default function Navbar() {
   const { user } = useAuth();
-  const { weatherMode, setWeatherMode, broadcastAlerts, dismissBroadcast } = useFloodData();
+  const { weatherMode, setWeatherMode, broadcastAlerts, dismissBroadcast, isSimulationActive } = useFloodData();
   const [showNotifs, setShowNotifs] = useState(false);
+  const [showSimulator, setShowSimulator] = useState(false);
 
   const activeBroadcasts = broadcastAlerts.filter(b => b.active);
 
@@ -30,6 +32,35 @@ export default function Navbar() {
             <option value="flash_flood">⛈️ Heavy Storm / Cyclone</option>
           </select>
         </div>
+
+        {/* Hackathon Simulation Suite Quick Button */}
+        <button
+          onClick={() => setShowSimulator(true)}
+          style={{
+            background: isSimulationActive
+              ? 'linear-gradient(135deg, #ef4444, #b91c1c)'
+              : 'linear-gradient(135deg, #ff4444 0%, #d97706 100%)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: '0.775rem',
+            padding: '0.35rem 0.8rem',
+            borderRadius: '999px',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            boxShadow: isSimulationActive
+              ? '0 0 16px rgba(239, 68, 68, 0.6)'
+              : '0 2px 10px rgba(255, 68, 68, 0.35)',
+            animation: isSimulationActive ? 'pulse 2s infinite' : 'none',
+            whiteSpace: 'nowrap',
+          }}
+          title="Open Hackathon Demonstration Emergency Suite"
+        >
+          <AlertTriangle size={13} />
+          <span>{isSimulationActive ? '🚨 SIMULATION ACTIVE' : '🚨 Simulate Emergency'}</span>
+        </button>
       </div>
 
       <div className={styles.center}>
@@ -149,6 +180,8 @@ export default function Navbar() {
           </div>
         )}
       </div>
+
+      <HackathonSimulatorModal isOpen={showSimulator} onClose={() => setShowSimulator(false)} />
     </header>
   );
 }

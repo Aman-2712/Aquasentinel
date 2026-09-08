@@ -514,8 +514,14 @@ body.theme-citizen {
   --role-logo-bg: linear-gradient(135deg, #415A77, #778D7A);
   --role-logo-color: #F4F1DE;
 }
-body.theme-citizen .card { background: #1e2d40; border-color: rgba(65,90,119,0.2); }
-body.theme-citizen .card:hover { border-color: rgba(65,90,119,0.45); box-shadow: 0 0 24px rgba(65,90,119,0.15), 0 4px 16px rgba(0,0,0,0.6); }
+body.theme-citizen .app-main {
+  background-image: linear-gradient(160deg, rgba(13, 27, 42, 0.92) 0%, rgba(27, 38, 59, 0.88) 50%, rgba(13, 27, 42, 0.94) 100%), url('https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=2000&q=80');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+}
+body.theme-citizen .card { background: rgba(30, 45, 64, 0.85); backdrop-filter: blur(16px); border-color: rgba(65,90,119,0.25); }
+body.theme-citizen .card:hover { border-color: rgba(65,90,119,0.55); box-shadow: 0 0 24px rgba(65,90,119,0.2), 0 8px 24px rgba(0,0,0,0.5); }
 body.theme-citizen .card::before { background: linear-gradient(90deg,transparent,rgba(65,90,119,0.3),rgba(119,141,122,0.15),transparent); }
 body.theme-citizen .btn-primary { background: linear-gradient(135deg,#415A77,#1B263B); color:#F4F1DE; box-shadow:0 4px 16px rgba(65,90,119,0.35); }
 body.theme-citizen .btn-primary:hover { box-shadow:0 6px 24px rgba(65,90,119,0.5); }
@@ -528,7 +534,7 @@ body.theme-citizen .form-input { background:rgba(65,90,119,0.1); border-color:rg
 body.theme-citizen .form-input::placeholder { color:#778D7A; opacity:1; }
 body.theme-citizen .form-input:focus { border-color:#415A77; background:rgba(65,90,119,0.15); box-shadow:0 0 0 3px rgba(65,90,119,0.15); }
 
-/* ── FARMER — Deep Forest + Emerald ── */
+/* ── FARMER — Deep Forest + Emerald Agricultural Terrace ── */
 body.theme-farmer {
   --clr-bg: #050f08;
   --clr-surface: #080f0a;
@@ -555,9 +561,15 @@ body.theme-farmer {
   --role-logo-bg: linear-gradient(135deg, #22c55e, #4ade80);
   --role-logo-color: #000;
 }
-body.theme-farmer .card { background: #0d1a10; border-color: rgba(255,255,255,0.05); }
-body.theme-farmer .card:hover { border-color: rgba(34,197,94,0.22); box-shadow: 0 0 20px rgba(34,197,94,0.08); }
-body.theme-farmer .card::before { background: linear-gradient(90deg,transparent,rgba(34,197,94,0.18),transparent); }
+body.theme-farmer .app-main {
+  background-image: linear-gradient(160deg, rgba(5, 15, 8, 0.91) 0%, rgba(13, 26, 16, 0.86) 50%, rgba(5, 15, 8, 0.93) 100%), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2000&q=80');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+body.theme-farmer .card { background: rgba(13, 26, 16, 0.85); backdrop-filter: blur(16px); border-color: rgba(34,197,94,0.15); }
+body.theme-farmer .card:hover { border-color: rgba(34,197,94,0.35); box-shadow: 0 0 24px rgba(34,197,94,0.15); }
+body.theme-farmer .card::before { background: linear-gradient(90deg,transparent,rgba(34,197,94,0.22),transparent); }
 body.theme-farmer .btn-primary { background: linear-gradient(135deg,#22c55e,#16a34a); color:#000; box-shadow:0 4px 16px rgba(34,197,94,0.32); }
 body.theme-farmer .btn-outline { color:#22c55e; border-color:rgba(34,197,94,0.28); }
 body.theme-farmer .btn-outline:hover { background:rgba(34,197,94,0.08); border-color:#22c55e; }
@@ -566,7 +578,7 @@ body.theme-farmer ::-webkit-scrollbar-thumb { background:rgba(34,197,94,0.2); }
 body.theme-farmer ::-webkit-scrollbar-thumb:hover { background:#22c55e; }
 body.theme-farmer .form-input:focus { border-color:#22c55e; background:rgba(34,197,94,0.07); box-shadow:0 0 0 3px rgba(34,197,94,0.1); }
 
-/* ── AUTHORITY — Deep Black + Amber/Red ── */
+/* ── AUTHORITY — Deep Tactical Command Center ── */
 body.theme-authority {
   --clr-bg: #0a0800;
   --clr-surface: #110e00;
@@ -593,9 +605,15 @@ body.theme-authority {
   --role-logo-bg: linear-gradient(135deg, #f59e0b, #ef4444);
   --role-logo-color: #000;
 }
-body.theme-authority .card { background: #1a1400; border-color: rgba(255,255,255,0.05); }
-body.theme-authority .card:hover { border-color: rgba(245,158,11,0.22); box-shadow: 0 0 20px rgba(245,158,11,0.08); }
-body.theme-authority .card::before { background: linear-gradient(90deg,transparent,rgba(245,158,11,0.18),transparent); }
+body.theme-authority .app-main {
+  background-image: linear-gradient(160deg, rgba(10, 8, 0, 0.92) 0%, rgba(26, 20, 0, 0.88) 50%, rgba(10, 8, 0, 0.94) 100%), url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=2000&q=80');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+body.theme-authority .card { background: rgba(26, 20, 0, 0.85); backdrop-filter: blur(16px); border-color: rgba(245,158,11,0.15); }
+body.theme-authority .card:hover { border-color: rgba(245,158,11,0.35); box-shadow: 0 0 24px rgba(245,158,11,0.15); }
+body.theme-authority .card::before { background: linear-gradient(90deg,transparent,rgba(245,158,11,0.22),transparent); }
 body.theme-authority .btn-primary { background: linear-gradient(135deg,#f59e0b,#ef4444); color:#000; box-shadow:0 4px 16px rgba(245,158,11,0.32); }
 body.theme-authority .btn-outline { color:#f59e0b; border-color:rgba(245,158,11,0.28); }
 body.theme-authority .btn-outline:hover { background:rgba(245,158,11,0.08); border-color:#f59e0b; }

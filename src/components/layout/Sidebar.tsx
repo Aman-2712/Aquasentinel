@@ -4,11 +4,12 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Map, Navigation, Bell, BarChart3,
   FileText, Shield, Activity, LogOut, ChevronRight,
-  Droplets, Menu, X, Sliders
+  Droplets, Menu, X, Sliders, AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { ROLE_DASHBOARD } from '@/context/AuthContext';
 import { useState } from 'react';
+import HackathonSimulatorModal from '@/components/demo/HackathonSimulatorModal';
 import styles from './Sidebar.module.css';
 
 const CITIZEN_NAV = [
@@ -42,6 +43,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showSimulator, setShowSimulator] = useState(false);
 
   // Pick navigation items based on user's role
   const navItems = user?.role === 'farmer' ? FARMER_NAV
@@ -56,7 +58,7 @@ export default function Sidebar() {
     const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
     const Icon = item.icon;
     return (
-      <Link href={item.href} className={`${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setMobileOpen(false)}>
+      <Link href={item.href} prefetch={true} className={`${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setMobileOpen(false)}>
         <Icon size={18} />
         <span>{item.label}</span>
         {'badge' in item && item.badge ? (
@@ -92,6 +94,32 @@ export default function Sidebar() {
             {roleLabel && <span className={styles.sectionLabel}>{roleLabel}</span>}
             {navItems.map(item => <NavItem key={item.href} item={item} />)}
           </div>
+
+          {/* Hackathon Simulation Quick Trigger */}
+          <div style={{ padding: '0 0.75rem', marginTop: '1rem' }}>
+            <button
+              onClick={() => setShowSimulator(true)}
+              style={{
+                width: '100%',
+                padding: '0.65rem 0.85rem',
+                borderRadius: '10px',
+                border: '1px solid rgba(255, 68, 68, 0.4)',
+                background: 'linear-gradient(135deg, rgba(255, 68, 68, 0.15), rgba(217, 119, 6, 0.15))',
+                color: '#ff6b6b',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.45rem',
+                boxShadow: '0 2px 12px rgba(255, 68, 68, 0.15)',
+              }}
+            >
+              <AlertTriangle size={15} color="#ff4444" />
+              <span>🚨 Live Demo Simulator</span>
+            </button>
+          </div>
         </div>
 
         {/* User */}
@@ -117,6 +145,8 @@ export default function Sidebar() {
           </div>
         )}
       </aside>
+
+      <HackathonSimulatorModal isOpen={showSimulator} onClose={() => setShowSimulator(false)} />
     </>
   );
 }

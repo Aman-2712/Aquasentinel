@@ -16,6 +16,10 @@ export function SectorOnboardingModal() {
   // Farmer Survey
   const [hasLand, setHasLand] = useState<boolean | null>(null);
   const [wantProtection, setWantProtection] = useState<boolean | null>(null);
+  const [farmerPhone, setFarmerPhone] = useState('');
+  const [farmLocation, setFarmLocation] = useState('Anakapalle Agricultural Catchment');
+  const [farmAcres, setFarmAcres] = useState('5.0 Acres');
+  const [farmCrop, setFarmCrop] = useState('Paddy & Sugarcane');
   const [isSubmittingLead, setIsSubmittingLead] = useState(false);
   const [leadSuccessMsg, setLeadSuccessMsg] = useState('');
 
@@ -48,23 +52,30 @@ export function SectorOnboardingModal() {
 
   // Handle Farmer Finish
   const handleFarmerSubmit = async () => {
-    // Immediately complete onboarding & switch role to proceed to dashboard
-    completeFarmerOnboarding(hasLand || false, wantProtection || false);
-    switchRole('farmer');
-
+    setIsSubmittingLead(true);
     if (hasLand && wantProtection) {
       try {
-        fetch('/api/send-farmer-lead', {
+        await fetch('/api/send-farmer-lead', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             farmerName: user?.name || 'Farmer Member',
             farmerEmail: user?.email || 'farmer@aquasentinel.io',
-            location: 'Visakhapatnam District',
+            farmerPhone: farmerPhone || '+91 98480 12345',
+            location: farmLocation || 'Visakhapatnam District',
+            acres: farmAcres || '5.0 Acres',
+            crop: farmCrop || 'Paddy & Mixed Agriculture',
           }),
-        }).catch(() => {});
+        });
+        setLeadSuccessMsg('Hardware protection request transmitted to operations team at aquasentinelfis@gmail.com!');
       } catch (e) {}
     }
+
+    setTimeout(() => {
+      completeFarmerOnboarding(hasLand || false, wantProtection || false);
+      switchRole('farmer');
+      setIsSubmittingLead(false);
+    }, 1200);
   };
 
   return (
@@ -374,17 +385,101 @@ export function SectorOnboardingModal() {
                 </div>
               </div>
             ) : (
-              /* Confirmation & Finish */
+              /* Confirmation & Farm Details */
               <div>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  style={{ width: '100%', justifyContent: 'center', background: '#00ff88', color: '#000' }}
-                  onClick={handleFarmerSubmit}
-                  disabled={isSubmittingLead}
-                >
-                  {isSubmittingLead ? <Loader size={18} className="spin" /> : <><span>Enter Farmer Dashboard</span><ArrowRight size={16} /></>}
-                </button>
+                {wantProtection ? (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <div style={{ padding: '0.85rem 1rem', borderRadius: '12px', background: 'rgba(0, 255, 136, 0.1)', border: '1px solid rgba(0, 255, 136, 0.3)', marginBottom: '1rem' }}>
+                      <strong style={{ color: '#00ff88', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Mail size={16} /> Hardware Deployment Lead Dispatch
+                      </strong>
+                      <p style={{ fontSize: '0.775rem', color: '#e8f8f0', margin: '0.35rem 0 0 0', lineHeight: 1.4 }}>
+                        Our engineering operations at <strong style={{ color: '#00ff88' }}>aquasentinelfis@gmail.com</strong> will be notified automatically to schedule your field setup.
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)', display: 'block', marginBottom: '0.25rem' }}>Contact Phone</label>
+                        <input
+                          type="tel"
+                          placeholder="+91 98480 12345"
+                          value={farmerPhone}
+                          onChange={e => setFarmerPhone(e.target.value)}
+                          style={{ width: '100%', padding: '0.6rem 0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)', display: 'block', marginBottom: '0.25rem' }}>Farm Size (Acres)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 5.0 Acres"
+                          value={farmAcres}
+                          onChange={e => setFarmAcres(e.target.value)}
+                          style={{ width: '100%', padding: '0.6rem 0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)', display: 'block', marginBottom: '0.25rem' }}>Location / Mandal</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Anakapalle / Pendurthi"
+                          value={farmLocation}
+                          onChange={e => setFarmLocation(e.target.value)}
+                          style={{ width: '100%', padding: '0.6rem 0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)', display: 'block', marginBottom: '0.25rem' }}>Primary Crop</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Paddy / Sugarcane"
+                          value={farmCrop}
+                          onChange={e => setFarmCrop(e.target.value)}
+                          style={{ width: '100%', padding: '0.6rem 0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: '0.85rem', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: '1.25rem' }}>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--clr-text-muted)' }}>
+                      You are registering for free agricultural weather alerts & soil saturation advisories.
+                    </p>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setWantProtection(null)}
+                    disabled={isSubmittingLead}
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ flex: 1, justifyContent: 'center', background: '#00ff88', color: '#000', fontWeight: 700 }}
+                    onClick={handleFarmerSubmit}
+                    disabled={isSubmittingLead}
+                  >
+                    {isSubmittingLead ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Loader size={18} className="animate-spin" /> Dispatching to Operations...
+                      </span>
+                    ) : (
+                      <>
+                        <span>{wantProtection ? 'Submit Inquiry & Enter Portal' : 'Enter Farmer Portal'}</span>
+                        <ArrowRight size={16} />
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
 
