@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { FIELD_SHIELDS, type RiskLevel, type FloodZone, type AlertData, type RouteOption } from '@/data/visakhapatnam_zones';
 
 export interface WeatherForecastItem {
@@ -454,7 +454,7 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
     setSafeRoutes(dynamicRoutes);
   };
 
-  const fetchWeatherData = async () => {
+  const fetchWeatherData = useCallback(async () => {
     setIsLoading(true);
     try {
       if (weatherMode !== 'live') {
@@ -562,13 +562,13 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [weatherMode]);
 
   useEffect(() => {
     calculateFloodPrediction(DEFAULT_WEATHER.current.rainfall, DEFAULT_WEATHER.current.soilMoisture);
     setIsLoading(false);
     fetchWeatherData();
-  }, [weatherMode]);
+  }, [fetchWeatherData]);
 
   const sendAuthorityBroadcast = (broadcast: { area: string; risk: RiskLevel; message: string }) => {
     const newBroadcast: AuthorityBroadcast = {

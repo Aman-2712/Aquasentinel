@@ -4,7 +4,7 @@
   left: var(--sidebar-width);
   right: 0;
   height: var(--navbar-height);
-  background: rgba(17, 23, 42, 0.95);
+  background: var(--clr-surface);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--clr-border);
   display: flex;
@@ -12,6 +12,7 @@
   padding: 0 1.5rem;
   gap: 1rem;
   z-index: 100;
+  transition: background var(--transition-slow), border-color var(--transition-slow);
 }
 
 .left {
@@ -26,7 +27,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.25rem 0.65rem;
-  background: rgba(255,255,255,0.04);
+  background: var(--clr-bg);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius-full);
   font-size: 0.72rem;
@@ -62,7 +63,7 @@
 .searchInput {
   width: 100%;
   padding: 0.5rem 1rem 0.5rem 2.3rem;
-  background: rgba(255,255,255,0.04);
+  background: var(--clr-bg);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius-full);
   color: var(--clr-text);
@@ -72,8 +73,8 @@
 
 .searchInput:focus {
   border-color: var(--clr-primary);
-  background: rgba(0,212,255,0.04);
-  box-shadow: 0 0 0 3px rgba(0,212,255,0.08);
+  background: var(--clr-surface);
+  box-shadow: 0 0 0 3px var(--clr-primary-dim);
   outline: none;
 }
 
@@ -91,7 +92,7 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.04);
+  background: var(--clr-bg);
   border: 1px solid var(--clr-border);
   color: var(--clr-text-muted);
   display: flex;
@@ -128,7 +129,7 @@
   gap: 0.4rem;
   padding: 0.3rem 0.75rem;
   background: var(--clr-primary-dim);
-  border: 1px solid rgba(0,212,255,0.2);
+  border: 1px solid var(--clr-border);
   border-radius: var(--radius-full);
   font-size: 0.8rem;
   font-weight: 600;
@@ -155,7 +156,7 @@
 }
 
 .simulationSelect option {
-  background: #071228;
+  background: var(--clr-card);
   color: var(--clr-text);
 }
 

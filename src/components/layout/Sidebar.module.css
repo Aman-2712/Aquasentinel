@@ -4,7 +4,7 @@
   left: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  background: rgba(17, 23, 42, 0.97);
+  background: var(--clr-surface);
   backdrop-filter: blur(20px);
   border-right: 1px solid var(--clr-border);
   display: flex;
@@ -15,6 +15,9 @@
 }
 
 /* Tint the sidebar bg subtly using the role color */
+body.theme-citizen .sidebar {
+  background: #ffffff;
+}
 body.theme-farmer .sidebar {
   background: rgba(6, 20, 16, 0.97);
 }
@@ -103,14 +106,14 @@ body.theme-authority .sidebar {
 
 .navItem:hover {
   color: var(--clr-text);
-  background: rgba(255,255,255,0.04);
+  background: var(--clr-bg);
 }
 
-/* Active nav item uses --role-color so it's green/amber/cyan by role */
+/* Active nav item uses --role-color so it's green/amber/blue by role */
 .navItem.active {
   color: var(--role-color, var(--clr-primary));
   background: var(--role-color-dim, var(--clr-primary-dim));
-  border: 1px solid color-mix(in srgb, var(--role-color, #00d4ff) 25%, transparent);
+  border: 1px solid var(--clr-border);
 }
 
 /* Left accent bar on active item */

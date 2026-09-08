@@ -38,7 +38,7 @@ export function SectorOnboardingModal() {
       return;
     }
 
-    switchRole('authority', govtId);
+    switchRole('authority');
   };
 
   // Handle Citizen choice
