@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Map, Navigation, Bell, BarChart3,
   FileText, Shield, Activity, LogOut, ChevronRight,
-  Droplets, Menu, X
+  Droplets, Menu, X, Sliders
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { ROLE_DASHBOARD } from '@/context/AuthContext';
@@ -24,7 +24,7 @@ const FARMER_NAV = [
   { label: 'Farmer Dashboard', href: '/farmer/dashboard', icon: LayoutDashboard },
   { label: 'Live Map AI', href: '/map', icon: Map },
   { label: 'FieldShield', href: '/fieldshield', icon: Shield },
-  { label: 'Shield Status', href: '/fieldshield/status', icon: Activity },
+  { label: 'Gate Control', href: '/fieldshield/status', icon: Sliders },
   { label: 'Alerts', href: '/alerts', icon: Bell, badge: 5 },
   { label: 'Predictions', href: '/predictions', icon: BarChart3 },
 ];

@@ -1,56 +1,196 @@
+/* ── SHARED ── */
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── STAT CARDS ── */
 .statCard { display: flex; align-items: center; gap: 0.85rem; padding: 1rem; }
 .statIcon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .si_primary { background: var(--clr-primary-dim); color: var(--clr-primary); }
-.si_safe { background: var(--clr-safe-dim); color: var(--clr-safe); }
-.si_danger { background: var(--clr-danger-dim); color: var(--clr-danger); }
-.statVal { display: block; font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--clr-text); }
+.si_safe    { background: var(--clr-safe-dim);    color: var(--clr-safe);    }
+.si_danger  { background: var(--clr-danger-dim);  color: var(--clr-danger);  }
+.statVal   { display: block; font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--clr-text); }
 .statLabel { display: block; font-size: 0.72rem; color: var(--clr-text-muted); }
 
-.module2Banner {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(0,102,255,0.08));
-  border: 1px solid rgba(124,58,237,0.25);
-  border-radius: var(--radius-lg);
-  margin-bottom: 1.5rem;
+/* ── TAB BUTTONS ── */
+.tabBtn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: var(--clr-text-muted);
+  font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
 }
-.module2Icon { color: #a78bfa; flex-shrink: 0; }
-.module2Text { flex: 1; }
-.module2Text strong { display: block; font-size: 0.9rem; color: var(--clr-text); margin-bottom: 2px; }
-.module2Text span { font-size: 0.78rem; color: var(--clr-text-muted); }
-.module2Steps { display: flex; gap: 0.5rem; }
-.module2Step { display: flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; color: var(--clr-text-muted); white-space: nowrap; }
-.module2StepNum { width: 18px; height: 18px; border-radius: 50%; background: rgba(124,58,237,0.2); color: #a78bfa; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tabBtn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.tabBtn[data-active="true"] {
+  background: rgba(0,255,136,0.15);
+  border-color: rgba(0,255,136,0.5);
+  color: #00ff88;
+}
 
+.tabBtnCam {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: var(--clr-text-muted);
+  font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.tabBtnCam:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.tabBtnCam[data-active="true"] {
+  background: rgba(0,212,255,0.15);
+  border-color: rgba(0,212,255,0.5);
+  color: #00d4ff;
+}
+
+.livePill {
+  background: rgba(255,59,48,0.85);
+  color: #fff;
+  font-size: 0.6rem; font-weight: 800;
+  padding: 2px 7px; border-radius: 999px;
+  letter-spacing: 0.5px;
+}
+
+/* ── FIELD SHIELD CARDS ── */
 .fieldCard { padding: 1.25rem; border-left: 4px solid transparent; }
-.field_high { border-left-color: var(--clr-danger); }
+.field_high   { border-left-color: var(--clr-danger);  }
 .field_medium { border-left-color: var(--clr-warning); }
-.field_low { border-left-color: var(--clr-safe); }
+.field_low    { border-left-color: var(--clr-safe);    }
 
 .fieldHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
-.fieldName { font-size: 0.95rem; font-weight: 700; color: var(--clr-text); margin-bottom: 2px; }
+.fieldName   { font-size: 0.95rem; font-weight: 700; color: var(--clr-text); margin: 0 0 2px 0; }
 .fieldFarmer { font-size: 0.75rem; color: var(--clr-text-muted); }
-.fieldBadges { display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
-.fieldMeta { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--clr-text-muted); margin-bottom: 0.85rem; }
-.deviceId { font-family: 'Outfit', sans-serif; color: var(--clr-text-subtle); }
+.fieldMeta   { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--clr-text-muted); margin-bottom: 0.85rem; }
+.deviceId    { font-family: 'Outfit', sans-serif; color: var(--clr-text-subtle); }
 
-.meters { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
-.meter {}
+.meters      { display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1rem; }
 .meterHeader { display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--clr-text-muted); margin-bottom: 0.3rem; }
-.meterVal { margin-left: auto; font-weight: 700; color: var(--clr-text); }
-.meterTrack { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
-.meterFill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.meterVal    { margin-left: auto; font-weight: 700; color: var(--clr-text); }
+.meterTrack  { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.meterFill   { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
 
 .fieldControl { display: flex; align-items: center; justify-content: space-between; padding-top: 0.85rem; border-top: 1px solid var(--clr-border); }
 .shieldStatus { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; }
-.lastAction { font-size: 0.68rem; color: var(--clr-text-subtle); }
-.controlBtns {}
+.lastAction   { font-size: 0.68rem; color: var(--clr-text-subtle); }
 
-.spin { animation: spin 0.8s linear infinite; }
+/* ── CAMERA GRID (Image 2 style) ── */
+.camGrid2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+@media (max-width: 860px) { .camGrid2 { grid-template-columns: 1fr; } }
 
-@media (max-width: 900px) {
-  .module2Banner { flex-direction: column; align-items: flex-start; }
-  .module2Steps { flex-wrap: wrap; }
+/* Camera card — clean bordered card like Image 2 */
+.camCard2 {
+  background: #0e1520;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Card header row — camera name + online/offline badge */
+.camCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.camCardLabel {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+}
+.camBadgeOnline {
+  font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;
+  padding: 3px 10px; border-radius: 999px;
+  background: rgba(0,255,136,0.9); color: #000;
+}
+.camBadgeOffline {
+  font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;
+  padding: 3px 10px; border-radius: 999px;
+  background: rgba(255,59,48,0.85); color: #fff;
+}
+
+/* Big feed area */
+.camFeedArea {
+  position: relative;
+  height: 220px;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Centered offline / loading message */
+.camCenterMsg {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.4rem; color: rgba(255,255,255,0.35);
+}
+
+/* Subtle field crop row texture */
+.camSceneOverlay {
+  position: absolute; inset: 0;
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0, transparent 12%, rgba(0,60,20,0.22) 12%, rgba(0,60,20,0.22) 13%),
+    repeating-linear-gradient(0deg, transparent 0, transparent 18%, rgba(0,50,15,0.18) 18%, rgba(0,50,15,0.18) 19%);
+}
+
+/* Scan line sweep */
+@keyframes scanSweep {
+  0%   { top: -3px; opacity: 0.6; }
+  100% { top: 100%; opacity: 0; }
+}
+.camScanLine {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.45), transparent);
+  animation: scanSweep 3.5s linear infinite;
+  pointer-events: none;
+}
+
+/* Water detection bounding box */
+.camWaterBox {
+  position: absolute; bottom: 20%; left: 10%; width: 52%; height: 24%;
+  border: 2px solid rgba(255,68,68,0.85);
+  border-radius: 4px;
+  background: rgba(255,68,68,0.07);
+  box-shadow: 0 0 14px rgba(255,68,68,0.25);
+}
+.camWaterLabel {
+  position: absolute; top: -20px; left: 0;
+  font-size: 0.62rem; color: #ff4444; font-weight: 800; letter-spacing: 0.8px;
+  background: rgba(0,0,0,0.65); padding: 2px 6px; border-radius: 3px;
+}
+
+/* Refresh / Fullscreen button row — exactly like Image 2 */
+.camBtnRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.camBtn {
+  display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+  padding: 0.55rem;
+  background: rgba(255,255,255,0.04);
+  border: none;
+  border-right: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  font-size: 0.8rem; font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.camBtn:last-child { border-right: none; }
+.camBtn:hover { background: rgba(255,255,255,0.09); color: #fff; }
+.camBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Footer: "Camera: CAM-X • Last update: ..." */
+.camFooter {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.35);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.2);
 }

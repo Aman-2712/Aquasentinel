@@ -25,10 +25,24 @@ export default function ProtectedLayout({ children, requiredRole }: ProtectedLay
         return;
       }
 
+      // Only redirect if the role is definitively wrong AND it's not a fresh login
+      // (fresh logins briefly have user=null before saveUserSession fires)
       if (requiredRole && user.role && user.role !== requiredRole) {
-        console.warn(`User role '${user.role}' does not match required role '${requiredRole}'. Redirecting.`);
-        const correctDashboard = ROLE_DASHBOARD[user.role] || '/citizen/dashboard';
-        router.replace(correctDashboard);
+        // Give it a tick — if login() just fired, the role may update immediately after
+        const timer = setTimeout(() => {
+          // Re-check after the tick in case role just updated
+          const stored = typeof window !== 'undefined' ? localStorage.getItem('aquasentinel_user') : null;
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              if (parsed.role === requiredRole) return; // role just updated, stay
+            } catch (e) {}
+          }
+          console.warn(`Role mismatch: '${user.role}' vs required '${requiredRole}'. Redirecting.`);
+          const correctDashboard = ROLE_DASHBOARD[user.role] || '/citizen/dashboard';
+          router.replace(correctDashboard);
+        }, 150);
+        return () => clearTimeout(timer);
       }
     }
   }, [isLoading, user, requiredRole, router]);

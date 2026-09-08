@@ -1,29 +1,100 @@
-.deviceCard { border: 1px solid; padding: 1.25rem; }
-.deviceHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.deviceId { display: flex; align-items: center; gap: 0.65rem; }
-.deviceIcon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.deviceIdText { display: block; font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--clr-text); }
-.deviceName { display: block; font-size: 0.72rem; color: var(--clr-text-muted); }
-.deviceStatus { display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; font-weight: 700; padding: 0.3rem 0.7rem; border-radius: var(--radius-full); border: 1px solid; }
-.deviceGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 0.85rem; }
-.deviceMetric { background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); padding: 0.5rem; }
-.dml { display: block; font-size: 0.65rem; color: var(--clr-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
-.dmv { display: block; font-size: 0.85rem; font-weight: 600; color: var(--clr-text); }
-.signalRow { display: flex; align-items: center; gap: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--clr-border); }
-.signalLabel { font-size: 0.72rem; color: var(--clr-text-muted); flex: 1; }
-.signalBars { display: flex; align-items: flex-end; gap: 2px; }
-.signalBar { width: 4px; border-radius: 2px; transition: background 0.3s; }
-.signalText { font-size: 0.72rem; font-weight: 600; }
-
-.timelineTitle { font-size: 0.95rem; font-weight: 700; color: var(--clr-text); margin-bottom: 1.25rem; }
-.timeline { display: flex; flex-direction: column; gap: 0; }
-.timelineItem { display: flex; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); position: relative; }
-.timelineItem:last-child { border-bottom: none; }
-.timelineDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
-.timelineContent { flex: 1; }
-.timelineHeader { display: flex; justify-content: space-between; margin-bottom: 2px; }
-.timelineDevice { font-size: 0.78rem; font-weight: 700; color: var(--clr-primary); font-family: 'Outfit', sans-serif; }
-.timelineTime { font-size: 0.72rem; color: var(--clr-text-muted); }
-.timelineEvent { font-size: 0.82rem; color: var(--clr-text-muted); }
-
+/* ── SHARED ── */
 .spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── STAT CARDS ── */
+.statCard { display: flex; align-items: center; gap: 0.85rem; padding: 1rem; }
+.statIcon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.si_primary { background: var(--clr-primary-dim); color: var(--clr-primary); }
+.si_safe    { background: var(--clr-safe-dim);    color: var(--clr-safe);    }
+.si_danger  { background: var(--clr-danger-dim);  color: var(--clr-danger);  }
+.si_warning { background: rgba(255,170,0,0.12);   color: #ffaa00;            }
+.statVal   { display: block; font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--clr-text); }
+.statLabel { display: block; font-size: 0.72rem; color: var(--clr-text-muted); }
+
+/* ── SUMMARY ROW (top 4 boxes) ── */
+.summaryRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 860px) { .summaryRow { grid-template-columns: repeat(2, 1fr); } }
+
+.summaryBox {
+  display: flex; align-items: center; gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+}
+.summaryNum  { display: block; font-size: 1.6rem; font-weight: 800; line-height: 1; }
+.summaryLbl  { display: block; font-size: 0.72rem; color: var(--clr-text-muted); margin-top: 2px; }
+
+/* ── GATE CARD GRID ── */
+.gateCardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+@media (max-width: 860px) { .gateCardGrid { grid-template-columns: 1fr; } }
+
+/* ── GATE CARD ── */
+.gateCard2 {
+  background: var(--clr-bg-card);
+  border: 1px solid var(--clr-border);
+  border-left: 4px solid transparent;
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: box-shadow 0.2s ease;
+}
+.gateCard2:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.4); }
+
+/* ── WATER STATUS BOX ── */
+.waterStatusBox {
+  display: flex; align-items: center; gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid;
+  border-radius: 12px;
+}
+
+
+/* ── GATE OPENING SLIDER ── */
+.gateSlider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 7px;
+  border-radius: 4px;
+  outline: none;
+  background: linear-gradient(
+    to right,
+    #00d4ff var(--fill, 0%),
+    rgba(255,255,255,0.1) var(--fill, 0%)
+  );
+  transition: opacity 0.2s;
+}
+.gateSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #00d4ff;
+  border: 3px solid #000;
+  box-shadow: 0 0 10px rgba(0,212,255,0.55);
+  cursor: pointer;
+}
+.gateSlider:disabled::-webkit-slider-thumb {
+  background: rgba(255,255,255,0.2);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.gateSlider::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #00d4ff;
+  border: 3px solid #000;
+  cursor: pointer;
+}

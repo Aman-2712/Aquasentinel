@@ -125,9 +125,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        setUser(parsed);
-        setIsLoading(false);
-        return;
+        // Only restore if it has a valid role — prevents stale/corrupt sessions
+        if (parsed && parsed.id && parsed.role) {
+          setUser(parsed);
+          setIsLoading(false);
+          return;
+        }
       } catch (e) {
         localStorage.removeItem('aquasentinel_user');
       }
@@ -229,6 +232,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string, desiredRole?: UserRole) => {
     const normEmail = email.trim().toLowerCase();
+
+    // ── Always clear any existing stale session before logging in ──
+    try { localStorage.removeItem('aquasentinel_user'); } catch (e) {}
+    setUser(null);
+
     const accounts = getRegisteredAccounts();
     const existing = accounts.find(a => a.email.toLowerCase() === normEmail);
 
@@ -236,6 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (existing.passwordHash !== password && password !== 'password123') {
         throw new Error('Invalid email or password. Please check your credentials.');
       }
+      // desiredRole always wins — the user chose which portal to log in from
       const activeRole = desiredRole || existing.role;
       saveUserSession({
         id: `user-${Date.now()}`,
@@ -253,11 +262,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       if (data.user) {
-        // Query profiles table for the authoritative role
         const profileRole = await fetchProfileRole(data.user.id);
-        let role: UserRole = profileRole || desiredRole || 'citizen';
+        // desiredRole wins — if the user logs in from /farmer/login, they are a farmer
+        let role: UserRole = desiredRole || profileRole || 'citizen';
         if (!profileRole && desiredRole) {
-          // First login with this role — create the profile
           const name = data.user.user_metadata?.name || email.split('@')[0];
           await upsertProfile(data.user.id, data.user.email || email, name, desiredRole);
           role = desiredRole;
@@ -275,7 +283,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Final fallback: create a local session
+    // Final fallback: create a local session — desiredRole always authoritative
     const activeRole = desiredRole || 'citizen';
     saveUserSession({
       id: `user-${Date.now()}`,
