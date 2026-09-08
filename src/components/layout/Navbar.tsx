@@ -132,14 +132,14 @@ export default function Navbar() {
 
         {user && (
           <div className={styles.userChip}>
-            <div className={styles.userDot} style={{ background: user.role === 'authority' ? '#ff4444' : user.role === 'farmer' ? '#00ff88' : '#00d4ff' }} />
+            <div className={styles.userDot} style={{ background: user.role === 'authority' ? '#ff4444' : user.role === 'farmer' ? '#00ff88' : '#599692' }} />
             <span>{user.name}</span>
             <span style={{
               fontSize: '0.7rem',
               padding: '0.1rem 0.4rem',
               borderRadius: '4px',
-              background: user.role === 'authority' ? 'rgba(255,68,68,0.2)' : user.role === 'farmer' ? 'rgba(0,255,136,0.2)' : 'rgba(0,214,255,0.2)',
-              color: user.role === 'authority' ? '#ff4444' : user.role === 'farmer' ? '#00ff88' : '#00d4ff',
+              background: user.role === 'authority' ? 'rgba(255,68,68,0.2)' : user.role === 'farmer' ? 'rgba(0,255,136,0.2)' : 'rgba(89,150,146,0.25)',
+              color: user.role === 'authority' ? '#ff4444' : user.role === 'farmer' ? '#00ff88' : '#599692',
               marginLeft: '0.2rem',
               fontWeight: 600,
               textTransform: 'capitalize',

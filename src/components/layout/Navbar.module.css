@@ -4,7 +4,7 @@
   left: var(--sidebar-width);
   right: 0;
   height: var(--navbar-height);
-  background: rgba(7, 18, 40, 0.95);
+  background: rgba(17, 23, 42, 0.95);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--clr-border);
   display: flex;
