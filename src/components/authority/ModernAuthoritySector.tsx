@@ -460,6 +460,53 @@ export default function ModernAuthoritySector() {
                         ))}
                       </div>
                     </div>
+
+                    {/* CARD 3: DISTRICT TRANSPORT INUNDATION & EVACUATION CORRIDORS (Fills empty vertical space!) */}
+                    <div className={styles.gapFillerCard}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', fontWeight: 700, color: '#fff' }}>
+                          <Crosshair size={16} color="#00f0ff" />
+                          <span>MUNICIPAL TRANSPORT ARTERIALS &amp; EVACUATION CORRIDORS</span>
+                        </div>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: 'rgba(0, 214, 255, 0.15)', color: '#00f0ff', border: '1px solid rgba(0, 214, 255, 0.35)' }}>
+                          5 MONITORED ROADS
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.2rem' }}>
+                        <div className={styles.corridorRow}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff4444' }} />
+                            <strong>Poorna Market Arterial</strong>
+                          </div>
+                          <span style={{ color: '#ff4444', fontWeight: 700 }}>84 cm • Inundated (Avoid)</span>
+                        </div>
+
+                        <div className={styles.corridorRow}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffaa00' }} />
+                            <strong>Gajuwaka Industrial Underpass</strong>
+                          </div>
+                          <span style={{ color: '#ffaa00', fontWeight: 700 }}>72 cm • Submerged (NDRF Active)</span>
+                        </div>
+
+                        <div className={styles.corridorRow}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00ff88' }} />
+                            <strong>Beach Road Marine Corridor</strong>
+                          </div>
+                          <span style={{ color: '#00ff88', fontWeight: 700 }}>14 cm • 100% Passable (Evacuation)</span>
+                        </div>
+
+                        <div className={styles.corridorRow}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00ff88' }} />
+                            <strong>NH-16 Elevated Freeway</strong>
+                          </div>
+                          <span style={{ color: '#00ff88', fontWeight: 700 }}>18 cm • Clear Transit</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* CARD 3: RIGHT SIDEBAR FORECAST & GIANT TEMPERATURE CARD */}

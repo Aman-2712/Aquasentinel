@@ -75,7 +75,7 @@ export default function ProtectedLayout({ children, requiredRole }: ProtectedLay
 
   if (user.role === 'authority') {
     return (
-      <div style={{ height: '100vh', maxHeight: '100vh', width: '100vw', overflow: 'hidden', background: '#060f1d', padding: '0.85rem', boxSizing: 'border-box', display: 'flex' }}>
+      <div style={{ height: '100vh', maxHeight: '100vh', width: '100vw', overflow: 'hidden', background: '#050c18', padding: '0.5rem', boxSizing: 'border-box', display: 'flex' }}>
         {children}
         <AIConditionMonitor />
       </div>
