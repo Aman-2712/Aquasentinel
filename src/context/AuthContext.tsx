@@ -246,6 +246,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       // desiredRole always wins — the user chose which portal to log in from
       const activeRole = desiredRole || existing.role;
+      const isAlreadyOnboarded = typeof window !== 'undefined' && (localStorage.getItem('aquasentinel_farmer_onboarded') === 'true' || activeRole !== 'farmer');
       saveUserSession({
         id: `user-${Date.now()}`,
         name: existing.name,
@@ -253,10 +254,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: activeRole,
         hasAgriLand: activeRole === 'farmer',
         hasFieldShieldAccess: activeRole === 'farmer',
-        onboardingCompleted: activeRole !== 'farmer',
+        onboardingCompleted: isAlreadyOnboarded,
       });
       return;
     }
+
 
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });

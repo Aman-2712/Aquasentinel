@@ -9,16 +9,31 @@ export function FarmerOnboardingModal() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [hasLand, setHasLand] = useState<boolean | null>(null);
   const [wantShield, setWantShield] = useState<boolean | null>(null);
+  const [dismissed, setDismissed] = useState(false);
 
-  if (!user || user.role !== 'farmer' || user.onboardingCompleted) {
+  // Check localStorage if already completed
+  const isPermanentlyOnboarded = typeof window !== 'undefined' && localStorage.getItem('aquasentinel_farmer_onboarded') === 'true';
+
+  if (dismissed || isPermanentlyOnboarded || !user || user.role !== 'farmer' || user.onboardingCompleted) {
     return null;
   }
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aquasentinel_farmer_onboarded', 'true');
+    }
+    completeFarmerOnboarding(true, true);
+  };
 
   const handleStep1 = (hasAgriLand: boolean) => {
     setHasLand(hasAgriLand);
     if (hasAgriLand) {
       setStep(2);
     } else {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('aquasentinel_farmer_onboarded', 'true');
+      }
       completeFarmerOnboarding(false, false);
     }
   };
@@ -28,17 +43,46 @@ export function FarmerOnboardingModal() {
     if (shieldReq) {
       setStep(3);
     } else {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('aquasentinel_farmer_onboarded', 'true');
+      }
       completeFarmerOnboarding(true, false);
     }
   };
 
   const handleFinish = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aquasentinel_farmer_onboarded', 'true');
+    }
     completeFarmerOnboarding(true, true);
+    setDismissed(true);
   };
 
   return (
     <div className={styles.overlay}>
-      <div className={styles.modal}>
+      <div className={styles.modal} style={{ position: 'relative' }}>
+        <button
+          onClick={handleDismiss}
+          style={{
+            position: 'absolute',
+            top: 14,
+            right: 14,
+            background: 'rgba(255,255,255,0.1)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 32,
+            height: 32,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            cursor: 'pointer',
+            zIndex: 10,
+          }}
+          title="Dismiss and do not show again"
+        >
+          <X size={18} />
+        </button>
         <div className={styles.header}>
           <div className={styles.badgeIcon}>
             <Sprout size={24} />
