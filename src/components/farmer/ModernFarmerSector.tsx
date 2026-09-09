@@ -26,7 +26,9 @@ import {
   ArrowUpRight,
   Sparkles,
   X,
-  ChevronRight
+  ChevronRight,
+  Bot,
+  Cpu
 } from 'lucide-react';
 import { FarmerOnboardingModal } from '@/components/onboarding/FarmerOnboardingModal';
 import HackathonSimulatorModal from '@/components/demo/HackathonSimulatorModal';
@@ -113,8 +115,46 @@ export default function ModernFarmerSector() {
     }));
   }, [weatherData.forecast, currentTemp, currentRain, isStorm]);
 
+  const [autoGateModes, setAutoGateModes] = useState<Record<string, boolean>>({
+    fs1: true,
+    fs2: true,
+    fs3: false,
+    fs4: true,
+  });
+  const [isAutoCalibrating, setIsAutoCalibrating] = useState(false);
+  const [autoCalibrateSuccess, setAutoCalibrateSuccess] = useState(false);
+
   const handleBarrierHeightChange = (id: string, newHeight: number) => {
     setBarrierHeights(prev => ({ ...prev, [id]: newHeight }));
+  };
+
+  const handleAutoCalibrateAll = async () => {
+    setIsAutoCalibrating(true);
+    // Intelligent calculation based on actual zone hydrology and rainfall
+    const targetHeights: Record<string, number> = {
+      fs1: currentRain > 20 ? 150 : 90,
+      fs2: currentRain > 20 ? 120 : 60,
+      fs3: currentRain > 20 ? 90 : 45,
+      fs4: currentRain > 20 ? 150 : 120,
+    };
+    setBarrierHeights(targetHeights);
+    setAutoGateModes({ fs1: true, fs2: true, fs3: true, fs4: true });
+    for (const fs of fieldShields) {
+      await triggerDeviceShield(fs.id, 'deploy');
+    }
+    setIsAutoCalibrating(false);
+    setAutoCalibrateSuccess(true);
+    setTimeout(() => setAutoCalibrateSuccess(false), 3500);
+  };
+
+  const handleToggleAutoGate = (id: string, waterLevel: number = 0) => {
+    const nextState = !autoGateModes[id];
+    setAutoGateModes(prev => ({ ...prev, [id]: nextState }));
+    if (nextState) {
+      // Auto-calibrate this gate shutter based on current water level
+      const autoH = waterLevel >= 15 ? 150 : waterLevel >= 8 ? 90 : waterLevel >= 3 ? 45 : 0;
+      setBarrierHeights(prev => ({ ...prev, [id]: autoH }));
+    }
   };
 
   const handleDeployAllGates = async () => {
@@ -836,7 +876,7 @@ export default function ModernFarmerSector() {
           </div>
         )}
 
-        {/* TAB 4: GATE CONTROL (WITH HEIGHT ADJUSTMENT BAR) */}
+        {/* TAB 4: GATE CONTROL (WITH HEIGHT ADJUSTMENT BAR & AUTOMATIC SHUTTER CONTROL) */}
         {activeTab === 'gates' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -846,7 +886,7 @@ export default function ModernFarmerSector() {
                   <span>Automated Hydraulic Sluice Gate Control &amp; Height Calibration</span>
                 </h3>
                 <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.65)' }}>
-                  Interactive height elevation sliders (0cm - 150cm) and emergency runoff diversion actuators
+                  Interactive height elevation sliders (0cm - 150cm) and AI autonomous runoff diversion actuators
                 </span>
               </div>
               <button onClick={() => setActiveTab('overview')} className={styles.actionBtnSecondary}>
@@ -854,18 +894,52 @@ export default function ModernFarmerSector() {
               </button>
             </div>
 
+            {/* AI AUTO SHUTTER CONTROL BANNER (IMG 2 AUTOMATIC GATE CONTROL) */}
+            <div className={styles.autoGateHeaderBar}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(0,255,136,0.18)', border: '1px solid #00ff88', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00ff88', boxShadow: '0 0 16px rgba(0,255,136,0.3)' }}>
+                  <Bot size={22} />
+                </div>
+                <div>
+                  <strong style={{ fontSize: '0.95rem', color: '#fff', display: 'block' }}>
+                    Autonomous AI Shutter Regulation Active
+                  </strong>
+                  <span style={{ fontSize: '0.775rem', color: 'rgba(255,255,255,0.7)' }}>
+                    Continuous IoT sensor telemetry auto-regulates shutter elevation to prevent soil saturation &amp; crop logging
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleAutoCalibrateAll}
+                disabled={isAutoCalibrating}
+                className={styles.autoGateAutoBtn}
+              >
+                <Sparkles size={16} />
+                <span>{isAutoCalibrating ? 'Calibrating Shutters...' : autoCalibrateSuccess ? '✓ All Shutters AI Optimized!' : '⚡ AI Auto-Calibrate All Gates'}</span>
+              </button>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
               {fieldShields.map(fs => {
                 const currentH = barrierHeights[fs.id] ?? 90;
                 const percentage = Math.round((currentH / 150) * 100);
+                const isAutoActive = autoGateModes[fs.id] ?? true;
 
                 return (
                   <div key={fs.id} className={styles.gateCard}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <strong style={{ fontSize: '1.1rem', color: '#fff' }}>{fs.name} Sluice Gate</strong>
-                      <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: currentH > 0 ? 'rgba(0, 255, 136, 0.2)' : 'rgba(255, 255, 255, 0.1)', color: currentH > 0 ? '#00ff88' : '#fff' }}>
-                        {currentH === 0 ? 'CLOSED (0cm)' : currentH >= 120 ? 'EMERGENCY SPILL (100%)' : `RAISED ${percentage}%`}
-                      </span>
+                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                        {isAutoActive && (
+                          <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '5px', background: 'rgba(0, 212, 255, 0.25)', color: '#00d4ff', border: '1px solid rgba(0, 212, 255, 0.4)' }}>
+                            🤖 AI AUTO
+                          </span>
+                        )}
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: currentH > 0 ? 'rgba(0, 255, 136, 0.2)' : 'rgba(255, 255, 255, 0.1)', color: currentH > 0 ? '#00ff88' : '#fff' }}>
+                          {currentH === 0 ? 'CLOSED (0cm)' : currentH >= 120 ? 'EMERGENCY SPILL (100%)' : `RAISED ${percentage}%`}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Visual Gate Level Elevation Bar */}
@@ -930,24 +1004,35 @@ export default function ModernFarmerSector() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
                       <button
                         onClick={() => {
                           handleBarrierHeightChange(fs.id, 150);
                           triggerDeviceShield(fs.id, 'deploy');
                         }}
                         className={styles.actionBtnPrimary}
-                        style={{ flex: 1, justifyContent: 'center' }}
+                        style={{ flex: 1, minWidth: '110px', justifyContent: 'center', fontSize: '0.785rem', padding: '0.6rem 0.5rem' }}
                       >
-                        <Zap size={14} /> Full Deploy (150cm)
+                        <Zap size={13} /> Full Deploy (150cm)
                       </button>
+
+                      <button
+                        onClick={() => handleToggleAutoGate(fs.id, fs.waterLevel)}
+                        className={`${styles.autoGateCardBtn} ${isAutoActive ? styles.autoGateCardBtnActive : ''}`}
+                        title="AI Autonomous Shutter Regulation"
+                        style={{ minWidth: '105px' }}
+                      >
+                        <Bot size={14} />
+                        <span>{isAutoActive ? '✓ Auto (Active)' : '⚡ Auto Shutter'}</span>
+                      </button>
+
                       <button
                         onClick={() => {
                           handleBarrierHeightChange(fs.id, 0);
                           triggerDeviceShield(fs.id, 'idle');
                         }}
                         className={styles.actionBtnSecondary}
-                        style={{ flex: 1, justifyContent: 'center' }}
+                        style={{ flex: 1, minWidth: '100px', justifyContent: 'center', fontSize: '0.785rem', padding: '0.6rem 0.5rem' }}
                       >
                         Retract (0cm)
                       </button>
