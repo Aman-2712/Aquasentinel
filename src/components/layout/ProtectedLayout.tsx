@@ -63,6 +63,16 @@ export default function ProtectedLayout({ children, requiredRole }: ProtectedLay
     return null;
   }
 
+  // Farmer sector has its own modern, all-in-one capsule dock and header UI
+  if (user.role === 'farmer') {
+    return (
+      <div style={{ minHeight: '100vh', width: '100%', background: '#05140d', padding: '0.85rem', boxSizing: 'border-box' }}>
+        {children}
+        <AIConditionMonitor />
+      </div>
+    );
+  }
+
   return (
     <div className="app-layout">
       <Sidebar />
