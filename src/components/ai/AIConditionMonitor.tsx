@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useFloodData } from '@/context/FloodDataContext';
 import { Bot, Mail, CheckCircle2, AlertOctagon, X, Sparkles, ShieldAlert, Cpu, Volume2, VolumeX, RotateCcw } from 'lucide-react';
@@ -7,6 +8,7 @@ import { playEmergencySirenAudio, stopEmergencySirenAudio, getIsSirenAudioPlayin
 
 export default function AIConditionMonitor() {
   const { user } = useAuth();
+  const pathname = usePathname();
   const { weatherData, xgboostPrediction, weatherMode, isSimulationActive, broadcastAlerts } = useFloodData();
   const [activeNotification, setActiveNotification] = useState<{
     id: string;
@@ -25,6 +27,9 @@ export default function AIConditionMonitor() {
   const lastPlayedSirenIdRef = useRef<string>('');
   const [isDispatching, setIsDispatching] = useState(false);
 
+  // Authority command console is determined by pathname to prevent shared localStorage role collisions
+  const isAuthorityConsole = pathname?.startsWith('/authority') === true;
+
   // Initialize browser audio unlocking & cleanup on unmount
   useEffect(() => {
     initAudioUnlock();
@@ -35,8 +40,8 @@ export default function AIConditionMonitor() {
 
   // Check for incoming authority broadcast siren alerts on Farmer & Citizen screens
   useEffect(() => {
-    // Only play siren on Farmer and Citizen devices, NEVER on the Authority command center
-    if (user?.role === 'authority') return;
+    // NEVER play siren on the Authority command center
+    if (isAuthorityConsole) return;
 
     const activeSirenAlert = broadcastAlerts.find(
       b => b.active && b.risk === 'high' && (b.message.includes('SIREN') || b.message.includes('EMERGENCY'))
@@ -45,14 +50,16 @@ export default function AIConditionMonitor() {
     if (activeSirenAlert && !isSirenMuted) {
       if (lastPlayedSirenIdRef.current !== activeSirenAlert.id) {
         lastPlayedSirenIdRef.current = activeSirenAlert.id;
+        console.log('🚨 [SIREN DETECTED ON FARMER/CITIZEN DEVICE]:', activeSirenAlert.id, activeSirenAlert.message);
+
         // Play real siren on Farmer / Citizen devices for precisely 2 seconds
         playEmergencySirenAudio(2000);
 
         setActiveNotification({
           id: `siren-${activeSirenAlert.id}`,
-          sector: user?.role || 'citizen',
+          sector: pathname?.includes('farmer') ? 'farmer' : (user?.role || 'citizen'),
           subject: '🚨 MASTER DISTRICT EMERGENCY SIREN ACTIVATED',
-          recipients: [user?.email || 'Registered Citizen / Farmer Device'],
+          recipients: [user?.email || 'Registered Sector Device (Visakhapatnam)'],
           timestamp: activeSirenAlert.timestamp || 'Just now',
           riskScore: xgboostPrediction.riskScore || 94,
           rainfall: weatherData.current.rainfall || 48.2,
@@ -61,7 +68,7 @@ export default function AIConditionMonitor() {
         });
       }
     }
-  }, [broadcastAlerts, user?.role, isSirenMuted, xgboostPrediction.riskScore, weatherData.current.rainfall]);
+  }, [broadcastAlerts, isAuthorityConsole, isSirenMuted, xgboostPrediction.riskScore, weatherData.current.rainfall, pathname, user?.email, user?.role]);
 
   // Autonomous AI weather monitoring and email dispatch
   useEffect(() => {
@@ -71,13 +78,13 @@ export default function AIConditionMonitor() {
       weatherMode === 'flash_flood' ||
       isSimulationActive;
 
-    const eventKey = `${weatherMode}-${Math.round(weatherData.current.rainfall / 15)}-${user?.role || 'citizen'}-${user?.hasAgriLand ? 'land' : 'noland'}`;
+    const eventKey = `${weatherMode}-${Math.round(weatherData.current.rainfall / 15)}-${pathname?.includes('farmer') ? 'farmer' : (user?.role || 'citizen')}-${user?.hasAgriLand ? 'land' : 'noland'}`;
 
     if (isCritical && lastDispatchedRef.current !== eventKey && !isDispatching) {
       lastDispatchedRef.current = eventKey;
       setIsDispatching(true);
 
-      const sector = user?.role || 'citizen';
+      const sector = pathname?.includes('farmer') ? 'farmer' : (user?.role || 'citizen');
       const hasAgriLand = user?.hasAgriLand ?? false;
       const userName = user?.name || 'AquaSentinel Member';
       const userEmail = user?.email || '';
@@ -107,12 +114,12 @@ export default function AIConditionMonitor() {
               actionSummary = hasAgriLand
                 ? 'Agricultural crop preservation directive & FieldShield sluice gate alert dispatched.'
                 : 'Rural storm precautions and livestock shelter advisory dispatched.';
-            } else if (sector === 'authority') {
+            } else if (isAuthorityConsole) {
               actionSummary = 'District command telemetry & inundation breakdown dispatched.';
             }
 
             // Play siren for Farmer / Citizen if high risk for 2 seconds
-            if (user?.role !== 'authority' && xgboostPrediction.riskScore >= 75 && !isSirenMuted) {
+            if (!isAuthorityConsole && xgboostPrediction.riskScore >= 75 && !isSirenMuted) {
               playEmergencySirenAudio(2000);
             }
 
@@ -125,11 +132,11 @@ export default function AIConditionMonitor() {
               riskScore: xgboostPrediction.riskScore,
               rainfall: weatherData.current.rainfall,
               actionSummary,
-              isSirenAlert: user?.role !== 'authority' && xgboostPrediction.riskScore >= 75,
+              isSirenAlert: !isAuthorityConsole && xgboostPrediction.riskScore >= 75,
             });
 
             // Auto-hide notification after 15s if not siren
-            if (user?.role === 'authority' || xgboostPrediction.riskScore < 75) {
+            if (isAuthorityConsole || xgboostPrediction.riskScore < 75) {
               setTimeout(() => {
                 setActiveNotification(prev => (prev?.id ? null : prev));
               }, 12000);
@@ -148,10 +155,12 @@ export default function AIConditionMonitor() {
     xgboostPrediction.riskScore,
     weatherMode,
     isSimulationActive,
-    user?.role,
+    isAuthorityConsole,
+    pathname,
     user?.hasAgriLand,
     user?.name,
     user?.email,
+    user?.role,
     isDispatching,
     isSirenMuted,
   ]);
@@ -227,7 +236,7 @@ export default function AIConditionMonitor() {
                   textTransform: 'uppercase',
                 }}
               >
-                {activeNotification.isSirenAlert ? '2-SEC SIREN PULSE' : 'AUTONOMOUS'}
+                {activeNotification.isSirenAlert ? '2-SEC SIREN' : 'AUTONOMOUS'}
               </span>
             </div>
             <span style={{ fontSize: '0.7rem', color: 'var(--clr-text-muted)' }}>

@@ -74,7 +74,7 @@ interface FloodDataContextType {
   resetSimulation: () => void;
   triggerDeviceShield: (id: string, action: 'deploy' | 'idle') => Promise<void>;
   refreshWeather: () => Promise<void>;
-  sendAuthorityBroadcast: (broadcast: { area: string; risk: RiskLevel; message: string }) => void;
+  sendAuthorityBroadcast: (broadcast: { area: string; risk: RiskLevel; message: string; id?: string; sender?: string }) => void;
   dismissBroadcast: (id: string) => void;
   addIncidentReport: (report: { area: string; type: string; severity: string; desc: string }) => void;
 }
@@ -679,9 +679,9 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
     fetchWeatherData();
   }, [fetchWeatherData]);
 
-  const sendAuthorityBroadcast = async (broadcast: { area: string; risk: RiskLevel; message: string; sender?: string }) => {
+  const sendAuthorityBroadcast = async (broadcast: { area: string; risk: RiskLevel; message: string; id?: string; sender?: string }) => {
     const newBroadcast: AuthorityBroadcast = {
-      id: `broadcast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      id: broadcast.id || `broadcast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       sender: broadcast.sender || 'Visakhapatnam Disaster Management Authority (VDMA)',
       area: broadcast.area,
       risk: broadcast.risk,

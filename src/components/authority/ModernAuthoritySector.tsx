@@ -138,8 +138,11 @@ export default function ModernAuthoritySector() {
   const handleToggleSiren = () => {
     setMasterSirenActive(true);
 
+    const sirenUniqueId = `siren-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+
     // 1. Broadcast across all sectors (Farmers & Citizens receive the 2-second siren alert & audio)
     sendAuthorityBroadcast({
+      id: sirenUniqueId,
       area: 'All Municipal & Agricultural Sectors (Visakhapatnam Metropolitan)',
       risk: 'high',
       message: '🚨 MASTER EMERGENCY SIREN ACTIVATED: Severe Cloudburst & Coastal Inundation warning. Farmers & Citizens must take immediate shelter on elevated safe ground.'
