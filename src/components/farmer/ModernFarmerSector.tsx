@@ -24,7 +24,9 @@ import {
   SlidersHorizontal,
   Layers,
   ArrowUpRight,
-  Sparkles
+  Sparkles,
+  X,
+  ChevronRight
 } from 'lucide-react';
 import { FarmerOnboardingModal } from '@/components/onboarding/FarmerOnboardingModal';
 import HackathonSimulatorModal from '@/components/demo/HackathonSimulatorModal';
@@ -57,6 +59,7 @@ export default function ModernFarmerSector() {
   const [showSimulatorModal, setShowSimulatorModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchRiskFilter, setSearchRiskFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [leadPhone, setLeadPhone] = useState('+91 98480 22338');
   const [leadAcres, setLeadAcres] = useState('6.5 Acres');
   const [leadCrop, setLeadCrop] = useState('Paddy & Sugarcane');
@@ -158,9 +161,16 @@ export default function ModernFarmerSector() {
     }
   };
 
-  const filteredZones = searchQuery
-    ? zones.filter(z => z.name.toLowerCase().includes(searchQuery.toLowerCase()) || z.area.toLowerCase().includes(searchQuery.toLowerCase()))
-    : zones;
+  const filteredZones = useMemo(() => {
+    return zones.filter(z => {
+      const matchText = searchQuery === '' ||
+        z.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        z.area.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchRisk = searchRiskFilter === 'all' || z.risk === searchRiskFilter;
+      return matchText && matchRisk;
+    });
+  }, [zones, searchQuery, searchRiskFilter]);
 
   return (
     <div className={styles.farmerSectorContainer}>
@@ -282,61 +292,147 @@ export default function ModernFarmerSector() {
         </div>
       )}
 
-      {/* Quick Search Modal */}
+      {/* Quick Search Modal (Redesigned with Frosted Glass, Spacious Layout & Filter Pills) */}
       {showSearchModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9999,
-          background: 'rgba(0, 0, 0, 0.75)',
-          backdropFilter: 'blur(16px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1rem',
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(16, 36, 26, 0.95), rgba(8, 20, 14, 0.98))',
-            border: '1.5px solid rgba(0, 255, 136, 0.4)',
-            borderRadius: '24px',
-            padding: '1.75rem',
-            maxWidth: '560px',
-            width: '100%',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)',
-            color: '#fff',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Search size={18} color="#00ff88" />
-                Search Farmland &amp; Visakhapatnam Zones
-              </h3>
-              <button onClick={() => setShowSearchModal(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
-            </div>
-            <input
-              type="text"
-              autoFocus
-              placeholder="Search Anandapuram, Pendurthi, Gajuwaka, Madhurawada..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '12px', background: 'rgba(0,0,0,0.5)', border: '1.5px solid #00ff88', color: '#fff', fontSize: '0.95rem', marginBottom: '1rem' }}
-            />
-            <div style={{ maxHeight: '280px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {filteredZones.map(z => (
-                <div
-                  key={z.id}
-                  onClick={() => { setActiveTab('livemap'); setShowSearchModal(false); }}
-                  className={styles.frostedCardPlot}
-                  style={{ cursor: 'pointer', margin: 0 }}
-                >
-                  <div>
-                    <strong style={{ color: '#fff', fontSize: '0.9rem' }}>{z.name}</strong>
-                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', display: 'block' }}>{z.area} • Water Depth: {z.waterDepth}cm</span>
-                  </div>
-                  <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '4px', background: z.risk === 'high' ? 'rgba(255,68,68,0.2)' : z.risk === 'medium' ? 'rgba(255,170,0,0.2)' : 'rgba(0,255,136,0.2)', color: z.risk === 'high' ? '#ff4444' : z.risk === 'medium' ? '#ffaa00' : '#00ff88' }}>
-                    {z.risk.toUpperCase()}
+        <div className={styles.searchModalOverlay} onClick={() => setShowSearchModal(false)}>
+          <div className={styles.searchModalBox} onClick={e => e.stopPropagation()}>
+            <div className={styles.searchHeader}>
+              <div className={styles.searchHeaderTitle}>
+                <div className={styles.searchHeaderIcon}>
+                  <Search size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#fff' }}>
+                    Farmland &amp; Zone Search
+                  </h3>
+                  <span style={{ fontSize: '0.775rem', color: 'rgba(255, 255, 255, 0.65)' }}>
+                    Instant catchment lookup &amp; real-time hydrology telemetry
                   </span>
                 </div>
-              ))}
+              </div>
+              <button 
+                onClick={() => setShowSearchModal(false)} 
+                className={styles.searchCloseBtn}
+                title="Close Search (ESC)"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Input Field with Icons */}
+            <div className={styles.searchInputWrapper}>
+              <div className={styles.searchLeftIcon}>
+                <Search size={18} />
+              </div>
+              <input
+                type="text"
+                autoFocus
+                placeholder="Search Anandapuram, Pendurthi, Gajuwaka, Madhurawada..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className={styles.searchInputField}
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className={styles.searchClearBtn}
+                  title="Clear search"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* Quick Filter Tabs */}
+            <div className={styles.searchFilterTabs}>
+              <button
+                type="button"
+                className={`${styles.searchFilterChip} ${searchRiskFilter === 'all' ? styles.searchFilterChipActive : ''}`}
+                onClick={() => setSearchRiskFilter('all')}
+              >
+                All Zones ({zones.length})
+              </button>
+              <button
+                type="button"
+                className={`${styles.searchFilterChip} ${searchRiskFilter === 'high' ? styles.searchFilterChipActive : ''}`}
+                onClick={() => setSearchRiskFilter('high')}
+              >
+                High Risk ({zones.filter(z => z.risk === 'high').length})
+              </button>
+              <button
+                type="button"
+                className={`${styles.searchFilterChip} ${searchRiskFilter === 'medium' ? styles.searchFilterChipActive : ''}`}
+                onClick={() => setSearchRiskFilter('medium')}
+              >
+                Moderate ({zones.filter(z => z.risk === 'medium').length})
+              </button>
+              <button
+                type="button"
+                className={`${styles.searchFilterChip} ${searchRiskFilter === 'low' ? styles.searchFilterChipActive : ''}`}
+                onClick={() => setSearchRiskFilter('low')}
+              >
+                Nominal ({zones.filter(z => z.risk === 'low').length})
+              </button>
+            </div>
+
+            {/* Search Results List */}
+            <div className={styles.searchResultsContainer}>
+              {filteredZones.length === 0 ? (
+                <div className={styles.searchEmptyState}>
+                  <MapPin size={32} color="rgba(255,255,255,0.3)" />
+                  <p style={{ margin: 0, fontSize: '0.9rem' }}>No farmland catchments match &quot;{searchQuery}&quot;</p>
+                  <button 
+                    onClick={() => { setSearchQuery(''); setSearchRiskFilter('all'); }}
+                    className={styles.searchFilterChip}
+                    style={{ marginTop: '0.25rem' }}
+                  >
+                    Reset Search Filter
+                  </button>
+                </div>
+              ) : (
+                filteredZones.map(z => {
+                  const isHigh = z.risk === 'high';
+                  const isMed = z.risk === 'medium';
+                  const badgeBg = isHigh ? 'rgba(255, 68, 68, 0.22)' : isMed ? 'rgba(255, 170, 0, 0.22)' : 'rgba(0, 255, 136, 0.22)';
+                  const badgeColor = isHigh ? '#ff5555' : isMed ? '#ffaa00' : '#00ff88';
+                  const badgeBorder = isHigh ? '1px solid rgba(255, 68, 68, 0.45)' : isMed ? '1px solid rgba(255, 170, 0, 0.45)' : '1px solid rgba(0, 255, 136, 0.45)';
+
+                  return (
+                    <div
+                      key={z.id}
+                      onClick={() => { setActiveTab('livemap'); setShowSearchModal(false); }}
+                      className={styles.searchItemCard}
+                    >
+                      <div className={styles.searchItemLeft}>
+                        <div className={styles.searchItemIconWrapper}>
+                          <MapPin size={18} />
+                        </div>
+                        <div className={styles.searchItemInfo}>
+                          <span className={styles.searchItemName}>{z.name}</span>
+                          <span className={styles.searchItemDetails}>
+                            <span>📍 {z.area}</span>
+                            <span>•</span>
+                            <span style={{ color: '#00ff88' }}>💧 Depth: {z.waterDepth}cm</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className={styles.searchItemRight}>
+                        <span 
+                          className={styles.searchRiskBadge}
+                          style={{ background: badgeBg, color: badgeColor, border: badgeBorder }}
+                        >
+                          {z.risk.toUpperCase()} RISK
+                        </span>
+                        <div className={styles.searchActionHint}>
+                          <span>View</span>
+                          <ChevronRight size={14} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -941,34 +1037,36 @@ export default function ModernFarmerSector() {
           </div>
         )}
 
-        {/* BOTTOM ACTION CONTROLS STRIP */}
-        <div className={styles.hardwareActionStrip}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#00ff88', boxShadow: '0 0 10px #00ff88' }} />
-            <span style={{ fontSize: '0.8rem', color: '#ffffff', fontWeight: 600 }}>
-              FieldShield IoT Mesh: <strong>All Sluice Gates &amp; Soil Moisture Sensors Active</strong>
-            </span>
-          </div>
+        {/* BOTTOM ACTION CONTROLS STRIP (VISIBLE EXCLUSIVELY ON MAIN OVERVIEW / DASHBOARD TAB) */}
+        {activeTab === 'overview' && (
+          <div className={styles.hardwareActionStrip}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#00ff88', boxShadow: '0 0 10px #00ff88' }} />
+              <span style={{ fontSize: '0.8rem', color: '#ffffff', fontWeight: 600 }}>
+                FieldShield IoT Mesh: <strong>All Sluice Gates &amp; Soil Moisture Sensors Active</strong>
+              </span>
+            </div>
 
-          <div style={{ display: 'flex', gap: '0.6rem' }}>
-            <button
-              onClick={handleDeployAllGates}
-              disabled={isDeploying}
-              className={styles.actionBtnPrimary}
-            >
-              <Zap size={14} />
-              <span>{isDeploying ? 'Deploying...' : deploySuccess ? '✓ Gates Deployed!' : '⚡ Deploy All Sluice Gates'}</span>
-            </button>
+            <div style={{ display: 'flex', gap: '0.6rem' }}>
+              <button
+                onClick={handleDeployAllGates}
+                disabled={isDeploying}
+                className={styles.actionBtnPrimary}
+              >
+                <Zap size={14} />
+                <span>{isDeploying ? 'Deploying...' : deploySuccess ? '✓ Gates Deployed!' : '⚡ Deploy All Sluice Gates'}</span>
+              </button>
 
-            <button
-              onClick={() => setShowLeadModal(true)}
-              className={styles.actionBtnSecondary}
-            >
-              <Shield size={14} />
-              <span>Request Hardware Quote</span>
-            </button>
+              <button
+                onClick={() => setShowLeadModal(true)}
+                className={styles.actionBtnSecondary}
+              >
+                <Shield size={14} />
+                <span>Request Hardware Quote</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
