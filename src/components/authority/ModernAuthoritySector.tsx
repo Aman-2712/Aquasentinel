@@ -206,7 +206,7 @@ export default function ModernAuthoritySector() {
               transition={{ type: 'spring', stiffness: 450, damping: 32 }}
             />
           )}
-          <LayoutGrid size={20} />
+          <LayoutGrid size={22} />
         </button>
 
         {/* Button 2: Bell / Broadcast Alert Icon */}
@@ -223,7 +223,7 @@ export default function ModernAuthoritySector() {
               transition={{ type: 'spring', stiffness: 450, damping: 32 }}
             />
           )}
-          <Bell size={20} />
+          <Bell size={22} />
           {broadcastAlerts.length > 0 && (
             <span className={styles.dockBadgeCount}>{broadcastAlerts.length}</span>
           )}
@@ -243,7 +243,7 @@ export default function ModernAuthoritySector() {
               transition={{ type: 'spring', stiffness: 450, damping: 32 }}
             />
           )}
-          <Crosshair size={20} />
+          <Crosshair size={22} />
         </button>
 
         {/* Button 4: Equalizer / Bar Analytics Icon */}
@@ -260,7 +260,7 @@ export default function ModernAuthoritySector() {
               transition={{ type: 'spring', stiffness: 450, damping: 32 }}
             />
           )}
-          <BarChart3 size={20} />
+          <BarChart3 size={22} />
         </button>
 
         {/* Button 5: Citizen SOS Button */}
@@ -277,14 +277,14 @@ export default function ModernAuthoritySector() {
               transition={{ type: 'spring', stiffness: 450, damping: 32 }}
             />
           )}
-          <LifeBuoy size={19} />
+          <LifeBuoy size={21} />
           {pendingSOSCount > 0 && (
             <span className={styles.dockBadgeCount}>{pendingSOSCount}</span>
           )}
         </button>
 
         {/* Separator */}
-        <div style={{ width: '22px', height: '1px', background: 'rgba(255, 255, 255, 0.2)', margin: '2px 0' }} />
+        <div style={{ width: '28px', height: '1px', background: 'rgba(255, 255, 255, 0.2)', margin: '4px 0' }} />
 
         {/* Emergency Simulator */}
         <button
@@ -294,7 +294,7 @@ export default function ModernAuthoritySector() {
           title="Launch Emergency Scenario Simulator"
           style={{ color: '#00f0ff' }}
         >
-          <Zap size={19} />
+          <Zap size={20} />
         </button>
 
         {/* Logout */}
@@ -305,7 +305,7 @@ export default function ModernAuthoritySector() {
           title="Exit Authority Command"
           style={{ color: 'rgba(255, 120, 120, 0.8)' }}
         >
-          <LogOut size={18} />
+          <LogOut size={19} />
         </button>
       </aside>
 
