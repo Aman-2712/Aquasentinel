@@ -1,0 +1,763 @@
+/* ==========================================================================
+   MODERN AUTHORITY COMMAND SECTOR THEME
+   Spatial Glassmorphic Curved Command Center • Atmospheric Horizon • High-Tech Telemetry
+   Matching Visual Reference media_1788961987234.jpg
+   ========================================================================== */
+
+.authoritySectorContainer {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 1.7rem);
+  max-height: calc(100vh - 1.7rem);
+  border-radius: 28px;
+  overflow: hidden;
+  background-image: 
+    linear-gradient(180deg, rgba(10, 20, 36, 0.78) 0%, rgba(15, 30, 54, 0.55) 50%, rgba(8, 16, 30, 0.92) 100%),
+    url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=2400&q=85');
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: fadeIn 0.4s ease;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.99); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* --- Left Vertical Icon Dock (Spatial Capsule Pill) --- */
+.leftIconDock {
+  width: 76px;
+  height: 100%;
+  flex-shrink: 0;
+  background: rgba(12, 24, 44, 0.65);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 0.5rem;
+  z-index: 20;
+}
+
+.dockLogo {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: radial-gradient(circle, rgba(0, 214, 255, 0.35) 0%, rgba(0, 119, 255, 0.1) 75%);
+  border: 1px solid rgba(0, 214, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 214, 255, 0.4);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dockLogo:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 26px rgba(0, 214, 255, 0.6);
+}
+
+.dockNavGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: center;
+  width: 100%;
+}
+
+.dockBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dockBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px) scale(1.05);
+}
+
+.dockBtnActive {
+  background: rgba(0, 214, 255, 0.18);
+  border-color: rgba(0, 240, 255, 0.55);
+  color: #00f0ff;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), 0 0 16px rgba(0, 214, 255, 0.35);
+}
+
+.dockBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ff4444;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid rgba(12, 24, 44, 0.9);
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+}
+
+/* --- Main Layout Frame --- */
+.mainLayoutFrame {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* --- Top Header Bar --- */
+.authorityHeader {
+  height: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  background: rgba(10, 20, 36, 0.5);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 15;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brandBadge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #00f0ff;
+  background: rgba(0, 214, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.headerTitle {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.headerActionBtn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.headerActionBtn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.headerSirenBtn {
+  background: linear-gradient(135deg, rgba(255, 68, 68, 0.25), rgba(220, 38, 38, 0.45));
+  border: 1.5px solid #ff4444;
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 14px rgba(255, 68, 68, 0.35);
+  animation: pulseGlow 2s infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 14px rgba(255, 68, 68, 0.35); }
+  50% { box-shadow: 0 0 24px rgba(255, 68, 68, 0.65); }
+}
+
+/* --- Interior Scrollable Dashboard Area --- */
+.mainDashboardArea {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 214, 255, 0.3) transparent;
+}
+
+.mainDashboardArea::-webkit-scrollbar {
+  width: 6px;
+}
+.mainDashboardArea::-webkit-scrollbar-thumb {
+  background: rgba(0, 214, 255, 0.3);
+  border-radius: 10px;
+}
+
+/* --- Grid Structure: Left Main Content vs Right Forecast Panel --- */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.overviewLeftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ==========================================================================
+   HERO WEATHER CARD (Matching Reference Image top left)
+   ========================================================================== */
+.heroWeatherCard {
+  position: relative;
+  width: 100%;
+  min-height: 230px;
+  border-radius: 22px;
+  overflow: hidden;
+  background-image: 
+    linear-gradient(180deg, rgba(8, 20, 36, 0.5) 0%, rgba(12, 28, 50, 0.75) 100%),
+    url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80');
+  background-size: cover;
+  background-position: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.heroLocationRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 2;
+}
+
+.heroLocationTag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+  padding: 5px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.heroSubtitleLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 0.25rem;
+}
+
+.heroConditionTitle {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0 0 0.4rem 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.heroDescriptionText {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 540px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.hero3DIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 80%);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00f0ff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 20px rgba(0, 240, 255, 0.4);
+}
+
+/* ==========================================================================
+   24-HOUR SINE WAVE HORIZON CARD (Matching Reference Image bottom left)
+   ========================================================================== */
+.horizonStatsCard {
+  background: rgba(14, 28, 50, 0.65);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 22px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.horizonHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.horizonTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.horizonSineWrap {
+  position: relative;
+  width: 100%;
+  height: 90px;
+  margin: 0.5rem 0;
+}
+
+.sineSvg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hourlyTelemetryRow {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.85rem;
+}
+
+.hourlyNodeItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.4rem 0.2rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.hourlyNodeItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.hourlyNodeTemp {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+  margin-bottom: 3px;
+}
+
+.hourlyNodeTime {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+
+.hourlyNodeCondition {
+  font-size: 0.64rem;
+  color: #84abc9;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+/* ==========================================================================
+   RIGHT SIDEBAR PANEL (Matching Reference Image right side)
+   ========================================================================== */
+.rightSidebarCard {
+  background: rgba(14, 28, 50, 0.65);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 22px;
+  padding: 1.5rem 1.25rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.rightHeaderRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.rightDateText {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.rightTimeText {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.rightGiantTempSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rightGiantTempText {
+  font-size: 4rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.4rem;
+}
+
+.rightWindTelemetry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
+}
+
+.forecastHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.forecastTitle {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Forecast Multi-Day Toggle Pills (4 days / 14 days / 30 days) */
+.forecastPillGroup {
+  display: flex;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 3px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+}
+
+.forecastPillBtn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 6px 0;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.forecastPillBtnActive {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.forecastRowsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.forecastRowItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.6rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.2s ease;
+}
+
+.forecastRowItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.forecastRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.forecastRowIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(0, 214, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00f0ff;
+}
+
+.forecastRowDayName {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.forecastRowCondition {
+  font-size: 0.68rem;
+  color: #84abc9;
+  font-weight: 500;
+}
+
+.forecastRowTemp {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   AUTHORITY INTERACTIVE MODULES & CARDS
+   ========================================================================== */
+.moduleGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.glassModuleCard {
+  background: rgba(14, 28, 50, 0.65);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  padding: 1.25rem;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.65rem;
+}
+
+.cardTitle {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.cardBadge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+.cardBadgeCritical {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+  border: 1px solid rgba(255, 68, 68, 0.4);
+}
+
+.cardBadgeCyan {
+  background: rgba(0, 214, 255, 0.15);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 214, 255, 0.4);
+}
+
+.cardBadgeGreen {
+  background: rgba(0, 255, 136, 0.15);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.4);
+}
+
+/* ==========================================================================
+   MODALS & OVERLAYS
+   ========================================================================== */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 20, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1000;
+  animation: fadeIn 0.25s ease;
+}
+
+.modalCard {
+  background: rgba(14, 28, 52, 0.92);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1.5px solid rgba(0, 214, 255, 0.35);
+  border-radius: 24px;
+  padding: 1.75rem;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 214, 255, 0.2);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   BUTTONS WITH BEAUTIFUL SIDE-SLIDE HOVER EFFECT
+   ========================================================================== */
+.slideActionBtn {
+  position: relative;
+  overflow: hidden;
+  padding: 0.65rem 1.1rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid rgba(0, 214, 255, 0.4);
+  background: rgba(0, 214, 255, 0.15);
+  color: #00f0ff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.slideActionBtn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(0, 214, 255, 0.4), rgba(0, 119, 255, 0.4));
+  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+}
+
+.slideActionBtn:hover::before {
+  left: 0;
+}
+
+.slideActionBtn:hover {
+  color: #ffffff;
+  border-color: #00f0ff;
+  box-shadow: 0 4px 20px rgba(0, 214, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.slideActionBtnDanger {
+  border-color: rgba(255, 68, 68, 0.5);
+  background: rgba(255, 68, 68, 0.15);
+  color: #ff4444;
+}
+
+.slideActionBtnDanger::before {
+  background: linear-gradient(90deg, rgba(255, 68, 68, 0.5), rgba(220, 38, 38, 0.5));
+}
+
+.slideActionBtnDanger:hover {
+  border-color: #ff4444;
+  color: #ffffff;
+  box-shadow: 0 4px 20px rgba(255, 68, 68, 0.45);
+}

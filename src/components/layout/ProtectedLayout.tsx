@@ -63,10 +63,19 @@ export default function ProtectedLayout({ children, requiredRole }: ProtectedLay
     return null;
   }
 
-  // Farmer sector has its own modern, all-in-one capsule dock and header UI
+  // Farmer and Authority sectors have their own modern, all-in-one capsule dock and header UI matching reference designs
   if (user.role === 'farmer') {
     return (
       <div style={{ height: '100vh', maxHeight: '100vh', width: '100vw', overflow: 'hidden', background: '#05140d', padding: '0.85rem', boxSizing: 'border-box', display: 'flex' }}>
+        {children}
+        <AIConditionMonitor />
+      </div>
+    );
+  }
+
+  if (user.role === 'authority') {
+    return (
+      <div style={{ height: '100vh', maxHeight: '100vh', width: '100vw', overflow: 'hidden', background: '#060f1d', padding: '0.85rem', boxSizing: 'border-box', display: 'flex' }}>
         {children}
         <AIConditionMonitor />
       </div>

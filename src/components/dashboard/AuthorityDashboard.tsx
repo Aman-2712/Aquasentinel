@@ -1,7 +1,7 @@
 'use client';
 import { useAuth } from '@/context/AuthContext';
 import { Lock } from 'lucide-react';
-import ArcticAuthorityStation from '@/components/authority/ArcticAuthorityStation';
+import ModernAuthoritySector from '@/components/authority/ModernAuthoritySector';
 
 export default function AuthorityDashboard() {
   const { user } = useAuth();
@@ -42,5 +42,5 @@ export default function AuthorityDashboard() {
     );
   }
 
-  return <ArcticAuthorityStation />;
+  return <ModernAuthoritySector />;
 }
