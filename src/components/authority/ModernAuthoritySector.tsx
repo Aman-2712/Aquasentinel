@@ -36,7 +36,6 @@ import {
 } from 'lucide-react';
 import AuthorityAlertDispatcher from '@/components/authority/AuthorityAlertDispatcher';
 import HackathonSimulatorModal from '@/components/demo/HackathonSimulatorModal';
-import { playEmergencySirenAudio, stopEmergencySirenAudio, getIsSirenAudioPlaying } from '@/utils/sirenAudio';
 import dynamic from 'next/dynamic';
 
 const FloodMap = dynamic(() => import('@/components/map/FloodMap'), { ssr: false });
@@ -81,13 +80,6 @@ export default function ModernAuthoritySector() {
   const [masterSirenActive, setMasterSirenActive] = useState(false);
   const [sirenEmailSent, setSirenEmailSent] = useState(false);
   const [aiNoteIndex, setAiNoteIndex] = useState(0);
-
-  // Stop siren audio on unmount
-  useEffect(() => {
-    return () => {
-      stopEmergencySirenAudio();
-    };
-  }, []);
 
   const aiNotes = [
     'Autonomous AI Guardian: Doppler rainfall rate stabilized at 48.2 mm/h. Coastal high-tide alert synchronized.',
@@ -142,23 +134,20 @@ export default function ModernAuthoritySector() {
     }
   }, [forecastPeriod]);
 
-  // Handle emergency siren button (Plays real Web Audio siren + Dispatches across sectors + Sends emergency email)
+  // Handle emergency siren button (Broadcasts across all sectors + Dispatches emergency email without playing in Authority dashboard)
   const handleToggleSiren = () => {
     const nextState = !masterSirenActive;
     setMasterSirenActive(nextState);
 
     if (nextState) {
-      // 1. Play real dual-tone siren sound
-      playEmergencySirenAudio();
-
-      // 2. Broadcast across all sectors
+      // 1. Broadcast across all sectors (Farmers & Citizens receive the siren alert & audio)
       sendAuthorityBroadcast({
         area: 'All Municipal & Agricultural Sectors (Visakhapatnam Metropolitan)',
         risk: 'high',
         message: '🚨 MASTER EMERGENCY SIREN ACTIVATED: Severe Cloudburst & Coastal Inundation warning. Farmers & Citizens must take immediate shelter on elevated safe ground.'
       });
 
-      // 3. Dispatch automated emergency email alert
+      // 2. Dispatch automated emergency email alert
       fetch('/api/send-emergency-alert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -182,9 +171,6 @@ export default function ModernAuthoritySector() {
           setTimeout(() => setSirenEmailSent(false), 8000);
         })
         .catch(err => console.error('Emergency email dispatch error:', err));
-    } else {
-      // Stop siren sound
-      stopEmergencySirenAudio();
     }
   };
 

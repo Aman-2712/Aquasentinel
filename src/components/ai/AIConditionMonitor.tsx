@@ -2,11 +2,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useFloodData } from '@/context/FloodDataContext';
-import { Bot, Mail, CheckCircle2, AlertOctagon, X, Sparkles, ShieldAlert, Cpu } from 'lucide-react';
+import { Bot, Mail, CheckCircle2, AlertOctagon, X, Sparkles, ShieldAlert, Cpu, Volume2, VolumeX } from 'lucide-react';
+import { playEmergencySirenAudio, stopEmergencySirenAudio, getIsSirenAudioPlaying } from '@/utils/sirenAudio';
 
 export default function AIConditionMonitor() {
   const { user } = useAuth();
-  const { weatherData, xgboostPrediction, weatherMode, isSimulationActive } = useFloodData();
+  const { weatherData, xgboostPrediction, weatherMode, isSimulationActive, broadcastAlerts } = useFloodData();
   const [activeNotification, setActiveNotification] = useState<{
     id: string;
     sector: string;
@@ -16,13 +17,49 @@ export default function AIConditionMonitor() {
     riskScore: number;
     rainfall: number;
     actionSummary: string;
+    isSirenAlert?: boolean;
   } | null>(null);
 
+  const [isSirenMuted, setIsSirenMuted] = useState(false);
   const lastDispatchedRef = useRef<string>('');
   const [isDispatching, setIsDispatching] = useState(false);
 
+  // Stop siren audio on unmount
   useEffect(() => {
-    // Condition check: Cloudburst / Heavy rain / Flash flood / XGBoost High Risk
+    return () => {
+      stopEmergencySirenAudio();
+    };
+  }, []);
+
+  // Check for incoming authority broadcast siren alerts on Farmer & Citizen screens
+  useEffect(() => {
+    // Only play siren on Farmer and Citizen devices, NEVER on the Authority command center
+    if (user?.role === 'authority') return;
+
+    const activeSirenAlert = broadcastAlerts.find(
+      b => b.active && b.risk === 'high' && (b.message.includes('SIREN') || b.message.includes('EMERGENCY'))
+    );
+
+    if (activeSirenAlert && !isSirenMuted) {
+      // Play real siren on Farmer / Citizen devices
+      playEmergencySirenAudio();
+
+      setActiveNotification({
+        id: `siren-${activeSirenAlert.id}`,
+        sector: user?.role || 'citizen',
+        subject: '🚨 MASTER DISTRICT EMERGENCY SIREN ACTIVATED',
+        recipients: [user?.email || 'Registered Citizen / Farmer Device'],
+        timestamp: activeSirenAlert.timestamp,
+        riskScore: xgboostPrediction.riskScore || 94,
+        rainfall: weatherData.current.rainfall || 48.2,
+        actionSummary: activeSirenAlert.message,
+        isSirenAlert: true,
+      });
+    }
+  }, [broadcastAlerts, user?.role, isSirenMuted, xgboostPrediction.riskScore, weatherData.current.rainfall]);
+
+  // Autonomous AI weather monitoring and email dispatch
+  useEffect(() => {
     const isCritical =
       weatherData.current.rainfall >= 35 ||
       xgboostPrediction.riskScore >= 70 ||
@@ -69,6 +106,11 @@ export default function AIConditionMonitor() {
               actionSummary = 'District command telemetry & inundation breakdown dispatched.';
             }
 
+            // Play siren for Farmer / Citizen if high risk
+            if (user?.role !== 'authority' && xgboostPrediction.riskScore >= 75) {
+              playEmergencySirenAudio();
+            }
+
             setActiveNotification({
               id: `alert-${Date.now()}`,
               sector,
@@ -78,12 +120,15 @@ export default function AIConditionMonitor() {
               riskScore: xgboostPrediction.riskScore,
               rainfall: weatherData.current.rainfall,
               actionSummary,
+              isSirenAlert: user?.role !== 'authority' && xgboostPrediction.riskScore >= 75,
             });
 
-            // Auto-hide notification after 10s
-            setTimeout(() => {
-              setActiveNotification(prev => (prev?.id ? null : prev));
-            }, 10000);
+            // Auto-hide notification after 15s if not siren
+            if (user?.role === 'authority' || xgboostPrediction.riskScore < 75) {
+              setTimeout(() => {
+                setActiveNotification(prev => (prev?.id ? null : prev));
+              }, 12000);
+            }
           }
         })
         .catch(err => {
@@ -93,6 +138,8 @@ export default function AIConditionMonitor() {
     }
   }, [
     weatherData.current.rainfall,
+    weatherData.current.condition,
+    weatherData.current.soilMoisture,
     xgboostPrediction.riskScore,
     weatherMode,
     isSimulationActive,
@@ -103,9 +150,20 @@ export default function AIConditionMonitor() {
     isDispatching,
   ]);
 
+  const handleDismissNotification = () => {
+    stopEmergencySirenAudio();
+    setIsSirenMuted(true);
+    setActiveNotification(null);
+  };
+
+  const handleMuteSiren = () => {
+    stopEmergencySirenAudio();
+    setIsSirenMuted(true);
+  };
+
   if (!activeNotification) return null;
 
-  const isHighRisk = activeNotification.riskScore >= 70;
+  const isHighRisk = activeNotification.riskScore >= 70 || activeNotification.isSirenAlert;
 
   return (
     <div
@@ -114,13 +172,13 @@ export default function AIConditionMonitor() {
         bottom: '24px',
         right: '24px',
         zIndex: 99999,
-        maxWidth: '430px',
+        maxWidth: '450px',
         width: 'calc(100vw - 48px)',
         background: 'rgba(8, 16, 28, 0.96)',
         backdropFilter: 'blur(20px)',
         border: `1.5px solid ${isHighRisk ? '#ff4444' : '#00d6ff'}`,
         borderRadius: '16px',
-        boxShadow: `0 16px 48px rgba(0, 0, 0, 0.7), 0 0 24px ${isHighRisk ? 'rgba(255, 68, 68, 0.3)' : 'rgba(0, 214, 255, 0.25)'}`,
+        boxShadow: `0 16px 48px rgba(0, 0, 0, 0.7), 0 0 24px ${isHighRisk ? 'rgba(255, 68, 68, 0.4)' : 'rgba(0, 214, 255, 0.25)'}`,
         padding: '1.1rem',
         color: '#fff',
         animation: 'slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -130,21 +188,23 @@ export default function AIConditionMonitor() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div
             style={{
-              width: '32px',
-              height: '32px',
+              width: '34px',
+              height: '34px',
               borderRadius: '8px',
-              background: isHighRisk ? 'rgba(255, 68, 68, 0.2)' : 'rgba(0, 214, 255, 0.2)',
+              background: isHighRisk ? 'rgba(255, 68, 68, 0.25)' : 'rgba(0, 214, 255, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: isHighRisk ? '#ff4444' : '#00d6ff',
             }}
           >
-            <Bot size={18} />
+            {activeNotification.isSirenAlert ? <Volume2 size={20} className="animate-pulse" /> : <Bot size={18} />}
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <strong style={{ fontSize: '0.85rem', color: '#fff' }}>AI Sentinel Climate Guardian</strong>
+              <strong style={{ fontSize: '0.85rem', color: '#fff' }}>
+                {activeNotification.isSirenAlert ? '🚨 EMERGENCY SIREN DISPATCH' : 'AI Sentinel Climate Guardian'}
+              </strong>
               <span
                 style={{
                   fontSize: '0.65rem',
@@ -156,7 +216,7 @@ export default function AIConditionMonitor() {
                   textTransform: 'uppercase',
                 }}
               >
-                AUTONOMOUS DISPATCH
+                {activeNotification.isSirenAlert ? 'LIVE SIREN' : 'AUTONOMOUS'}
               </span>
             </div>
             <span style={{ fontSize: '0.7rem', color: 'var(--clr-text-muted)' }}>
@@ -164,12 +224,38 @@ export default function AIConditionMonitor() {
             </span>
           </div>
         </div>
-        <button
-          onClick={() => setActiveNotification(null)}
-          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
-        >
-          <X size={16} />
-        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {activeNotification.isSirenAlert && (
+            <button
+              onClick={handleMuteSiren}
+              title="Silence Siren Sound"
+              style={{
+                background: 'rgba(255, 68, 68, 0.2)',
+                border: '1px solid #ff4444',
+                color: '#ff4444',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <VolumeX size={12} />
+              <span>Silence</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleDismissNotification}
+            style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       <div
