@@ -58,6 +58,7 @@ export default function FloodMap({ zones, routes, selectedRouteId, onSelectRoute
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        if (!mapRef.current) return;
         const userLat = pos.coords.latitude;
         const userLng = pos.coords.longitude;
         const userCoords: [number, number] = [userLat, userLng];
@@ -77,6 +78,8 @@ export default function FloodMap({ zones, routes, selectedRouteId, onSelectRoute
           iconSize: [32, 32],
           iconAnchor: [16, 16],
         });
+
+        if (!mapRef.current) return;
 
         const m = L.marker(userCoords, { icon: userIcon })
           .bindPopup(`
