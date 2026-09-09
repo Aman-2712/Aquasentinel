@@ -610,6 +610,11 @@
 
 .presetPillActive {
   background: rgba(0, 255, 136, 0.25);
+  border-color: #00ff88;
+  color: #00ff88;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+}
+
 /* --- Search Modal Redesign --- */
 .searchModalOverlay {
   position: fixed;
