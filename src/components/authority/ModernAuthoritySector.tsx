@@ -1,35 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useFloodData } from '@/context/FloodDataContext';
 import { useAuth } from '@/context/AuthContext';
 import styles from './authorityModern.module.css';
 import {
-  ShieldAlert,
-  Radio,
-  Wifi,
-  Satellite,
-  Bot,
-  Activity,
-  Droplets,
-  Thermometer,
-  Sliders,
-  Send,
-  AlertTriangle,
-  Play,
-  Pause,
-  LifeBuoy,
-  Server,
-  Layers,
-  Sparkles,
-  Megaphone,
-  CheckCircle,
-  Eye,
-  RefreshCw,
+  LayoutGrid,
   Bell,
-  Menu,
-  ChevronRight,
-  Maximize2,
+  Crosshair,
+  BarChart3,
+  SlidersHorizontal,
   MapPin,
   Wind,
   CloudRain,
@@ -37,19 +17,16 @@ import {
   Sun,
   Cloud,
   LogOut,
-  TrendingUp,
   Zap,
-  Shield,
-  SlidersHorizontal,
-  ArrowUpRight,
-  Phone,
-  Navigation,
-  Clock,
-  CheckCircle2,
-  AlertOctagon,
-  X,
+  LifeBuoy,
   Volume2,
-  Users
+  Droplets,
+  CheckCircle2,
+  Phone,
+  ChevronRight,
+  Shield,
+  Activity,
+  CheckCircle
 } from 'lucide-react';
 import AuthorityAlertDispatcher from '@/components/authority/AuthorityAlertDispatcher';
 import HackathonSimulatorModal from '@/components/demo/HackathonSimulatorModal';
@@ -58,7 +35,7 @@ import dynamic from 'next/dynamic';
 const FloodMap = dynamic(() => import('@/components/map/FloodMap'), { ssr: false });
 const PredictionCharts = dynamic(() => import('@/components/charts/PredictionCharts'), { ssr: false });
 
-type AuthorityTab = 'overview' | 'livemap' | 'broadcasts' | 'dams' | 'sos_dispatch' | 'predictions';
+type AuthorityTab = 'overview' | 'broadcasts' | 'livemap' | 'predictions' | 'dams' | 'sos_dispatch';
 type ForecastPeriod = '4days' | '14days' | '30days';
 
 interface SOSItem {
@@ -70,23 +47,19 @@ interface SOSItem {
   time: string;
   status: 'pending' | 'dispatched' | 'resolved';
   assignedTeam?: string;
-  priority: 'high' | 'critical' | 'medium';
 }
 
 const INITIAL_SOS: SOSItem[] = [
-  { id: 'sos-1', name: 'Ravi Teja', phone: '+91 98480 12345', location: 'Poorna Market Main Street', coords: '17.7041° N, 83.2977° E', time: '4 mins ago', status: 'pending', priority: 'critical' },
-  { id: 'sos-2', name: 'Srinivas Rao', phone: '+91 97001 98765', location: 'Gajuwaka Industrial Underpass', coords: '17.6868° N, 83.2185° E', time: '12 mins ago', status: 'dispatched', assignedTeam: 'NDRF Team Alpha (Boat 4)', priority: 'high' },
-  { id: 'sos-3', name: 'Lakshmi Devi', phone: '+91 91234 56789', location: 'Gopalapatnam Railway Colony', coords: '17.7400° N, 83.2300° E', time: '25 mins ago', status: 'resolved', assignedTeam: 'SDRF Unit 2', priority: 'medium' },
-  { id: 'sos-4', name: 'K. Venkatesh', phone: '+91 94401 55667', location: 'Beach Road Coastal Promenade', coords: '17.7160° N, 83.3280° E', time: '38 mins ago', status: 'pending', priority: 'high' },
+  { id: 'sos-1', name: 'Ravi Teja', phone: '+91 98480 12345', location: 'Poorna Market Main Street', coords: '17.7041° N, 83.2977° E', time: '4 mins ago', status: 'pending' },
+  { id: 'sos-2', name: 'Srinivas Rao', phone: '+91 97001 98765', location: 'Gajuwaka Industrial Underpass', coords: '17.6868° N, 83.2185° E', time: '12 mins ago', status: 'dispatched', assignedTeam: 'NDRF Team Alpha (Boat 4)' },
+  { id: 'sos-3', name: 'Lakshmi Devi', phone: '+91 91234 56789', location: 'Gopalapatnam Railway Colony', coords: '17.7400° N, 83.2300° E', time: '25 mins ago', status: 'resolved', assignedTeam: 'SDRF Unit 2' },
 ];
 
 export default function ModernAuthoritySector() {
   const { user, logout } = useAuth();
   const {
     weatherData,
-    xgboostPrediction,
     zones,
-    isSimulationActive,
     broadcastAlerts,
     safeRoutes,
     sendAuthorityBroadcast,
@@ -98,7 +71,6 @@ export default function ModernAuthoritySector() {
   const [showSimulatorModal, setShowSimulatorModal] = useState(false);
   const [masterSirenActive, setMasterSirenActive] = useState(false);
   const [autoBalancingActive, setAutoBalancingActive] = useState(true);
-  const [aiInsightIndex, setAiInsightIndex] = useState(0);
 
   // Reservoir Sluice Gate Control state
   const [damLevels, setDamLevels] = useState([
@@ -108,60 +80,33 @@ export default function ModernAuthoritySector() {
     { id: 'd4', name: 'Mudasarlova Catchment', capacity: 62, dischargeRate: 140, status: 'Normal', sluiceGate: 20, safeMax: 80 },
   ]);
 
-  const aiInsights = [
-    'Autonomous Sentinel Sync: XGBoost Model indicates 14.8% probability rise in coastal storm surge at 19:30 IST.',
-    'Doppler Radar Inflow: 48.2mm/h downpour convergence detected over Poorna Market and Gajuwaka corridors.',
-    'Reservoir Balancing Mesh: Automated sluice gates on Raiwada & Meghadrigeddha operating within optimal discharge tolerances.',
-    'Civil Evacuation Route: Beach Road Coastal Arterial marked 100% passable. Emergency NDRF staging ready at Sector 4.',
-  ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setAiInsightIndex(prev => (prev + 1) % aiInsights.length);
-    }, 7000);
-    return () => clearInterval(timer);
-  }, [aiInsights.length]);
-
-  // Current telemetry values
-  const currentTemp = Math.round(weatherData.current.temp || 20);
-  const currentRain = weatherData.current.rainfall || 0;
-  const currentPressure = weatherData.current.pressure || 1008;
-  const currentHumidity = weatherData.current.humidity || 82;
-  const windSpeed = weatherData.current.windSpeed || 40.9;
-  const windDir = 'Northwest';
-
-  // Format dynamic dates
-  const now = new Date();
-  const dateFormatted = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-  const timeFormatted = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-  // Sine Horizon Data
+  // Hourly nodes exactly matching the reference image values
   const horizonNodes = [
-    { temp: '27°', time: '09:00 AM', condition: 'Partly Cloudy', x: 50, y: 55 },
-    { temp: '26°', time: '10:00 AM', condition: 'Sunny Cloudy', x: 120, y: 65 },
-    { temp: '27°', time: '11:00 AM', condition: 'Partly Cloudy', x: 190, y: 50 },
-    { temp: '23°', time: '12:00 PM', condition: 'Moderate Rain', x: 260, y: 75 },
-    { temp: '20°', time: '01:00 PM', condition: 'Overcast Cloudy', x: 330, y: 35 },
-    { temp: '22°', time: '02:00 PM', condition: 'Moderate Cloudy', x: 400, y: 60 },
+    { temp: '27°', time: '09:00 AM', condition: 'Partly Cloudy' },
+    { temp: '26°', time: '10:00 AM', condition: 'Sunny cloudy' },
+    { temp: '27°', time: '11:00 AM', condition: 'Partly Cloudy' },
+    { temp: '23°', time: '12:00 PM', condition: 'Moderate rain' },
+    { temp: '20°', time: '01:00 PM', condition: 'Overcast Cloudy' },
+    { temp: '22°', time: '02:00 PM', condition: 'Moderate Cloudy' },
   ];
 
-  // Multi-day forecast list matching reference
+  // Multi-day forecast list matching reference image
   const forecastItems = useMemo(() => {
     if (forecastPeriod === '4days') {
       return [
         { day: 'Wednesday', date: 'June 21', condition: 'Partly Cloudy', temp: '28°', icon: Cloud },
-        { day: 'Thursday', date: 'June 22', condition: 'Sunny Cloudy', temp: '26°', icon: Sun },
-        { day: 'Friday', date: 'June 23', condition: 'Moderate Rain', temp: '21°', icon: CloudRain },
-        { day: 'Saturday', date: 'June 24', condition: 'Partly Cloudy', temp: '25°', icon: Cloud },
+        { day: 'Thursday', date: 'June 22', condition: 'Sunny cloudy', temp: '26°', icon: Sun },
+        { day: 'Friday', date: 'June 22', condition: 'Moderate rain', temp: '21°', icon: CloudRain },
+        { day: 'Saturday', date: 'June 23', condition: 'Partly Cloudy', temp: '25°', icon: Cloud },
       ];
     } else if (forecastPeriod === '14days') {
       return [
         { day: 'Wednesday', date: 'June 21', condition: 'Partly Cloudy', temp: '28°', icon: Cloud },
-        { day: 'Thursday', date: 'June 22', condition: 'Sunny Cloudy', temp: '26°', icon: Sun },
-        { day: 'Friday', date: 'June 23', condition: 'Heavy Storm', temp: '20°', icon: CloudLightning },
-        { day: 'Saturday', date: 'June 24', condition: 'Moderate Rain', temp: '22°', icon: CloudRain },
-        { day: 'Sunday', date: 'June 25', condition: 'Overcast', temp: '24°', icon: Cloud },
-        { day: 'Monday', date: 'June 26', condition: 'Clear Sky', temp: '29°', icon: Sun },
+        { day: 'Thursday', date: 'June 22', condition: 'Sunny cloudy', temp: '26°', icon: Sun },
+        { day: 'Friday', date: 'June 22', condition: 'Heavy Storm', temp: '20°', icon: CloudLightning },
+        { day: 'Saturday', date: 'June 23', condition: 'Moderate rain', temp: '22°', icon: CloudRain },
+        { day: 'Sunday', date: 'June 24', condition: 'Overcast', temp: '24°', icon: Cloud },
+        { day: 'Monday', date: 'June 25', condition: 'Clear Sky', temp: '29°', icon: Sun },
       ];
     } else {
       return [
@@ -200,479 +145,363 @@ export default function ModernAuthoritySector() {
   const pendingSOSCount = sosList.filter(s => s.status === 'pending').length;
 
   return (
-    <div className={styles.authoritySectorContainer}>
+    <div className={styles.spatialViewportWrapper}>
       {/* =========================================================================
-          LEFT VERTICAL CAPSULE DOCK (Spatial Floating HUD Dock)
+          FLOATING LEFT CAPSULE DOCK (Exact Match with Reference Image media_1788963090452.jpg)
           ========================================================================= */}
-      <aside className={styles.leftIconDock}>
-        <div className={styles.dockLogo} onClick={() => setActiveTab('overview')} title="AquaSentinel Authority Command">
-          <Shield size={22} />
-        </div>
+      <aside className={styles.floatingCapsuleDock}>
+        {/* Button 1: Grid / Apps Icon */}
+        <button
+          type="button"
+          className={`${styles.dockIconButton} ${activeTab === 'overview' ? styles.dockIconButtonActive : ''}`}
+          onClick={() => setActiveTab('overview')}
+          title="Weather & Command HUD Overview"
+        >
+          <LayoutGrid size={20} />
+        </button>
 
-        <nav className={styles.dockNavGroup}>
-          <button
-            type="button"
-            className={`${styles.dockBtn} ${activeTab === 'overview' ? styles.dockBtnActive : ''}`}
-            onClick={() => setActiveTab('overview')}
-            title="Command Center HUD Overview"
-          >
-            <Activity size={20} />
-          </button>
+        {/* Button 2: Bell / Broadcast Alert Icon */}
+        <button
+          type="button"
+          className={`${styles.dockIconButton} ${activeTab === 'broadcasts' ? styles.dockIconButtonActive : ''}`}
+          onClick={() => setActiveTab('broadcasts')}
+          title="Emergency Municipal Broadcast Dispatcher"
+        >
+          <Bell size={20} />
+          {broadcastAlerts.length > 0 && (
+            <span className={styles.dockBadgeCount}>{broadcastAlerts.length}</span>
+          )}
+        </button>
 
-          <button
-            type="button"
-            className={`${styles.dockBtn} ${activeTab === 'livemap' ? styles.dockBtnActive : ''}`}
-            onClick={() => setActiveTab('livemap')}
-            title="Live GIS Inundation & Rescue Map"
-          >
-            <Navigation size={20} />
-          </button>
+        {/* Button 3: Radar / Location Target Icon */}
+        <button
+          type="button"
+          className={`${styles.dockIconButton} ${activeTab === 'livemap' ? styles.dockIconButtonActive : ''}`}
+          onClick={() => setActiveTab('livemap')}
+          title="Live GIS Inundation & Rescue Map"
+        >
+          <Crosshair size={20} />
+        </button>
 
-          <button
-            type="button"
-            className={`${styles.dockBtn} ${activeTab === 'broadcasts' ? styles.dockBtnActive : ''}`}
-            onClick={() => setActiveTab('broadcasts')}
-            title="Emergency Municipal Broadcast Dispatcher"
-          >
-            <Megaphone size={20} />
-            {broadcastAlerts.length > 0 && (
-              <span className={styles.dockBadge}>{broadcastAlerts.length}</span>
-            )}
-          </button>
+        {/* Button 4: Equalizer / Bar Analytics Icon */}
+        <button
+          type="button"
+          className={`${styles.dockIconButton} ${activeTab === 'predictions' ? styles.dockIconButtonActive : ''}`}
+          onClick={() => setActiveTab('predictions')}
+          title="XGBoost AI Hydrology Telemetry & Predictions"
+        >
+          <BarChart3 size={20} />
+        </button>
 
-          <button
-            type="button"
-            className={`${styles.dockBtn} ${activeTab === 'dams' ? styles.dockBtnActive : ''}`}
-            onClick={() => setActiveTab('dams')}
-            title="Reservoir & Hydraulic Sluice Gate Control Mesh"
-          >
-            <Sliders size={20} />
-          </button>
+        {/* Button 5: Sliders / Control Icon */}
+        <button
+          type="button"
+          className={`${styles.dockIconButton} ${activeTab === 'dams' ? styles.dockIconButtonActive : ''}`}
+          onClick={() => setActiveTab('dams')}
+          title="Reservoir & Hydraulic Sluice Gate Control Mesh"
+        >
+          <SlidersHorizontal size={20} />
+        </button>
 
-          <button
-            type="button"
-            className={`${styles.dockBtn} ${activeTab === 'sos_dispatch' ? styles.dockBtnActive : ''}`}
-            onClick={() => setActiveTab('sos_dispatch')}
-            title="Citizen SOS & NDRF Fleet Rescue Dispatch"
-          >
-            <LifeBuoy size={20} />
-            {pendingSOSCount > 0 && (
-              <span className={styles.dockBadge}>{pendingSOSCount}</span>
-            )}
-          </button>
+        {/* Separator */}
+        <div style={{ width: '24px', height: '1px', background: 'rgba(255, 255, 255, 0.2)', margin: '4px 0' }} />
 
-          <button
-            type="button"
-            className={`${styles.dockBtn} ${activeTab === 'predictions' ? styles.dockBtnActive : ''}`}
-            onClick={() => setActiveTab('predictions')}
-            title="XGBoost AI Hydrology Telemetry & Predictions"
-          >
-            <TrendingUp size={20} />
-          </button>
-        </nav>
+        {/* Citizen SOS Button */}
+        <button
+          type="button"
+          className={`${styles.dockIconButton} ${activeTab === 'sos_dispatch' ? styles.dockIconButtonActive : ''}`}
+          onClick={() => setActiveTab('sos_dispatch')}
+          title="Citizen SOS Rescue Dispatch"
+        >
+          <LifeBuoy size={19} />
+          {pendingSOSCount > 0 && (
+            <span className={styles.dockBadgeCount}>{pendingSOSCount}</span>
+          )}
+        </button>
 
-        <div className={styles.dockNavGroup}>
-          <button
-            type="button"
-            className={styles.dockBtn}
-            onClick={() => setShowSimulatorModal(true)}
-            title="Launch Emergency Scenario Simulator"
-            style={{ color: '#00f0ff' }}
-          >
-            <Zap size={20} />
-          </button>
+        {/* Emergency Simulator */}
+        <button
+          type="button"
+          className={styles.dockIconButton}
+          onClick={() => setShowSimulatorModal(true)}
+          title="Emergency Simulator"
+          style={{ color: '#00f0ff' }}
+        >
+          <Zap size={19} />
+        </button>
 
-          <button
-            type="button"
-            className={styles.dockBtn}
-            onClick={logout}
-            title="Log Out of Authority Command"
-            style={{ color: 'rgba(255, 100, 100, 0.7)' }}
-          >
-            <LogOut size={19} />
-          </button>
-        </div>
+        {/* Logout */}
+        <button
+          type="button"
+          className={styles.dockIconButton}
+          onClick={logout}
+          title="Exit Command"
+          style={{ color: 'rgba(255, 120, 120, 0.8)' }}
+        >
+          <LogOut size={18} />
+        </button>
       </aside>
 
       {/* =========================================================================
-          MAIN FRAME: Top Header + Interior Scrollable Dashboard
+          MAIN SPATIAL CURVED GLASS PANEL (Exact Match with Reference Image)
           ========================================================================= */}
-      <main className={styles.mainLayoutFrame}>
-        {/* Top Header Bar */}
-        <header className={styles.authorityHeader}>
-          <div className={styles.headerLeft}>
-            <div className={styles.brandBadge}>
-              <Satellite size={14} />
-              <span>AQUASENTINEL SPATIAL COMMAND</span>
-            </div>
-            <h1 className={styles.headerTitle}>
-              Visakhapatnam Municipal Disaster Operations Center
-            </h1>
+      <div className={styles.curvedSpatialPanel}>
+        {/* Ambient Top Strip */}
+        <div className={styles.panelTopHeader}>
+          <div className={styles.commandBadgeTag}>
+            <Shield size={14} color="#00f0ff" />
+            <span>AQUASENTINEL SPATIAL COMMAND • {user?.name || 'MUNICIPAL ADMINISTRATOR'}</span>
           </div>
 
-          <div className={styles.headerRight}>
+          <div className={styles.headerControlsGroup}>
             <button
               type="button"
-              className={masterSirenActive ? styles.headerSirenBtn : styles.headerActionBtn}
+              className={styles.headerCompactBtn}
               onClick={handleToggleSiren}
+              style={{
+                borderColor: masterSirenActive ? '#ff4444' : 'rgba(255, 255, 255, 0.2)',
+                color: masterSirenActive ? '#ff4444' : '#ffffff',
+                background: masterSirenActive ? 'rgba(255, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.08)'
+              }}
             >
-              <Volume2 size={15} color={masterSirenActive ? '#ff4444' : '#00f0ff'} />
-              <span>{masterSirenActive ? 'SIREN ACTIVE (CLICK TO SILENCE)' : 'TRIGGER DISTRICT SIREN'}</span>
+              <Volume2 size={13} />
+              <span>{masterSirenActive ? 'SIREN ACTIVE' : 'DISTRICT SIREN'}</span>
             </button>
 
             <button
               type="button"
-              className={styles.headerActionBtn}
+              className={styles.headerCompactBtn}
               onClick={() => setShowSimulatorModal(true)}
             >
-              <Zap size={14} color="#00f0ff" />
-              <span>Simulation Engine</span>
+              <Zap size={13} color="#00f0ff" />
+              <span>SIMULATION</span>
             </button>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0, 214, 255, 0.12)', border: '1px solid rgba(0, 240, 255, 0.35)', padding: '5px 12px', borderRadius: '12px', fontSize: '0.75rem', color: '#00f0ff', fontWeight: 700 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00ff88', boxShadow: '0 0 8px #00ff88' }} />
-              <span>OFFICIAL: {user?.name || 'ADMINISTRATOR'}</span>
-            </div>
           </div>
-        </header>
+        </div>
 
-        {/* Interior Scrollable Area */}
-        <div className={styles.mainDashboardArea}>
+        {/* Interior Canvas */}
+        <div className={styles.panelContentCanvas}>
           {/* =========================================================================
-              VIEW 1: OVERVIEW HUD (EXACT MATCH WITH REFERENCE IMAGE)
+              VIEW 1: SPATIAL HUD OVERVIEW (EXACT 1-TO-1 MATCH WITH REFERENCE IMAGE)
               ========================================================================= */}
           {activeTab === 'overview' && (
-            <>
-              <div className={styles.overviewGrid}>
-                {/* Left Column: Hero Weather Card + 24-Hour Horizon Spline Card */}
-                <div className={styles.overviewLeftCol}>
-                  {/* HERO WEATHER CARD (Top Left Card in Reference Image) */}
-                  <div className={styles.heroWeatherCard}>
-                    <div className={styles.heroLocationRow}>
-                      <div className={styles.heroLocationTag}>
-                        <MapPin size={14} color="#00f0ff" />
-                        <span>Purwokerto, Banyumas • Coastal Hydrology Station</span>
-                      </div>
-                      <div className={styles.hero3DIcon}>
-                        <CloudLightning size={32} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className={styles.heroSubtitleLabel}>Weather &amp; Inundation Telemetry</div>
-                      <h2 className={styles.heroConditionTitle}>Overcast cloudy</h2>
-                      <p className={styles.heroDescriptionText}>
-                        The low temperature will reach 25° on this gloomy day • Precipitation Probability 88% with monsoon storm surge converging over drainage canals.
-                      </p>
+            <div className={styles.spatialHUDGrid}>
+              {/* Left Column: 2 Cards (Hero Weather Card + Golden Sine Wave Card) */}
+              <div className={styles.spatialLeftCardsCol}>
+                {/* CARD 1: TOP LEFT HERO WEATHER CARD */}
+                <div className={styles.heroWeatherSpatialCard}>
+                  <div>
+                    <div className={styles.heroLocationPill}>
+                      <MapPin size={15} color="#ffffff" />
+                      <span>Purwokerto, Banyumas</span>
                     </div>
                   </div>
 
-                  {/* 24-HOUR SINE WAVE HORIZON CARD (Bottom Left Card in Reference Image) */}
-                  <div className={styles.horizonStatsCard}>
-                    <div className={styles.horizonHeaderRow}>
-                      <h3 className={styles.horizonTitle}>Today&apos;s statistics</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.72rem', color: '#84abc9' }}>
-                        <span style={{ display: 'inline-block', width: 10, height: 2.5, background: '#eab308', borderRadius: 2 }} />
-                        <span>Continuous Hydrographic &amp; Temperature Horizon</span>
-                      </div>
-                    </div>
+                  <div>
+                    <div className={styles.heroWeatherLabel}>Weather Forecast</div>
+                    <h1 className={styles.heroMainConditionTitle}>Overcast cloudy</h1>
+                    <p className={styles.heroSubtitleLine}>The low temperature will reach 25° on this gloomy day</p>
+                  </div>
 
-                    {/* Smooth Golden Sine Wave SVG Graphic */}
-                    <div className={styles.horizonSineWrap}>
-                      <svg viewBox="0 0 450 90" className={styles.sineSvg} preserveAspectRatio="none">
-                        <defs>
-                          <linearGradient id="sineGlowGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#eab308" stopOpacity="0.35" />
-                            <stop offset="100%" stopColor="#eab308" stopOpacity="0.0" />
-                          </linearGradient>
-                          <filter id="goldenGlow" x="-20%" y="-20%" width="140%" height="140%">
-                            <feGaussianBlur stdDeviation="2.5" result="blur" />
-                            <feMerge>
-                              <feMergeNode in="blur" />
-                              <feMergeNode in="SourceGraphic" />
-                            </feMerge>
-                          </filter>
-                        </defs>
-
-                        {/* Shaded Area Under Spline */}
-                        <path
-                          d="M 0 55 C 60 75, 100 25, 170 50 C 230 70, 280 20, 340 35 C 390 50, 420 65, 450 55 L 450 90 L 0 90 Z"
-                          fill="url(#sineGlowGrad)"
-                        />
-
-                        {/* Golden Curve Line */}
-                        <path
-                          d="M 0 55 C 60 75, 100 25, 170 50 C 230 70, 280 20, 340 35 C 390 50, 420 65, 450 55"
-                          fill="none"
-                          stroke="#eab308"
-                          strokeWidth="3.5"
-                          filter="url(#goldenGlow)"
-                        />
-
-                        {/* Peak Points on the Sine Curve */}
-                        <circle cx="170" cy="50" r="4.5" fill="#ffffff" stroke="#eab308" strokeWidth="2" />
-                        <circle cx="340" cy="35" r="5" fill="#ffffff" stroke="#eab308" strokeWidth="2.5" filter="url(#goldenGlow)" />
-                      </svg>
-                    </div>
-
-                    {/* Hourly Telemetry Row Underneath the Curve */}
-                    <div className={styles.hourlyTelemetryRow}>
-                      {horizonNodes.map((node, i) => (
-                        <div key={i} className={styles.hourlyNodeItem}>
-                          <span className={styles.hourlyNodeTemp}>{node.temp}</span>
-                          <span className={styles.hourlyNodeTime}>{node.time}</span>
-                          <span className={styles.hourlyNodeCondition}>{node.condition}</span>
-                        </div>
-                      ))}
-                    </div>
+                  {/* 3D Glowing Cloud Icon on the Right */}
+                  <div className={styles.hero3DCloudIcon}>
+                    <CloudLightning size={64} color="#ffffff" style={{ opacity: 0.95 }} />
                   </div>
                 </div>
 
-                {/* Right Column: Right Sidebar Panel (Matching Reference Image right side) */}
-                <div className={styles.rightSidebarCard}>
-                  <div className={styles.rightHeaderRow}>
-                    <div className={styles.rightDateText}>Tuesday, June 20</div>
-                    <div className={styles.rightTimeText}>01:00 PM</div>
+                {/* CARD 2: BOTTOM LEFT "TODAY'S STATISTICS" GOLDEN SINE WAVE CARD */}
+                <div className={styles.goldenStatsCard}>
+                  <h3 className={styles.statsTitleText}>Today&apos;s statistics</h3>
+
+                  {/* Golden Continuous Spline Wave SVG */}
+                  <div className={styles.goldenSineContainer}>
+                    <svg viewBox="0 0 450 85" className={styles.goldenSineSvg} preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="goldenAreaGlow" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#d97706" stopOpacity="0.3" />
+                          <stop offset="100%" stopColor="#d97706" stopOpacity="0.0" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* Area Under Golden Curve */}
+                      <path
+                        d="M 0 55 C 60 75, 100 25, 170 50 C 230 70, 280 18, 340 32 C 390 48, 420 62, 450 50 L 450 85 L 0 85 Z"
+                        fill="url(#goldenAreaGlow)"
+                      />
+
+                      {/* Continuous Golden Sine Spline */}
+                      <path
+                        d="M 0 55 C 60 75, 100 25, 170 50 C 230 70, 280 18, 340 32 C 390 48, 420 62, 450 50"
+                        fill="none"
+                        stroke="#d97706"
+                        strokeWidth="3.2"
+                      />
+                    </svg>
                   </div>
 
-                  {/* Giant Temperature & Wind Telemetry */}
-                  <div className={styles.rightGiantTempSection}>
-                    <div className={styles.rightGiantTempText}>20°</div>
-                    <div className={styles.rightWindTelemetry}>
-                      <Wind size={15} color="#00f0ff" />
-                      <span>Northwest, 40.9 km/h</span>
-                    </div>
+                  {/* Six Hourly Telemetry Columns Under Wave */}
+                  <div className={styles.sixHourlyColumnsRow}>
+                    {horizonNodes.map((node, idx) => (
+                      <div key={idx} className={styles.hourlyColItem}>
+                        <span className={styles.hourlyColTemp}>{node.temp}</span>
+                        <span className={styles.hourlyColTime}>{node.time}</span>
+                        <span className={styles.hourlyColCondition}>{node.condition}</span>
+                      </div>
+                    ))}
                   </div>
+                </div>
+              </div>
 
-                  {/* Forecast Section */}
-                  <div className={styles.forecastHeaderRow}>
-                    <span className={styles.forecastTitle}>The Next Day Forecast</span>
+              {/* CARD 3: RIGHT SIDEBAR FORECAST & GIANT TEMPERATURE CARD */}
+              <div className={styles.rightSpatialSidebarCard}>
+                {/* Date & Time Row */}
+                <div className={styles.rightDateClockRow}>
+                  <span>Tuesday, June 20</span>
+                  <span>01:00 PM</span>
+                </div>
+
+                {/* Giant 20° & Wind Vector */}
+                <div className={styles.rightGiantTempBlock}>
+                  <div className={styles.giantTempText}>20°</div>
+                  <div className={styles.windVectorLine}>
+                    <Wind size={15} color="#ffffff" style={{ opacity: 0.8 }} />
+                    <span>Northwest, 40.9 km/h</span>
                   </div>
+                </div>
 
-                  {/* Multi-Day Pill Toggle (4 days / 14 days / 30 days) */}
-                  <div className={styles.forecastPillGroup}>
-                    <button
-                      type="button"
-                      className={`${styles.forecastPillBtn} ${forecastPeriod === '4days' ? styles.forecastPillBtnActive : ''}`}
-                      onClick={() => setForecastPeriod('4days')}
-                    >
-                      4 days
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.forecastPillBtn} ${forecastPeriod === '14days' ? styles.forecastPillBtnActive : ''}`}
-                      onClick={() => setForecastPeriod('14days')}
-                    >
-                      14 days
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.forecastPillBtn} ${forecastPeriod === '30days' ? styles.forecastPillBtnActive : ''}`}
-                      onClick={() => setForecastPeriod('30days')}
-                    >
-                      30 days
-                    </button>
-                  </div>
+                {/* Forecast Section Title */}
+                <div className={styles.forecastHeaderRow}>
+                  <span className={styles.forecastTitleLabel}>The Next Day Forecast</span>
+                </div>
 
-                  {/* Forecast Rows List */}
-                  <div className={styles.forecastRowsList}>
-                    {forecastItems.map((item, idx) => {
-                      const Icon = item.icon;
-                      return (
-                        <div key={idx} className={styles.forecastRowItem}>
-                          <div className={styles.forecastRowLeft}>
-                            <div className={styles.forecastRowIcon}>
-                              <Icon size={18} />
-                            </div>
-                            <div>
-                              <div className={styles.forecastRowDayName}>{item.day}, {item.date}</div>
-                              <div className={styles.forecastRowCondition}>{item.condition}</div>
-                            </div>
+                {/* Pill Switch [ 4 days ] [ 14 days ] [ 30 days ] */}
+                <div className={styles.pillSwitchContainer}>
+                  <button
+                    type="button"
+                    className={`${styles.pillSwitchBtn} ${forecastPeriod === '4days' ? styles.pillSwitchBtnActive : ''}`}
+                    onClick={() => setForecastPeriod('4days')}
+                  >
+                    4 days
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.pillSwitchBtn} ${forecastPeriod === '14days' ? styles.pillSwitchBtnActive : ''}`}
+                    onClick={() => setForecastPeriod('14days')}
+                  >
+                    14 days
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.pillSwitchBtn} ${forecastPeriod === '30days' ? styles.pillSwitchBtnActive : ''}`}
+                    onClick={() => setForecastPeriod('30days')}
+                  >
+                    30 days
+                  </button>
+                </div>
+
+                {/* Forecast List Items */}
+                <div className={styles.forecastListWrap}>
+                  {forecastItems.map((item, i) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={i} className={styles.forecastRow}>
+                        <div className={styles.forecastRowLeft}>
+                          <div className={styles.forecastRowIconBox}>
+                            <Icon size={20} />
                           </div>
-                          <div className={styles.forecastRowTemp}>{item.temp}</div>
+                          <div>
+                            <div className={styles.forecastRowDay}>{item.day}, {item.date}</div>
+                            <div className={styles.forecastRowCond}>{item.condition}</div>
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Authority Directives Quick Trigger */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '0.85rem' }}>
-                    <button
-                      type="button"
-                      className={`${styles.slideActionBtn} ${styles.slideActionBtnDanger}`}
-                      onClick={() => setActiveTab('broadcasts')}
-                    >
-                      <Megaphone size={15} />
-                      <span>Send Municipal Broadcast</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className={styles.slideActionBtn}
-                      onClick={() => setActiveTab('dams')}
-                    >
-                      <SlidersHorizontal size={15} />
-                      <span>Sluice Gate Mesh Controller</span>
-                    </button>
-                  </div>
+                        <div className={styles.forecastRowTemp}>{item.temp}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-
-              {/* Authority Interactive Telemetry Modules Matrix */}
-              <div className={styles.moduleGrid} style={{ marginTop: '0.5rem' }}>
-                {/* Module 1: AI Environmental Sentinel */}
-                <div className={styles.glassModuleCard}>
-                  <div className={styles.cardHeader}>
-                    <h4 className={styles.cardTitle}>
-                      <Bot size={18} color="#00f0ff" />
-                      <span>AI DISASTER CO-PILOT</span>
-                    </h4>
-                    <span className={`${styles.cardBadge} ${styles.cardBadgeCyan}`}>INSAT-3DR SYNC</span>
-                  </div>
-                  <p style={{ fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.5, margin: 0 }}>
-                    {aiInsights[aiInsightIndex]}
-                  </p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.4rem' }}>
-                    <span style={{ fontSize: '0.7rem', color: '#84abc9' }}>● 150 XGBoost Trees Active</span>
-                    <button
-                      type="button"
-                      className={styles.slideActionBtn}
-                      style={{ padding: '4px 10px', fontSize: '0.72rem' }}
-                      onClick={() => setAiInsightIndex(prev => (prev + 1) % aiInsights.length)}
-                    >
-                      <RefreshCw size={12} />
-                      <span>Next Insight</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Module 2: Reservoir Status Matrix */}
-                <div className={styles.glassModuleCard}>
-                  <div className={styles.cardHeader}>
-                    <h4 className={styles.cardTitle}>
-                      <Droplets size={18} color="#00f0ff" />
-                      <span>RESERVOIR HYDRAULICS</span>
-                    </h4>
-                    <span className={`${styles.cardBadge} ${styles.cardBadgeGreen}`}>4 ACTIVE DAMS</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {damLevels.slice(0, 2).map(d => (
-                      <div key={d.id} style={{ background: 'rgba(255,255,255,0.04)', padding: '6px 10px', borderRadius: '10px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '3px' }}>
-                          <strong style={{ color: '#fff' }}>{d.name}</strong>
-                          <span style={{ color: d.capacity > 85 ? '#ff4444' : '#00f0ff', fontWeight: 700 }}>{d.capacity}%</span>
-                        </div>
-                        <div style={{ height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '999px', overflow: 'hidden' }}>
-                          <div style={{ width: `${d.capacity}%`, height: '100%', background: d.capacity > 85 ? '#ff4444' : '#00f0ff' }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.slideActionBtn}
-                    onClick={() => setActiveTab('dams')}
-                    style={{ marginTop: 'auto', padding: '5px', fontSize: '0.75rem' }}
-                  >
-                    <span>Manage All 4 Reservoirs</span>
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-
-                {/* Module 3: Citizen SOS Incident Queue */}
-                <div className={styles.glassModuleCard}>
-                  <div className={styles.cardHeader}>
-                    <h4 className={styles.cardTitle}>
-                      <LifeBuoy size={18} color="#ff4444" />
-                      <span>CITIZEN RESCUE QUEUE</span>
-                    </h4>
-                    <span className={`${styles.cardBadge} ${styles.cardBadgeCritical}`}>{pendingSOSCount} PENDING</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {sosList.slice(0, 2).map(sos => (
-                      <div key={sos.id} style={{ background: 'rgba(255,255,255,0.04)', padding: '6px 10px', borderRadius: '10px', fontSize: '0.75rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                          <strong style={{ color: '#fff' }}>{sos.name}</strong>
-                          <span style={{ color: sos.status === 'pending' ? '#ff4444' : '#00ff88', fontWeight: 700 }}>{sos.status.toUpperCase()}</span>
-                        </div>
-                        <div style={{ color: '#84abc9', fontSize: '0.7rem' }}>📍 {sos.location}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.slideActionBtn}
-                    onClick={() => setActiveTab('sos_dispatch')}
-                    style={{ marginTop: 'auto', padding: '5px', fontSize: '0.75rem' }}
-                  >
-                    <span>Open Rescue Dispatch Console</span>
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
-            </>
+            </div>
           )}
 
           {/* =========================================================================
-              VIEW 2: LIVE GIS INUNDATION MAP
+              VIEW 2: EMERGENCY BROADCAST DISPATCHER (BELL ICON)
+              ========================================================================= */}
+          {activeTab === 'broadcasts' && (
+            <div className={styles.fullViewCard}>
+              <div className={styles.subCardHeader}>
+                <h3 className={styles.subCardTitle}>
+                  <Bell size={22} color="#00f0ff" />
+                  <span>Municipal Emergency Broadcast Dispatcher</span>
+                </h3>
+              </div>
+              <AuthorityAlertDispatcher />
+            </div>
+          )}
+
+          {/* =========================================================================
+              VIEW 3: LIVE GIS INUNDATION MAP (CROSSHAIR ICON)
               ========================================================================= */}
           {activeTab === 'livemap' && (
-            <div className={styles.glassModuleCard} style={{ height: 'calc(100vh - 140px)', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
-              <div className={styles.cardHeader}>
-                <h3 className={styles.cardTitle}>
-                  <Navigation size={20} color="#00f0ff" />
+            <div className={styles.fullViewCard} style={{ height: 'calc(100vh - 160px)', padding: '1.25rem' }}>
+              <div className={styles.subCardHeader}>
+                <h3 className={styles.subCardTitle}>
+                  <Crosshair size={22} color="#00f0ff" />
                   <span>GIS Spatial Inundation &amp; Emergency Safe Corridors</span>
                 </h3>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <span className={`${styles.cardBadge} ${styles.cardBadgeGreen}`}>47 SENSORS MESHED</span>
-                  <span className={`${styles.cardBadge} ${styles.cardBadgeCyan}`}>LEAFLET HYDROLOGY LAYER</span>
-                </div>
+                <span style={{ fontSize: '0.75rem', color: '#00ff88', fontWeight: 700 }}>● 47 IoT SENSORS LIVE</span>
               </div>
-              <div style={{ flex: 1, borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.12)', marginTop: '0.75rem' }}>
+              <div style={{ flex: 1, borderRadius: '18px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.15)', marginTop: '0.5rem' }}>
                 <FloodMap zones={zones} routes={safeRoutes} />
               </div>
             </div>
           )}
 
           {/* =========================================================================
-              VIEW 3: EMERGENCY MUNICIPAL BROADCAST DISPATCHER
+              VIEW 4: XGBOOST AI PREDICTIONS (BAR CHART ICON)
               ========================================================================= */}
-          {activeTab === 'broadcasts' && (
-            <div className={styles.glassModuleCard} style={{ padding: '1.5rem' }}>
-              <AuthorityAlertDispatcher />
+          {activeTab === 'predictions' && (
+            <div className={styles.fullViewCard}>
+              <div className={styles.subCardHeader}>
+                <h3 className={styles.subCardTitle}>
+                  <BarChart3 size={22} color="#00f0ff" />
+                  <span>XGBoost Multi-Variable AI Hydrology &amp; Inundation Curves</span>
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: '#00f0ff', fontWeight: 700 }}>AUC 0.94 ACCURACY</span>
+              </div>
+              <div style={{ marginTop: '0.5rem' }}>
+                <PredictionCharts forecast={weatherData.forecast} zones={zones} />
+              </div>
             </div>
           )}
 
           {/* =========================================================================
-              VIEW 4: RESERVOIRS & HYDRAULIC SLUICE GATE MESH
+              VIEW 5: RESERVOIR & SLUICE GATE MESH (SLIDERS ICON)
               ========================================================================= */}
           {activeTab === 'dams' && (
-            <div className={styles.glassModuleCard} style={{ padding: '1.5rem' }}>
-              <div className={styles.cardHeader}>
-                <h3 className={styles.cardTitle}>
-                  <Droplets size={22} color="#00f0ff" />
-                  <span>District Reservoirs &amp; Automated Hydraulic Sluice Gate Mesh</span>
+            <div className={styles.fullViewCard}>
+              <div className={styles.subCardHeader}>
+                <h3 className={styles.subCardTitle}>
+                  <SlidersHorizontal size={22} color="#00f0ff" />
+                  <span>Reservoir Inundation &amp; Automated Hydraulic Sluice Gate Mesh</span>
                 </h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <button
-                    type="button"
-                    className={autoBalancingActive ? styles.headerActionBtn : styles.slideActionBtn}
-                    onClick={() => setAutoBalancingActive(!autoBalancingActive)}
-                    style={{ borderColor: autoBalancingActive ? '#00ff88' : '#00f0ff', color: autoBalancingActive ? '#00ff88' : '#00f0ff' }}
-                  >
-                    <CheckCircle2 size={15} />
-                    <span>{autoBalancingActive ? 'AI AUTO-BALANCING: ACTIVE' : 'MANUAL OVERRIDE'}</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className={styles.slideHoverBtn}
+                  onClick={() => setAutoBalancingActive(!autoBalancingActive)}
+                  style={{ borderColor: autoBalancingActive ? '#00ff88' : '#00f0ff', color: autoBalancingActive ? '#00ff88' : '#00f0ff' }}
+                >
+                  <CheckCircle2 size={15} />
+                  <span>{autoBalancingActive ? 'AI AUTO-BALANCING: ACTIVE' : 'MANUAL OVERRIDE'}</span>
+                </button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem', marginTop: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginTop: '0.5rem' }}>
                 {damLevels.map(dam => (
                   <div
                     key={dam.id}
                     style={{
-                      background: 'rgba(16, 36, 66, 0.65)',
-                      border: `1.5px solid ${dam.status === 'Critical' ? '#ff4444' : dam.status === 'Warning' ? '#ffaa00' : 'rgba(0, 240, 255, 0.35)'}`,
+                      background: 'rgba(16, 28, 45, 0.7)',
+                      border: `1.5px solid ${dam.status === 'Critical' ? '#ff4444' : dam.status === 'Warning' ? '#ffaa00' : 'rgba(255, 255, 255, 0.2)'}`,
                       borderRadius: '18px',
                       padding: '1.25rem',
                       display: 'flex',
@@ -681,29 +510,29 @@ export default function ModernAuthoritySector() {
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <strong style={{ color: '#fff', fontSize: '1rem' }}>{dam.name}</strong>
-                      <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: dam.status === 'Critical' ? '#ff4444' : dam.status === 'Warning' ? '#ffaa00' : '#00ff88', color: '#000' }}>
+                      <strong style={{ color: '#fff', fontSize: '0.95rem' }}>{dam.name}</strong>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: dam.status === 'Critical' ? '#ff4444' : dam.status === 'Warning' ? '#ffaa00' : '#00ff88', color: '#000' }}>
                         {dam.status.toUpperCase()}
                       </span>
                     </div>
 
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#84abc9', marginBottom: '0.35rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '0.35rem' }}>
                         <span>Capacity Filled:</span>
-                        <strong style={{ color: dam.capacity > 85 ? '#ff4444' : '#fff' }}>{dam.capacity}% (Max Safe: {dam.safeMax}%)</strong>
+                        <strong style={{ color: dam.capacity > 85 ? '#ff4444' : '#fff' }}>{dam.capacity}%</strong>
                       </div>
-                      <div style={{ height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '999px', overflow: 'hidden' }}>
+                      <div style={{ height: '7px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '999px', overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${dam.capacity}%`, background: dam.capacity > 85 ? '#ff4444' : '#00f0ff' }} />
                       </div>
                     </div>
 
-                    <div style={{ fontSize: '0.82rem', color: '#84abc9' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.7)' }}>
                       Discharge Flow Rate: <strong style={{ color: '#fff' }}>{dam.dischargeRate} cusecs</strong>
                     </div>
 
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.85rem' }}>
+                    <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '0.75rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#fff', marginBottom: '0.4rem' }}>
-                        <span>Hydraulic Sluice Gate Elevation:</span>
+                        <span>Hydraulic Sluice Elevation:</span>
                         <strong style={{ color: '#00f0ff' }}>{dam.sluiceGate}%</strong>
                       </div>
                       <input
@@ -722,24 +551,24 @@ export default function ModernAuthoritySector() {
           )}
 
           {/* =========================================================================
-              VIEW 5: CITIZEN SOS & RESCUE FLEET DISPATCH CONSOLE
+              VIEW 6: CITIZEN SOS & RESCUE DISPATCH
               ========================================================================= */}
           {activeTab === 'sos_dispatch' && (
-            <div className={styles.glassModuleCard} style={{ padding: '1.5rem' }}>
-              <div className={styles.cardHeader}>
-                <h3 className={styles.cardTitle}>
+            <div className={styles.fullViewCard}>
+              <div className={styles.subCardHeader}>
+                <h3 className={styles.subCardTitle}>
                   <LifeBuoy size={22} color="#ff4444" />
-                  <span>Citizen Distress SOS &amp; NDRF / SDRF Rapid Rescue Fleet</span>
+                  <span>Citizen Distress SOS &amp; NDRF Rapid Rescue Fleet</span>
                 </h3>
-                <span className={`${styles.cardBadge} ${styles.cardBadgeCritical}`}>{pendingSOSCount} PENDING RESCUE DISPATCHES</span>
+                <span style={{ fontSize: '0.75rem', color: '#ff4444', fontWeight: 800 }}>{pendingSOSCount} PENDING RESCUES</span>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.25rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginTop: '0.5rem' }}>
                 {sosList.map(sos => (
                   <div
                     key={sos.id}
                     style={{
-                      background: 'rgba(16, 36, 66, 0.65)',
+                      background: 'rgba(16, 28, 45, 0.7)',
                       border: `1.5px solid ${sos.status === 'pending' ? 'rgba(255, 68, 68, 0.45)' : 'rgba(0, 255, 136, 0.35)'}`,
                       borderRadius: '16px',
                       padding: '1.25rem',
@@ -752,10 +581,8 @@ export default function ModernAuthoritySector() {
                   >
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem' }}>
-                        <strong style={{ fontSize: '1.05rem', color: '#fff' }}>{sos.name}</strong>
-                        <span style={{ fontSize: '0.78rem', color: '#84abc9', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Phone size={12} /> {sos.phone}
-                        </span>
+                        <strong style={{ fontSize: '1rem', color: '#fff' }}>{sos.name}</strong>
+                        <span style={{ fontSize: '0.78rem', color: 'rgba(255, 255, 255, 0.65)' }}>{sos.phone}</span>
                         <span style={{ fontSize: '0.68rem', padding: '2px 8px', borderRadius: '6px', background: sos.status === 'pending' ? '#ff4444' : '#00ff88', color: '#000', fontWeight: 800 }}>
                           {sos.status.toUpperCase()}
                         </span>
@@ -775,16 +602,17 @@ export default function ModernAuthoritySector() {
                         <>
                           <button
                             type="button"
-                            className={`${styles.slideActionBtn} ${styles.slideActionBtnDanger}`}
+                            className={styles.slideHoverBtn}
                             onClick={() => handleDispatchSOS(sos.id, 'NDRF Boat Unit 1')}
+                            style={{ background: 'rgba(255, 68, 68, 0.25)', borderColor: '#ff4444' }}
                           >
                             <LifeBuoy size={14} />
                             <span>Deploy NDRF Unit</span>
                           </button>
                           <button
                             type="button"
-                            className={styles.slideActionBtn}
-                            onClick={() => handleDispatchSOS(sos.id, 'SDRF Rapid Fire & Rescue')}
+                            className={styles.slideHoverBtn}
+                            onClick={() => handleDispatchSOS(sos.id, 'SDRF Rapid Rescue')}
                           >
                             <span>Deploy SDRF</span>
                           </button>
@@ -792,7 +620,7 @@ export default function ModernAuthoritySector() {
                       ) : (
                         <button
                           type="button"
-                          className={styles.slideActionBtn}
+                          className={styles.slideHoverBtn}
                           onClick={() => handleResolveSOS(sos.id)}
                           style={{ borderColor: '#00ff88', color: '#00ff88' }}
                         >
@@ -806,26 +634,11 @@ export default function ModernAuthoritySector() {
               </div>
             </div>
           )}
-
-          {/* =========================================================================
-              VIEW 6: XGBOOST AI PREDICTIONS & TELEMETRY
-              ========================================================================= */}
-          {activeTab === 'predictions' && (
-            <div className={styles.glassModuleCard} style={{ padding: '1.5rem' }}>
-              <div className={styles.cardHeader}>
-                <h3 className={styles.cardTitle}>
-                  <TrendingUp size={22} color="#00f0ff" />
-                  <span>XGBoost Multi-Variable AI Hydrology &amp; Inundation Curves</span>
-                </h3>
-                <span className={`${styles.cardBadge} ${styles.cardBadgeCyan}`}>AUC 0.94 ACCURACY</span>
-              </div>
-              <div style={{ marginTop: '1.25rem' }}>
-                <PredictionCharts forecast={weatherData.forecast} zones={zones} />
-              </div>
-            </div>
-          )}
         </div>
-      </main>
+
+        {/* Apple Vision Pro Horizontal Home Indicator Bar */}
+        <div className={styles.bottomHomeBar} />
+      </div>
 
       {/* Emergency Simulation Modal */}
       <HackathonSimulatorModal isOpen={showSimulatorModal} onClose={() => setShowSimulatorModal(false)} />
