@@ -48,7 +48,7 @@ export default function AuthorityAlertDispatcher() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div className="grid-2" style={{ gap: '1.5rem' }}>
         {/* Dispatch Form */}
-        <div className="card" style={{ border: '1px solid rgba(255, 68, 68, 0.3)', background: 'rgba(20, 10, 15, 0.6)' }}>
+        <div className="card" style={{ border: '1.5px solid rgba(160, 225, 255, 0.28)', background: 'rgba(12, 28, 52, 0.68)', backdropFilter: 'blur(20px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
             <div style={{
               width: 40,

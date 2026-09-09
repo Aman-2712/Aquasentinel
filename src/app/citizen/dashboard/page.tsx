@@ -1,17 +1,14 @@
 'use client';
 import ProtectedLayout from '@/components/layout/ProtectedLayout';
-import CitizenDashboard from '@/components/dashboard/CitizenDashboard';
+import CitizenDashboardV2 from '@/components/dashboard/CitizenDashboardV2';
 
 /**
- * /citizen/dashboard
- * Only accessible by users with role === 'citizen'.
- * ProtectedLayout handles redirect to login if unauthenticated,
- * and to correct dashboard if wrong role.
+ * /citizen/dashboard — V2 light glassmorphism UI (local test only, NOT pushed)
  */
 export default function CitizenDashboardPage() {
   return (
     <ProtectedLayout requiredRole="citizen">
-      <CitizenDashboard />
+      <CitizenDashboardV2 />
     </ProtectedLayout>
   );
 }
