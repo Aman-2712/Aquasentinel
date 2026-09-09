@@ -270,13 +270,40 @@ const SIMULATED_WEATHER: Record<'monsoon' | 'flash_flood' | 'clear', WeatherData
 const DEFAULT_BROADCASTS: AuthorityBroadcast[] = [
   {
     id: 'b-init-1',
-    sender: 'Visakhapatnam Disaster Management Authority (VDMA)',
-    area: 'Poorna Market & Gajuwaka Basins',
-    risk: 'medium',
-    message: 'MUNICIPAL ADVISORY: Drainage pumps engaged at Gajuwaka junction. Keep emergency battery packs charged.',
-    timestamp: '10 mins ago',
+    sender: 'AP State Disaster Management Authority (APSDMA)',
+    area: 'Anandapuram & Pendurthi Agricultural Catchments',
+    risk: 'high',
+    message: 'CRITICAL INUNDATION WARNING: Cloudburst precipitation exceeding 48mm/h detected. Raise hydraulic sluice gates to prevent crop root logging.',
+    timestamp: '5 mins ago',
     active: true,
-  }
+  },
+  {
+    id: 'b-init-2',
+    sender: 'Visakhapatnam Agricultural Hydrology Board',
+    area: 'North Face Paddy Basins & Sugarcane Fields',
+    risk: 'high',
+    message: 'SOIL SATURATION ALERT: Soil moisture at 94% threshold. Automated spillway gates calibrated to 90cm elevation for controlled water runoff.',
+    timestamp: '12 mins ago',
+    active: true,
+  },
+  {
+    id: 'b-init-3',
+    sender: 'Greater Visakhapatnam Municipal Corporation (GVMC)',
+    area: 'Gopalapatnam & Steel Plant Agricultural Outflow',
+    risk: 'medium',
+    message: 'MUNICIPAL DRAINAGE ADVISORY: High-tide coastal surge expected at 19:30 IST. Secondary drainage barriers energized.',
+    timestamp: '25 mins ago',
+    active: true,
+  },
+  {
+    id: 'b-init-4',
+    sender: 'FieldShield Autonomous IoT Mesh Sentinel',
+    area: 'East Lowland Canals (ESP32-CAM Node #3)',
+    risk: 'medium',
+    message: 'TELEMETRY UPDATE: Inflow canal water depth stabilized at 67cm. Sluice gate barriers 1 & 4 operating nominal in auto mode.',
+    timestamp: '40 mins ago',
+    active: true,
+  },
 ];
 
 const DEFAULT_INCIDENTS: IncidentReport[] = [
