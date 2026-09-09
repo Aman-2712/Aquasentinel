@@ -52,7 +52,7 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  border: 1px solid transparent;
+  border: none;
   background: transparent;
   display: flex;
   align-items: center;
@@ -60,20 +60,27 @@
   color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
   position: relative;
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.2s ease, transform 0.2s ease;
+  z-index: 1;
 }
 
 .dockIconButton:hover {
-  background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
   transform: scale(1.08);
 }
 
+.dockActiveIndicator {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.32);
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  z-index: -1;
+}
+
 .dockIconButtonActive {
-  background: rgba(255, 255, 255, 0.35);
-  border-color: rgba(255, 255, 255, 0.55);
   color: #ffffff;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
 }
 
 .dockBadgeCount {
