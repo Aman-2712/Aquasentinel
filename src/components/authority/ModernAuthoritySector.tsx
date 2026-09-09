@@ -136,42 +136,44 @@ export default function ModernAuthoritySector() {
 
   // Handle emergency siren button (Broadcasts across all sectors + Dispatches emergency email without playing in Authority dashboard)
   const handleToggleSiren = () => {
-    const nextState = !masterSirenActive;
-    setMasterSirenActive(nextState);
+    setMasterSirenActive(true);
 
-    if (nextState) {
-      // 1. Broadcast across all sectors (Farmers & Citizens receive the siren alert & audio)
-      sendAuthorityBroadcast({
-        area: 'All Municipal & Agricultural Sectors (Visakhapatnam Metropolitan)',
-        risk: 'high',
-        message: '🚨 MASTER EMERGENCY SIREN ACTIVATED: Severe Cloudburst & Coastal Inundation warning. Farmers & Citizens must take immediate shelter on elevated safe ground.'
-      });
+    // 1. Broadcast across all sectors (Farmers & Citizens receive the 2-second siren alert & audio)
+    sendAuthorityBroadcast({
+      area: 'All Municipal & Agricultural Sectors (Visakhapatnam Metropolitan)',
+      risk: 'high',
+      message: '🚨 MASTER EMERGENCY SIREN ACTIVATED: Severe Cloudburst & Coastal Inundation warning. Farmers & Citizens must take immediate shelter on elevated safe ground.'
+    });
 
-      // 2. Dispatch automated emergency email alert
-      fetch('/api/send-emergency-alert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recipientEmail: user?.email || 'aquasentinelfis@gmail.com',
-          userName: user?.name || 'Visakhapatnam District Resident',
-          sector: 'authority',
-          hasAgriLand: false,
-          area: 'Visakhapatnam Metropolitan & Coastal Catchment',
-          weatherCondition: '🚨 CRITICAL MASTER SIREN: Cloudburst Precipitation & Tidal Inundation',
-          rainfall: 85.4,
-          riskScore: 94.2,
-          soilMoisture: 92,
-          isSimulation: false,
-          notes: 'Master Municipal Emergency Siren triggered by Disaster Management Authority.'
-        }),
+    // 2. Dispatch automated emergency email alert
+    fetch('/api/send-emergency-alert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipientEmail: user?.email || 'aquasentinelfis@gmail.com',
+        userName: user?.name || 'Visakhapatnam District Resident',
+        sector: 'authority',
+        hasAgriLand: false,
+        area: 'Visakhapatnam Metropolitan & Coastal Catchment',
+        weatherCondition: '🚨 CRITICAL MASTER SIREN: Cloudburst Precipitation & Tidal Inundation',
+        rainfall: 85.4,
+        riskScore: 94.2,
+        soilMoisture: 92,
+        isSimulation: false,
+        notes: 'Master Municipal Emergency Siren triggered by Disaster Management Authority.'
+      }),
+    })
+      .then(res => res.json())
+      .then(() => {
+        setSirenEmailSent(true);
+        setTimeout(() => setSirenEmailSent(false), 8000);
       })
-        .then(res => res.json())
-        .then(() => {
-          setSirenEmailSent(true);
-          setTimeout(() => setSirenEmailSent(false), 8000);
-        })
-        .catch(err => console.error('Emergency email dispatch error:', err));
-    }
+      .catch(err => console.error('Emergency email dispatch error:', err));
+
+    // Reset indicator back to normal after 2.5 seconds
+    setTimeout(() => {
+      setMasterSirenActive(false);
+    }, 2500);
   };
 
   const handleDispatchSOS = (id: string, team: string) => {
@@ -338,7 +340,7 @@ export default function ModernAuthoritySector() {
               onClick={handleToggleSiren}
             >
               <Volume2 size={14} color={masterSirenActive ? '#ffffff' : '#00f0ff'} />
-              <span>{masterSirenActive ? '🚨 SIREN BLARING (CLICK TO SILENCE)' : '🔊 DISTRICT SIREN'}</span>
+              <span>{masterSirenActive ? '🚨 SIREN DISPATCHED (2s PULSE)' : '🔊 DISTRICT SIREN'}</span>
             </button>
 
             {/* Simulation Button */}

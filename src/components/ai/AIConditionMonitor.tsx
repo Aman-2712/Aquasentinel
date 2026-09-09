@@ -2,8 +2,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useFloodData } from '@/context/FloodDataContext';
-import { Bot, Mail, CheckCircle2, AlertOctagon, X, Sparkles, ShieldAlert, Cpu, Volume2, VolumeX } from 'lucide-react';
-import { playEmergencySirenAudio, stopEmergencySirenAudio, getIsSirenAudioPlaying } from '@/utils/sirenAudio';
+import { Bot, Mail, CheckCircle2, AlertOctagon, X, Sparkles, ShieldAlert, Cpu, Volume2, VolumeX, RotateCcw } from 'lucide-react';
+import { playEmergencySirenAudio, stopEmergencySirenAudio, getIsSirenAudioPlaying, initAudioUnlock } from '@/utils/sirenAudio';
 
 export default function AIConditionMonitor() {
   const { user } = useAuth();
@@ -22,10 +22,12 @@ export default function AIConditionMonitor() {
 
   const [isSirenMuted, setIsSirenMuted] = useState(false);
   const lastDispatchedRef = useRef<string>('');
+  const lastPlayedSirenIdRef = useRef<string>('');
   const [isDispatching, setIsDispatching] = useState(false);
 
-  // Stop siren audio on unmount
+  // Initialize browser audio unlocking & cleanup on unmount
   useEffect(() => {
+    initAudioUnlock();
     return () => {
       stopEmergencySirenAudio();
     };
@@ -41,20 +43,23 @@ export default function AIConditionMonitor() {
     );
 
     if (activeSirenAlert && !isSirenMuted) {
-      // Play real siren on Farmer / Citizen devices
-      playEmergencySirenAudio();
+      if (lastPlayedSirenIdRef.current !== activeSirenAlert.id) {
+        lastPlayedSirenIdRef.current = activeSirenAlert.id;
+        // Play real siren on Farmer / Citizen devices for precisely 2 seconds
+        playEmergencySirenAudio(2000);
 
-      setActiveNotification({
-        id: `siren-${activeSirenAlert.id}`,
-        sector: user?.role || 'citizen',
-        subject: '🚨 MASTER DISTRICT EMERGENCY SIREN ACTIVATED',
-        recipients: [user?.email || 'Registered Citizen / Farmer Device'],
-        timestamp: activeSirenAlert.timestamp,
-        riskScore: xgboostPrediction.riskScore || 94,
-        rainfall: weatherData.current.rainfall || 48.2,
-        actionSummary: activeSirenAlert.message,
-        isSirenAlert: true,
-      });
+        setActiveNotification({
+          id: `siren-${activeSirenAlert.id}`,
+          sector: user?.role || 'citizen',
+          subject: '🚨 MASTER DISTRICT EMERGENCY SIREN ACTIVATED',
+          recipients: [user?.email || 'Registered Citizen / Farmer Device'],
+          timestamp: activeSirenAlert.timestamp || 'Just now',
+          riskScore: xgboostPrediction.riskScore || 94,
+          rainfall: weatherData.current.rainfall || 48.2,
+          actionSummary: activeSirenAlert.message,
+          isSirenAlert: true,
+        });
+      }
     }
   }, [broadcastAlerts, user?.role, isSirenMuted, xgboostPrediction.riskScore, weatherData.current.rainfall]);
 
@@ -106,9 +111,9 @@ export default function AIConditionMonitor() {
               actionSummary = 'District command telemetry & inundation breakdown dispatched.';
             }
 
-            // Play siren for Farmer / Citizen if high risk
-            if (user?.role !== 'authority' && xgboostPrediction.riskScore >= 75) {
-              playEmergencySirenAudio();
+            // Play siren for Farmer / Citizen if high risk for 2 seconds
+            if (user?.role !== 'authority' && xgboostPrediction.riskScore >= 75 && !isSirenMuted) {
+              playEmergencySirenAudio(2000);
             }
 
             setActiveNotification({
@@ -148,6 +153,7 @@ export default function AIConditionMonitor() {
     user?.name,
     user?.email,
     isDispatching,
+    isSirenMuted,
   ]);
 
   const handleDismissNotification = () => {
@@ -161,6 +167,11 @@ export default function AIConditionMonitor() {
     setIsSirenMuted(true);
   };
 
+  const handleReplaySiren = () => {
+    setIsSirenMuted(false);
+    playEmergencySirenAudio(2000);
+  };
+
   if (!activeNotification) return null;
 
   const isHighRisk = activeNotification.riskScore >= 70 || activeNotification.isSirenAlert;
@@ -172,7 +183,7 @@ export default function AIConditionMonitor() {
         bottom: '24px',
         right: '24px',
         zIndex: 99999,
-        maxWidth: '450px',
+        maxWidth: '460px',
         width: 'calc(100vw - 48px)',
         background: 'rgba(8, 16, 28, 0.96)',
         backdropFilter: 'blur(20px)',
@@ -216,7 +227,7 @@ export default function AIConditionMonitor() {
                   textTransform: 'uppercase',
                 }}
               >
-                {activeNotification.isSirenAlert ? 'LIVE SIREN' : 'AUTONOMOUS'}
+                {activeNotification.isSirenAlert ? '2-SEC SIREN PULSE' : 'AUTONOMOUS'}
               </span>
             </div>
             <span style={{ fontSize: '0.7rem', color: 'var(--clr-text-muted)' }}>
@@ -225,31 +236,57 @@ export default function AIConditionMonitor() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {activeNotification.isSirenAlert && (
-            <button
-              onClick={handleMuteSiren}
-              title="Silence Siren Sound"
-              style={{
-                background: 'rgba(255, 68, 68, 0.2)',
-                border: '1px solid #ff4444',
-                color: '#ff4444',
-                borderRadius: '6px',
-                padding: '3px 8px',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
-              <VolumeX size={12} />
-              <span>Silence</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleReplaySiren}
+                title="Replay 2s Siren Sound"
+                style={{
+                  background: 'rgba(0, 212, 255, 0.2)',
+                  border: '1px solid #00d4ff',
+                  color: '#00d4ff',
+                  borderRadius: '6px',
+                  padding: '3px 8px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <RotateCcw size={11} />
+                <span>Replay (2s)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleMuteSiren}
+                title="Silence Siren Sound"
+                style={{
+                  background: 'rgba(255, 68, 68, 0.2)',
+                  border: '1px solid #ff4444',
+                  color: '#ff4444',
+                  borderRadius: '6px',
+                  padding: '3px 8px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <VolumeX size={12} />
+                <span>Silence</span>
+              </button>
+            </>
           )}
 
           <button
+            type="button"
             onClick={handleDismissNotification}
             style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
           >

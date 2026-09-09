@@ -373,8 +373,35 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
     };
 
     window.addEventListener('storage', handleStorageChange);
+
+    // Multi-browser, cross-session realtime sync polling
+    const fetchApiBroadcasts = async () => {
+      try {
+        const res = await fetch('/api/broadcasts');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.broadcasts) && data.broadcasts.length > 0) {
+          setBroadcastAlerts(prev => {
+            const prevIds = new Set(prev.map(b => b.id));
+            const hasNew = data.broadcasts.some((b: any) => !prevIds.has(b.id));
+            if (hasNew) {
+              const merged = [...data.broadcasts];
+              try {
+                localStorage.setItem('aquasentinel_broadcasts', JSON.stringify(merged));
+              } catch (e) {}
+              return merged;
+            }
+            return prev;
+          });
+        }
+      } catch (err) {}
+    };
+
+    fetchApiBroadcasts();
+    const syncInterval = setInterval(fetchApiBroadcasts, 2500);
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      clearInterval(syncInterval);
       if (bc) bc.close();
     };
   }, []);
@@ -652,10 +679,10 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
     fetchWeatherData();
   }, [fetchWeatherData]);
 
-  const sendAuthorityBroadcast = (broadcast: { area: string; risk: RiskLevel; message: string }) => {
+  const sendAuthorityBroadcast = async (broadcast: { area: string; risk: RiskLevel; message: string; sender?: string }) => {
     const newBroadcast: AuthorityBroadcast = {
-      id: `broadcast-${Date.now()}`,
-      sender: 'Visakhapatnam Disaster Management Authority (VDMA)',
+      id: `broadcast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      sender: broadcast.sender || 'Visakhapatnam Disaster Management Authority (VDMA)',
       area: broadcast.area,
       risk: broadcast.risk,
       message: broadcast.message,
@@ -674,6 +701,21 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {}
       return updated;
     });
+
+    try {
+      await fetch('/api/broadcasts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender: newBroadcast.sender,
+          area: newBroadcast.area,
+          risk: newBroadcast.risk,
+          message: newBroadcast.message,
+        }),
+      });
+    } catch (e) {
+      console.warn('Failed to sync broadcast to API:', e);
+    }
   };
 
   const dismissBroadcast = (id: string) => {
