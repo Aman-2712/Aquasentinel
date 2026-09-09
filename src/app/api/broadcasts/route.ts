@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export interface BroadcastItem {
   id: string;
   sender: string;
@@ -59,7 +62,7 @@ export async function GET() {
   try {
     const store = getStore();
 
-    // If Supabase is configured, attempt to fetch latest from DB as well
+    // If Supabase is configured, attempt to sync latest from DB
     if (isSupabaseConfigured) {
       try {
         const { data } = await supabase
@@ -84,15 +87,24 @@ export async function GET() {
             }
           });
         }
-      } catch (e) {
-        // Fallback to in-memory store
-      }
+      } catch (e) {}
     }
 
-    return NextResponse.json({
-      success: true,
-      broadcasts: store.slice(0, 15),
-    });
+    return new NextResponse(
+      JSON.stringify({
+        success: true,
+        broadcasts: store.slice(0, 15),
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
+    );
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
@@ -101,11 +113,11 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { area, risk, message, sender } = body;
+    const { id, area, risk, message, sender } = body;
     const store = getStore();
 
     const newBroadcast: BroadcastItem = {
-      id: `broadcast-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: id || `broadcast-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       sender: sender || 'Visakhapatnam Disaster Management Authority (VDMA)',
       area: area || 'Visakhapatnam District & Agricultural Basins',
       risk: risk || 'high',
@@ -114,6 +126,12 @@ export async function POST(req: Request) {
       active: true,
       createdAt: Date.now(),
     };
+
+    // Remove duplicates if same ID exists
+    const existingIndex = store.findIndex(b => b.id === newBroadcast.id);
+    if (existingIndex >= 0) {
+      store.splice(existingIndex, 1);
+    }
 
     // Insert at front of global in-memory store
     store.unshift(newBroadcast);
@@ -137,11 +155,20 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      broadcast: newBroadcast,
-      broadcasts: store.slice(0, 15),
-    });
+    return new NextResponse(
+      JSON.stringify({
+        success: true,
+        broadcast: newBroadcast,
+        broadcasts: store.slice(0, 15),
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      }
+    );
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

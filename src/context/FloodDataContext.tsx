@@ -377,7 +377,7 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
     // Multi-browser, cross-session realtime sync polling
     const fetchApiBroadcasts = async () => {
       try {
-        const res = await fetch('/api/broadcasts');
+        const res = await fetch(`/api/broadcasts?_t=${Date.now()}`, { cache: 'no-store' });
         const data = await res.json();
         if (data.success && Array.isArray(data.broadcasts) && data.broadcasts.length > 0) {
           setBroadcastAlerts(prev => {
@@ -397,7 +397,7 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
     };
 
     fetchApiBroadcasts();
-    const syncInterval = setInterval(fetchApiBroadcasts, 2500);
+    const syncInterval = setInterval(fetchApiBroadcasts, 1000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -707,6 +707,7 @@ export function FloodDataProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: newBroadcast.id,
           sender: newBroadcast.sender,
           area: newBroadcast.area,
           risk: newBroadcast.risk,
