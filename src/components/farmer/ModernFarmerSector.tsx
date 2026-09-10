@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { FarmerOnboardingModal } from '@/components/onboarding/FarmerOnboardingModal';
 import HackathonSimulatorModal from '@/components/demo/HackathonSimulatorModal';
+import { playEmergencySirenAudio } from '@/utils/sirenAudio';
 import dynamic from 'next/dynamic';
 
 const FloodMap = dynamic(() => import('@/components/map/FloodMap'), { ssr: false });
@@ -1393,7 +1394,10 @@ export default function ModernFarmerSector() {
               <div style={{ display: 'flex', gap: '0.6rem' }}>
                 <button
                   onClick={() => {
+                    const testSirenId = `siren-test-${Date.now()}`;
+                    playEmergencySirenAudio(2000);
                     sendAuthorityBroadcast({
+                      id: testSirenId,
                       area: 'Visakhapatnam Agricultural Inundation Basin',
                       risk: 'high',
                       message: 'EMERGENCY INFLOW WARNING: Flood runoff surge detected (+40cm). Sluice gates automatically calibrated.',
@@ -1402,7 +1406,7 @@ export default function ModernFarmerSector() {
                   className={styles.actionBtnPrimary}
                   style={{ fontSize: '0.785rem', padding: '0.5rem 0.9rem' }}
                 >
-                  <Zap size={13} /> Trigger Alert Test
+                  <Zap size={13} /> Trigger Alert Test (2s Siren)
                 </button>
                 <button onClick={() => setActiveTab('overview')} className={styles.actionBtnSecondary}>
                   Back to Dashboard
