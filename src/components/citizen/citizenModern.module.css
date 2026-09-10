@@ -1,0 +1,741 @@
+/* =========================================================================
+   AQUASENTINEL CITIZEN SPATIAL SECTOR — MODERN NEUMORPHIC / GLASS HUD
+   Matching reference media_1789012004493.png
+   ========================================================================= */
+
+.spatialViewportWrapper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background: #f2f4fb;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1e1b4b;
+}
+
+/* =========================================================================
+   1. FLOATING LEFT CAPSULE NAVIGATION DOCK (Matching Reference Image)
+   ========================================================================= */
+.floatingCapsuleDock {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 62px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 36px;
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 6px;
+  gap: 1.15rem;
+  z-index: 1000;
+}
+
+/* Top Gradient Ring Logo */
+.dockLogoCircle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6);
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
+  cursor: pointer;
+  margin-bottom: 0.25rem;
+}
+
+.dockLogoInner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dockLogoCore {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #06b6d4);
+}
+
+.dockIconButton {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.dockIconButton:hover {
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.dockIconButtonActive {
+  color: #6366f1;
+}
+
+/* Spring Sliding Pill Indicator */
+.dockActiveIndicator {
+  position: absolute;
+  left: -6px;
+  width: 4px;
+  height: 22px;
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
+}
+
+.dockBadgeCount {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 10px;
+  border: 1.5px solid #ffffff;
+  line-height: 1;
+}
+
+.dockAvatarBtn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #6366f1;
+  background: linear-gradient(135deg, #e0e7ff, #ede9fe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4338ca;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+}
+
+.dockAvatarDot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid #ffffff;
+}
+
+/* =========================================================================
+   2. MAIN CURVED SPATIAL GLASS PANEL (Matching Reference White Card)
+   ========================================================================= */
+.curvedSpatialPanel {
+  flex: 1;
+  margin-left: 82px;
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 20px 60px rgba(99, 102, 241, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  height: calc(100vh - 1.3rem);
+}
+
+.panelContentCanvas {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.6rem 2rem 2.5rem 2rem;
+  position: relative;
+}
+
+/* =========================================================================
+   3. OVERVIEW GRID (Matching Reference media_1789012004493.png)
+   ========================================================================= */
+.spatialOverviewGrid {
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  gap: 1.5rem;
+  min-height: calc(100vh - 4.5rem);
+  position: relative;
+}
+
+/* Left Telemetry Column */
+.leftTelemetryColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  z-index: 10;
+}
+
+.generalStatsCard {
+  background: transparent;
+}
+
+.statsSectionTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  margin-bottom: 0.35rem;
+}
+
+.allUsersLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.heroStatNumber {
+  font-size: 2.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 1.15rem;
+}
+
+.statPillRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.statPillIconBoxPurple {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: #6366f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.statPillIconBoxCyan {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: #06b6d4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);
+}
+
+.statPillTextTitle {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.statPillTextVal {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e1b4b;
+}
+
+/* Floating Neumorphic Glass Cards (Left Column) */
+.glassStatCard {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.08), 0 1px 3px rgba(0, 0, 0, 0.03);
+  padding: 1.15rem 1.25rem;
+  position: relative;
+}
+
+.cardHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.cardHeaderTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.cardHeaderBadgeGreen {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #10b981;
+  background: #ecfdf5;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.cardHeroVal {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.2rem;
+}
+
+.cardSubCaption {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  margin-bottom: 0.85rem;
+}
+
+.progressBarTrack {
+  height: 5px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progressBarFillPurple {
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+.progressBarFillRed {
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #f43f5e, #fb7185);
+}
+
+.progressBarFillOrange {
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.progressLabelRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+/* 24-Hr Precipitation Heatmap Matrix Grid */
+.matrixGridWrap {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+  margin-top: 0.6rem;
+}
+
+.matrixBar {
+  height: 38px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.matrixSegment {
+  flex: 1;
+  border-radius: 2px;
+}
+
+/* =========================================================================
+   4. CENTRAL 3D GLOBE SPATIAL VIEWPORT
+   ========================================================================= */
+.centerGlobeColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.globeViewportContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 540px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.globeCanvas {
+  width: 100%;
+  max-width: 580px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  cursor: grab;
+  user-select: none;
+}
+
+.globeCanvas:active {
+  cursor: grabbing;
+}
+
+/* Floating Spatial Pins with Ripple Waves */
+.globePinsOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.spatialPinNode {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spatialPinBubble {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border: 2px solid #ffffff;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.2s ease;
+}
+
+.spatialPinNode:hover .spatialPinBubble {
+  transform: scale(1.15);
+}
+
+.spatialPinRipple1,
+.spatialPinRipple2 {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid;
+  opacity: 0.6;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: pinPulse 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+.spatialPinRipple2 {
+  animation-delay: 1.2s;
+}
+
+@keyframes pinPulse {
+  0% {
+    width: 32px;
+    height: 32px;
+    opacity: 0.8;
+  }
+  100% {
+    width: 72px;
+    height: 72px;
+    opacity: 0;
+  }
+}
+
+.spatialPinLabelCard {
+  position: absolute;
+  bottom: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 4px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.spatialPinNode:hover .spatialPinLabelCard,
+.spatialPinNodeActive .spatialPinLabelCard {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.spatialPinLabelTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #1e1b4b;
+}
+
+.spatialPinLabelSub {
+  font-size: 0.64rem;
+  color: #64748b;
+}
+
+/* Globe Top Control Capsule */
+.globeTopControlsCapsule {
+  position: absolute;
+  top: 10px;
+  display: flex;
+  gap: 0.6rem;
+  z-index: 20;
+}
+
+.globeControlBtn {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.08);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.globeControlBtn:hover {
+  background: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.15);
+}
+
+/* Active Pin Detailed Modal Card */
+.globeActivePinModal {
+  position: absolute;
+  bottom: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(226, 232, 240, 0.95);
+  border-radius: 18px;
+  box-shadow: 0 16px 48px rgba(99, 102, 241, 0.15), 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 1rem 1.3rem;
+  width: 90%;
+  max-width: 440px;
+  z-index: 30;
+  animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpModal {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.globeActiveModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.globeModalTelemetryRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.6rem;
+  background: #f8fafc;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+}
+
+.globeModalMetric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.globeModalMetricLabel {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* =========================================================================
+   5. RIGHT ANALYTICS COLUMN (Matching Reference Spline & Gauges)
+   ========================================================================= */
+.rightAnalyticsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  z-index: 10;
+}
+
+.quantityDataHeroTitle {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.15rem;
+}
+
+.salesTrendSubRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.salesTrendLabel {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e1b4b;
+}
+
+.salesTrendValHero {
+  font-size: 2.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+/* Dual Wave Spline Chart SVG */
+.splineWaveContainer {
+  width: 100%;
+  height: 64px;
+  margin: 0.6rem 0 1rem 0;
+}
+
+/* Sector Breakdown Table */
+.sectorTableWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.sectorTableRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+}
+
+.sectorTableName {
+  font-weight: 600;
+  color: #475569;
+}
+
+.sectorTableNums {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-weight: 700;
+  color: #1e1b4b;
+}
+
+.trendIconGreen {
+  color: #10b981;
+  font-size: 0.65rem;
+}
+
+.trendIconRed {
+  color: #ef4444;
+  font-size: 0.65rem;
+}
+
+/* Circular Progress Gauges (27% and 67%) */
+.gaugesContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.circularGaugeBox {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 0.65rem 0.85rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.06);
+  flex: 1;
+}
+
+.gaugeSvgWrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gaugePercentText {
+  position: absolute;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.gaugeLabelTitle {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.gaugeLabelSub {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .spatialOverviewGrid {
+    grid-template-columns: 240px 1fr 240px;
+  }
+}
