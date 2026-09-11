@@ -1,0 +1,117 @@
+================================================================================
+          ESP32 ACTUATOR & VISION WORKSTATION - HARDWARE WIRING GUIDE
+================================================================================
+System Architecture: Next.js Dashboard -> FastAPI Server -> ESP32 & ESP32-CAM
+Target Controllers  : ESP32 NodeMCU / DevKit V1 & ESP32-CAM (AI-Thinker)
+Date Created        : September 2026
+================================================================================
+
+--------------------------------------------------------------------------------
+1. ESP32 ACTUATOR CONTROLLER - PINOUT SUMMARY
+--------------------------------------------------------------------------------
++-------------------+---------------+------------------+-----------------------+
+| ESP32 GPIO PIN    | COMPONENT     | MODULE PIN / WIRE| FUNCTION              |
++-------------------+---------------+------------------+-----------------------+
+| GPIO 2 (Onboard)  | Onboard LED   | Anode (Built-in) | System Status LED     |
+| GPIO 14           | L298N Driver  | ENA (Enable A)   | Motor A PWM Speed     |
+| GPIO 26           | L298N Driver  | IN1              | Motor A Direction 1   |
+| GPIO 27           | L298N Driver  | IN2              | Motor A Direction 2   |
+| GPIO 13           | L298N Driver  | ENB (Enable B)   | Motor B PWM Speed     |
+| GPIO 32           | L298N Driver  | IN3              | Motor B Direction 1   |
+| GPIO 33           | L298N Driver  | IN4              | Motor B Direction 2   |
+| GPIO 18           | Servo Motor   | PWM / Signal Pin | Servo Angle (0-180deg)|
+| VIN / 5V          | Power Bus     | 5V DC            | 5V Logic/Servo Power  |
+| GND               | Power Bus     | GND              | COMMON SYSTEM GROUND  |
++-------------------+---------------+------------------+-----------------------+
+
+--------------------------------------------------------------------------------
+2. DETAILED MODULE WIRING SPECIFICATIONS
+--------------------------------------------------------------------------------
+
+2.1 ONBOARD LED (ACTUATOR STATE INDICATOR)
+    - Pin: ESP32 GPIO 2 (Internal connection on standard DevKit boards)
+    - Logic: HIGH (3.3V) = LED ON, LOW (0V) = LED OFF
+
+2.2 L298N DUAL DC MOTOR DRIVER MODULE
+    IMPORTANT: Remove the black jumpers from the ENA and ENB pins on the L298N
+    board so the ESP32 can send analog PWM signals for speed regulation.
+
+    [ESP32 Connection Pinout]
+    - ENA  --> ESP32 GPIO 14  (Motor A Speed Control - 5 kHz PWM)
+    - IN1  --> ESP32 GPIO 26  (Motor A Direction Pin 1)
+    - IN2  --> ESP32 GPIO 27  (Motor A Direction Pin 2)
+    - ENB  --> ESP32 GPIO 13  (Motor B Speed Control - 5 kHz PWM)
+    - IN3  --> ESP32 GPIO 32  (Motor B Direction Pin 1)
+    - IN4  --> ESP32 GPIO 33  (Motor B Direction Pin 2)
+
+    [Motor & Power Connections]
+    - OUT1 & OUT2 Terminals --> DC Motor A (Left Motor)
+    - OUT3 & OUT4 Terminals --> DC Motor B (Right Motor)
+    - 12V Power Screw Terminal --> External Battery Positive (+7V to +12V DC)
+    - GND Screw Terminal       --> External Battery Negative (-) AND ESP32 GND (COMMON GROUND)
+    - 5V Screw Terminal        --> Can connect to ESP32 VIN/5V pin if jumper is enabled.
+
+    [Motor Control Truth Table]
+    +----------+----------+-------------------+
+    | IN1 / IN3| IN2 / IN4| MOTOR BEHAVIOR    |
+    +----------+----------+-------------------+
+    |   HIGH   |   LOW    | Forward Direction |
+    |   LOW    |   HIGH   | Backward Direction|
+    |   LOW    |   LOW    | Stop (Brake)      |
+    |   HIGH   |   HIGH   | Stop (Brake)      |
+    +----------+----------+-------------------+
+
+2.3 SERVO MOTOR (SG90 / MG996R)
+    - Signal (Yellow / Orange Wire) --> ESP32 GPIO 18 (50 Hz, 16-bit LEDC PWM)
+    - VCC Power (Red Wire)          --> External 5V Power Supply or L298N 5V Out
+    - Ground (Brown / Black Wire)   --> ESP32 GND (Common System Ground)
+
+2.4 ESP32-CAM MODULE (STANDALONE VISION MODULE)
+    - VCC / 5V Pin                  --> 5V Power Supply (1A+ recommended)
+    - GND Pin                       --> Common System Ground
+    - Onboard Flash LED             --> GPIO 4 (Controlled via HTTP GET on Port 80)
+    - Stream WebServer              --> Broadcasts live MJPEG stream on Port 81 (:81/stream)
+
+--------------------------------------------------------------------------------
+3. POWER DISTRIBUTION & COMMON GROUND DIAGRAM (ASCII)
+--------------------------------------------------------------------------------
+
+  +------------------+                    +-----------------------+
+  |  7V-12V Battery  |                    |   ESP32 Actuator MCU  |
+  |                  |                    |                       |
+  |  (+) positive ---+----+               |  GPIO 14  --> L298N ENA
+  |                  |    |               |  GPIO 26  --> L298N IN1
+  |  (-) negative ---+--+ |               |  GPIO 27  --> L298N IN2
+  +------------------+  | |               |  GPIO 13  --> L298N ENB
+                        | |               |  GPIO 32  --> L298N IN3
+                        | |               |  GPIO 33  --> L298N IN4
+                        | |               |  GPIO 18  --> Servo PWM
+                        | |               |  GPIO 2   --> Onboard LED
+                        | |               |  GND -----+
+                        | |               +-----------|-----------+
+                        | |                           |
+                        v v                           v
+     +----------------------------------------------------+
+     |             COMMON GROUND BUS (GND)                |
+     +----------------------------------------------------+
+                        |
+                        +---> L298N GND Screw Terminal
+                        +---> Servo Motor Ground (Brown/Black)
+                        +---> ESP32-CAM Ground
+                        +---> Battery Negative (-)
+
+--------------------------------------------------------------------------------
+4. CRITICAL WIRING RULES & CHECKLIST
+--------------------------------------------------------------------------------
+[✓] COMMON GROUND MANDATORY: All grounds (ESP32 GND, L298N GND, Servo GND, 
+    ESP32-CAM GND, and Battery (-)) MUST be connected together. Without a 
+    common ground reference, motor PWM signals will fluctuate unpredictably.
+
+[✓] SEPARATE MOTOR POWER: Do NOT power DC motors or heavy servos directly from 
+    the ESP32 3.3V pin. Motors cause voltage spikes that will trigger brownout 
+    resets on the ESP32.
+
+[✓] L298N JUMPERS: Ensure the ENA and ENB jumpers are REMOVED to allow speed 
+    modulation via GPIO 14 and GPIO 13.
+
+================================================================================
