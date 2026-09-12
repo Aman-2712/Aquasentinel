@@ -1,36 +1,42 @@
-# dependencies
-/node_modules
+# ── JavaScript / Node ──────────────────────────────────────────
+node_modules/
 /.pnp
 .pnp.js
-
-# testing
 /coverage
 
-# next.js
-/.next/
+# ── Next.js ────────────────────────────────────────────────────
+frontend/.next/
 /out/
-
-# production
 /build
+*.tsbuildinfo
+next-env.d.ts
 
-# debug
+# ── Python ─────────────────────────────────────────────────────
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+*.egg
+
+# ── Environment / secrets ──────────────────────────────────────
+# Only ignore root-level .env and *.local variants
+/.env
+.env*.local
+frontend/.env.local
+
+# ── Debug logs ─────────────────────────────────────────────────
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# local env files
-.env*.local
-.env
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# vercel
+# ── Vercel ─────────────────────────────────────────────────────
 .vercel
 
-# IDEs and editors
+# ── IDEs and editors ───────────────────────────────────────────
 .idea/
 .vscode/
 *.suo
