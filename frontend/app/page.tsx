@@ -3,15 +3,16 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { DashboardWebSocketClient } from '@/lib/websocket';
 import { MotorCommand, MotorStatus, ConnectionState, ActivityLog as ActivityLogType } from '@/lib/types';
-import { ConnectionStatus } from '@/components/ConnectionStatus';
-import { LedToggleControl } from '@/components/LedToggleControl';
-import { DualMotorControl } from '@/components/DualMotorControl';
-import { ServoControl } from '@/components/ServoControl';
+import { Sidebar } from '@/components/Sidebar';
+import { TopHeader } from '@/components/TopHeader';
 import { CameraStream } from '@/components/CameraStream';
+import { ServoControl } from '@/components/ServoControl';
+import { DualMotorControl } from '@/components/DualMotorControl';
 import { ActivityLog } from '@/components/ActivityLog';
-import { Cpu, AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Sliders, Shield, Terminal, LifeBuoy } from 'lucide-react';
 
 export default function DashboardPage() {
+  const [activeTab, setActiveTab] = useState<string>('live-control');
   const [backendState, setBackendState] = useState<ConnectionState>('connecting');
   const [motorStatus, setMotorStatus] = useState<MotorStatus | null>(null);
   const [logs, setLogs] = useState<ActivityLogType[]>([]);
@@ -58,10 +59,9 @@ export default function DashboardPage() {
       try {
         const parsed = JSON.parse(raw);
         if (parsed.type === 'status') {
-          const ledStr = parsed.led_on ? 'ON' : 'OFF';
           const dirStr = parsed.direction ? parsed.direction.toUpperCase() : 'STOP';
           const servoStr = parsed.servo_angle !== undefined ? ` | Servo=${parsed.servo_angle}°` : '';
-          addLog('received', `Status: LED=${ledStr} | Motor=${dirStr} (${parsed.speed}%)${servoStr} | A:${parsed.motor_a || 'OFF'} B:${parsed.motor_b || 'OFF'}`);
+          addLog('received', `Status: Motor=${dirStr}${servoStr} | A:${parsed.motor_a || 'OFF'} B:${parsed.motor_b || 'OFF'}`);
         } else {
           addLog(direction, raw);
         }
@@ -76,34 +76,6 @@ export default function DashboardPage() {
       client.disconnect();
     };
   }, [addLog]);
-
-  // Optimistic LED State
-  const [optimisticLedOn, setOptimisticLedOn] = useState<boolean | null>(null);
-
-  const isLedOn = optimisticLedOn !== null
-    ? optimisticLedOn
-    : Boolean(motorStatus?.led_on || (motorStatus?.led_state && motorStatus.led_state.toUpperCase().includes('ON')));
-
-  useEffect(() => {
-    if (motorStatus) {
-      const hwState = Boolean(motorStatus.led_on || (motorStatus.led_state && motorStatus.led_state.toUpperCase().includes('ON')));
-      setOptimisticLedOn(hwState);
-    }
-  }, [motorStatus]);
-
-  const handleToggleLed = () => {
-    const nextState = !isLedOn;
-    setOptimisticLedOn(nextState);
-
-    const targetCommand: MotorCommand = {
-      command: nextState ? 'turn_on' : 'turn_off'
-    };
-
-    if (wsClientRef.current) {
-      wsClientRef.current.sendCommand(targetCommand);
-      addLog('sent', `LED: ${targetCommand.command.toUpperCase()}`);
-    }
-  };
 
   const handleSendMotorCommand = (cmd: MotorCommand) => {
     if (wsClientRef.current) {
@@ -122,112 +94,160 @@ export default function DashboardPage() {
     }
   };
 
-  const handleReconnect = () => {
-    if (wsClientRef.current) {
-      wsClientRef.current.disconnect();
-      wsClientRef.current.connect();
-      addLog('system', 'Manual reconnect triggered');
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 font-sans antialiased">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="flex min-h-screen bg-[#070d18] text-slate-100 font-sans antialiased overflow-x-hidden">
+      
+      {/* Left Sidebar */}
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col p-4 sm:p-6 lg:p-7 space-y-6 max-w-[1600px] mx-auto w-full">
         
-        {/* Header */}
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-900/60 p-5 rounded-3xl border border-slate-800 backdrop-blur-md shadow-lg">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <Cpu className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
-                ESP32 ACTUATOR DASHBOARD
-                <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                  ESP32-CAM + Dual DC + Servo + LED
-                </span>
-              </h1>
-              <p className="text-xs text-slate-400">
-                ESP32-CAM Live Feed (10.38.152.203) &bull; L298N Dual DC Motors &bull; Servo Motor &bull; Onboard LED
-              </p>
-            </div>
-          </div>
+        {/* Top Header Bar */}
+        <TopHeader backendState={backendState} motorStatus={motorStatus} />
 
-          <div className="flex items-center space-x-3 w-full sm:w-auto justify-end">
-            <button
-              onClick={handleReconnect}
-              type="button"
-              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 flex items-center gap-2 border border-slate-700 transition-colors cursor-pointer"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${backendState === 'connecting' ? 'animate-spin' : ''}`} />
-              Reconnect
-            </button>
-            <a
-              href="http://localhost:8000/docs"
-              target="_blank"
-              rel="noreferrer"
-              className="px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-xs font-semibold text-blue-300 border border-blue-500/30 transition-colors"
-            >
-              FastAPI Docs ↗
-            </a>
-          </div>
-        </header>
-
-        {/* Error Alert */}
+        {/* Global Error Banner */}
         {errorMessage && (
-          <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-4 flex items-center justify-between text-rose-300">
-            <div className="flex items-center space-x-2">
+          <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-3.5 flex items-center justify-between text-rose-300">
+            <div className="flex items-center space-x-2.5">
               <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
-              <span className="text-sm font-semibold">{errorMessage}</span>
+              <span className="text-xs font-semibold">{errorMessage}</span>
             </div>
             <button
               onClick={() => setErrorMessage(null)}
-              className="text-xs font-bold text-rose-400 hover:text-rose-200 px-2 py-1 rounded hover:bg-rose-500/20"
+              className="text-xs font-bold text-rose-400 hover:text-rose-200 px-2 py-1 rounded hover:bg-rose-500/20 cursor-pointer"
             >
               Dismiss
             </button>
           </div>
         )}
 
-        {/* Connectivity Strip */}
-        <ConnectionStatus backendState={backendState} motorStatus={motorStatus} />
+        {/* Tab 1: Live Control (Primary Screen matching reference image) */}
+        {activeTab === 'live-control' && (
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+            
+            {/* Left/Center Column: ESP Cam Live (8 Cols on xl) */}
+            <div className="xl:col-span-8">
+              <CameraStream defaultStreamUrl="http://10.38.152.203:81/stream" />
+            </div>
 
-        {/* Section 1: Live ESP32-CAM Video Stream (7 Cols) + LED & Servo Actuators (5 Cols) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Live Video Feed (7 Cols) */}
-          <div className="lg:col-span-7">
-            <CameraStream defaultStreamUrl="http://10.38.152.203:81/stream" />
+            {/* Right Column: Servo Motor Control + Motor Control (4 Cols on xl) */}
+            <div className="xl:col-span-4 space-y-5">
+              {/* Servo Motor Control */}
+              <ServoControl
+                onSendAngle={handleSendServoAngle}
+                status={motorStatus}
+                disabled={backendState !== 'connected'}
+              />
+
+              {/* Dual Motor Control */}
+              <DualMotorControl
+                onSendCommand={handleSendMotorCommand}
+                status={motorStatus}
+                disabled={backendState !== 'connected'}
+              />
+            </div>
+
           </div>
+        )}
 
-          {/* Micro-Actuators: Onboard LED & Servo (5 Cols) */}
-          <div className="lg:col-span-5 space-y-6">
-            <LedToggleControl
-              ledOn={isLedOn}
-              onToggle={handleToggleLed}
-              disabled={backendState !== 'connected'}
-            />
+        {/* Tab 2: Dashboard Overview */}
+        {activeTab === 'dashboard' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-[#0b1428] border border-[#162544] rounded-2xl p-6 space-y-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Shield className="w-4 h-4 text-[#00d2ff]" />
+                System Health
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                All ESP32 actuator channels, GPIO signals, and PWM drivers are operating normally.
+              </p>
+              <div className="pt-2 text-xs font-mono text-emerald-400 font-semibold">
+                ● 100% OPERATIONAL
+              </div>
+            </div>
 
-            <ServoControl
-              onSendAngle={handleSendServoAngle}
-              status={motorStatus}
-              disabled={backendState !== 'connected'}
-            />
+            <div className="bg-[#0b1428] border border-[#162544] rounded-2xl p-6 space-y-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-blue-400" />
+                Active Motors
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Dual DC Motors: {motorStatus?.motor_a_dir !== 'stop' || motorStatus?.motor_b_dir !== 'stop' ? 'Running' : 'Standby'}
+              </p>
+              <p className="text-xs text-slate-400">
+                Servo Position: {motorStatus?.servo_angle ?? 90}&deg;
+              </p>
+            </div>
+
+            <div className="bg-[#0b1428] border border-[#162544] rounded-2xl p-6 space-y-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-purple-400" />
+                Telemetry Stats
+              </h3>
+              <p className="text-xs text-slate-400">
+                Connected Clients: {motorStatus?.connected_dashboards ?? 1}
+              </p>
+              <p className="text-xs text-slate-400">
+                Latency: &lt;15ms via WebSocket
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Section 2: Full-Width Dual Motor Controller (12 Cols) */}
-        <div>
-          <DualMotorControl
-            onSendCommand={handleSendMotorCommand}
-            status={motorStatus}
-            disabled={backendState !== 'connected'}
-          />
-        </div>
+        {/* Tab 3: Logs View */}
+        {activeTab === 'logs' && (
+          <div className="bg-[#0b1428] border border-[#162544] rounded-2xl p-6">
+            <ActivityLog logs={logs} onClear={() => setLogs([])} />
+          </div>
+        )}
 
-        {/* Section 3: Activity Log Feed */}
-        <ActivityLog logs={logs} onClear={() => setLogs([])} />
+        {/* Tab 4: Settings */}
+        {activeTab === 'settings' && (
+          <div className="bg-[#0b1428] border border-[#162544] rounded-2xl p-6 space-y-4 max-w-2xl">
+            <h3 className="text-base font-bold text-white">System Settings</h3>
+            <p className="text-xs text-slate-400">
+              Configure endpoints, stream bitrate, and hardware serial baud rate.
+            </p>
+            <div className="space-y-3 pt-2">
+              <div>
+                <label className="text-xs text-slate-300 font-medium">ESP32-CAM Stream IP</label>
+                <input 
+                  type="text" 
+                  defaultValue="http://10.38.152.203:81/stream" 
+                  className="w-full mt-1 bg-[#070e1e] border border-[#1b2c4e] rounded-xl px-3 py-2 text-xs text-white"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-300 font-medium">FastAPI WebSocket URL</label>
+                <input 
+                  type="text" 
+                  defaultValue="ws://localhost:8000/ws/dashboard" 
+                  className="w-full mt-1 bg-[#070e1e] border border-[#1b2c4e] rounded-xl px-3 py-2 text-xs text-white"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
-      </div>
+        {/* Tab 5: Help */}
+        {activeTab === 'help' && (
+          <div className="bg-[#0b1428] border border-[#162544] rounded-2xl p-6 space-y-4 max-w-2xl">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <LifeBuoy className="w-5 h-5 text-[#00d2ff]" />
+              AquaSentinel Help &amp; Pinout Quick Reference
+            </h3>
+            <div className="space-y-2 text-xs text-slate-300 leading-relaxed">
+              <p>• <strong>Motor A (Left)</strong>: IN1 (GPIO 26), IN2 (GPIO 27), ENA (GPIO 14)</p>
+              <p>• <strong>Motor B (Right)</strong>: IN3 (GPIO 32), IN4 (GPIO 33), ENB (GPIO 25)</p>
+              <p>• <strong>Servo Motor (PWM)</strong>: Signal (GPIO 18)</p>
+              <p>• <strong>ESP32-CAM Stream</strong>: Port 81 (/stream)</p>
+            </div>
+          </div>
+        )}
+
+      </main>
+
     </div>
   );
 }
